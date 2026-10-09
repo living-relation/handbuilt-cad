@@ -19,3 +19,6 @@ knuckle/v3/knuckle.step
 knuckle/v4/knuckle.step
 sim-tools/downloads/FreeCAD_1.1.4-Windows-x86_64-py311.7z
 knuckle/v4b/knuckle.step
+knuckle_billet/baseline/*.frd
+knuckle_billet/baseline/*.vtu
+knuckle_billet/baseline/*.npz
