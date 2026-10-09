@@ -1,0 +1,4 @@
+Cantilever: ccx tip max |Uz| = 0.19016 mm, mean 0.19012 mm
+Hand calc: E-B 0.19048 mm, Timoshenko 0.19196 mm
+Error vs Timoshenko: -0.94 %
+Heat block: T(x=0)=100.00, T(x=25)=60.00 (exact 60.00), T(x=50)=20.00

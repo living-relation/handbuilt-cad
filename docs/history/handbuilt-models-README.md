@@ -11,7 +11,7 @@ Clean CAD solids built by hand from Daniel's 3D scans: the scan is measured in P
 | `pedal_adapter/` | Pedal adapter (machined-style part). `work_images/` holds work renders. | `pedal_adapter.py` / `.step` / `.stl`: 9 mm screw posts with 3.5 mm holes, pocket grid, connector, ear. Fit in `check_stats.json` (median 0.16 mm). |
 | `catch_can_refscan/` | Reference surfaces of the engine-bay space around the oil catch can mount (from Fairsolid `refscan`), for designing against. `scan2param_T4/` is the earlier trial version. | `40_ref_surfaces.step`: 9 surfaces, most panel points within about 0.07 mm. |
 | `bezel/` | Bezel. Being built by another job. | In progress. |
-| `sim-tools/` | Simulation tools (strength, heat, CFD) and their docs, wrappers, smoke tests and rollback. See `sim-tools/SIM_TOOLS.md`. | |
+| `sim-tools/` | Simulation tools: CalculiX, Elmer, OpenFOAM 14, Gmsh, ParaView in WSL, plus portable FreeCAD 1.1.4 on Windows. Docs, wrappers, smoke tests and rollback. | See `sim-tools/SIM_TOOLS.md`. |
 | `NOTES.md` | Working notes from the hand-build sessions. | |
 
 ## Rebuilding a part
