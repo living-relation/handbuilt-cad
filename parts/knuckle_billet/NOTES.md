@@ -117,3 +117,30 @@
   - a ±Z milling (no-undercut) projection for machinability
   - p-continuation and Heaviside projection to cut the 31-41% grey
 - **Not done:** it13 wasn't started (time).
+
+## 2026-10-09 chunk 6: it13 frame layout (from the topology read-out)
+
+- **New options in `knuckle_billet.py`** (the it11 script is kept as `iter/knuckle_billet_it11.py`):
+  - `layout='frame'`: struts from the flange to the left and right lateral eyes, plus a closed I-beam frame, left eye → strut-rod (top) eye → right eye. The separate top-eye arm is gone.
+  - radial strips under the 2 strut roots, at flange depth
+  - `ribs=False`: drops the strut-clamp ribs over the drive shaft
+  - `ear1_link_w`: makes ear 1 a slim link with no deep lug. Ear 2 keeps the deep lug, which is the hub web toward ear 2.
+  - Flange: the spoked ring r60 with 4 bolt bosses comes back, and the arm-side plate is removed.
+  - Tongue root: the broad blend is the full disc patch widened to ±40 plus the 12 mm 45° side blend.
+- **it13 starting sizes:**
+  - struts: left 34x44, right 34x42
+  - frame members: 30x36
+  - strips: 26 wide
+  - ear 1 link: 16 wide
+- **it13 build:** 1.90 kg (7075), one valid solid, interface 24/24.
+- **it13** (1.90 kg): bump 4.75, cornering 0.99, braking 0.51, combined 0.69. The ear-1 slim link failed under braking (robust 983 MPa at (-55,23,42)): the brake torque reaction needs the deep ear-1 lug, even though compliance-based topology called it removable. Cornering hot spots are at the left strut root and ear-1 corner (-75..-60, 15..45, 60..82) and at the right strut root (30..45, 45..60, 75).
+- **it14** (2.01 kg): ear-1 deep lug back, strips 40 wide, ring r63, left strut 34x48. Braking recovered to 1.84, but cornering is 0.96 and combined 1.07, with the hot spot at the left strut root (-75..-60, 30..45, 60..82).
+  - The first it14 build (strips 44, ring r63→64) came out as 3 solids and was invalid. The interface check caught it before any FEA ran.
+- **it15** (2.05 kg): hybrid arm-side plate instead of strips. Cornering 1.11, and braking 0.78 at the frame/top-eye junction (18,137,137), so the 30x36 frame members are too small for the strut-rod braking load.
+- **it16:** it14 plus a second left strut (26x32) from the flange/ear-1 corner to the left eye, which is it11's old rib-2 path, and frame members at 34x40.
+- **it16** (2.08 kg): worse, not better. Cornering 0.65 and braking 0.61, with peaks at (-65.6,57.9,75.9) and (-35,53,80) where the second left strut, the left strut and the frame meet. It is probably a junction notch from overlapping H-pockets or partial fillets. I didn't have time to debug it.
+- **Frame layout conclusion so far:** none of it13-it16 reaches SF 2. The compliance-only topology result under-sizes the strength-critical paths: the ear-1 lug, the left-eye root, and the strut-rod braking path into the frame. Turning the frame into a build123d model needs solid gusseted nodes at the eyes and roots (not H-pocketed bars just overlapping), or a stress-constrained topology run.
+- **it17:** it11 with `ribs=False` only, i.e. the topology run's clearest finding applied to the proven design. 2.05 kg (-0.28 kg vs it11), interface 24/24.
+- **it17 result:** cornering 1.31, braking 1.70, combined 1.38, bump 5.4, fatigue Goodman 4.5. Removing the drive-shaft ribs costs a lot of strength: cornering drops from it11's 2.18 to 1.31. So the compliance-only topology run's "ribs removable" finding is wrong for strength. The ribs carry the cornering moment from the left/top arm roots (-26,56,82) round to the strut tongue.
+- **Status after chunk 6:** it11 (2.33 kg) is still the only design with SF ≥ 2 in every case. Best frame candidate: it14, 2.01 kg, worst SF 0.96.
+- **Next:** a stress-constrained (p-norm von Mises) topology run, or SIMP with the it11 ribs and the ear-1 lug as non-design. Then either rebuild the frame with solid gusseted nodes and verify, or lighten it11 locally (pockets in the ribs instead of removing them).
