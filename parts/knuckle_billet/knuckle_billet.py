@@ -18,8 +18,12 @@ TONGUE_X = (-15.0, 15.0)   # strut-bracket clamp faces (v4b tongue measured -14.
 
 P = dict(hub_od=92.0, flange_r=71.0, flange_z=(62.0, 82.0), tongue_y=(-166.0, -40.0), tongue_z=(72.0, 116.0),
          tongue_pocket_depth=12.0, arm_w=34.0, arm_h=42.0, wall=6.0, web=6.0, edge_r=4.0, pocket_r=6.0,
-         ear_boss_d=26.0, side_boss_d=32.0, keepout_r=45.0, flange_pockets=True, flange_pocket_angles=(95, 189), junction_r=6.0, ear_lug_to_flange_top=False, left_arm_h=None)
+         ear_boss_d=26.0, side_boss_d=32.0, keepout_r=45.0, flange_pockets=True, flange_pocket_angles=(95, 189), junction_r=6.0, ear_lug_to_flange_top=False, left_arm_h=None,
+         flange_style='disc', ring_r=56.0, bolt_boss_r=11.5, floor_r=0.0, tongue_bottom_pocket=0.0, tongue_junction_r=0.0,
+         left_root=(-50, 40, 76), right_root=(45, 45, 82), top_root=(-5, 55, 78), arm_left=None, arm_right=None, arm_top=None, rib_r2=(24.0, 30.0), tongue_blend=0.0, tongue_blend_len=32.0, sector_y=-12.0, hybrid_pockets=())
 if len(sys.argv) > 1 and sys.argv[1].endswith('.json'): P.update(json.load(open(sys.argv[1])))
+for k in ('arm_left', 'arm_right', 'arm_top'):
+    if P[k] is None: P[k] = (P['arm_w'], P['left_arm_h'] or P['arm_h']) if k == 'arm_left' else (P['arm_w'], P['arm_h'])
 OUT = sys.argv[2] if len(sys.argv) > 2 else 'knuckle_billet'
 V = lambda *a: Vector(*a)
 
@@ -44,6 +48,9 @@ def hbar(A, B, w, h, end_clear=18.0, hint=(0, 0, 1)):
         for s in (1, -1):
             sk = Plane(origin=(0, 0, s * h / 2), z_dir=(0, 0, -s)) * RectangleRounded(pl_len, pw, P['pocket_r'])
             pk = extrude(sk, amount=pd)
+            if P['floor_r'] > 0:
+                try: pk = fillet(pk.edges().filter_by(lambda e, s=s, h=h, pd=pd: abs(e.center().Z - s * (h / 2 - pd)) < 0.01), P['floor_r'])
+                except Exception: pass
             bar = bar - pl * pk
     return bar
 
@@ -63,13 +70,31 @@ def junction_fillets(part):
                         if ee: part = fillet(ee, r); ok += 1
                     except Exception: pass
                 if ok: done.append((zf, ok, r, 'partial')); break
+    if P['tongue_junction_r'] > 0:   # tongue side faces (x = +/-15) meeting the flange top: the it4 hot spot (15,-42,82)
+        te = [e for e in part.edges() if all(abs(v.Z - zf1) < 0.05 for v in e.vertices()) and any(abs(abs(v.X) - 15.0) < 0.05 for v in e.vertices())
+              and -80 < e.center().Y < -30]
+        for r in (P['tongue_junction_r'], 6.0):
+            try: part = fillet(te, r); done.append(('tongue', len(te), r)); break
+            except Exception: pass
     print('junction fillets', done, flush=True)
     return part
 
 def build():
     zf0, zf1 = P['flange_z']
     part = Cylinder(P['hub_od']/2, 66.0, align=(Align.CENTER, Align.CENTER, Align.MIN))
-    part += Pos(0, 0, zf0) * Cylinder(P['flange_r'], zf1 - zf0, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    if P['flange_style'] == 'disc':
+        part += Pos(0, 0, zf0) * Cylinder(P['flange_r'], zf1 - zf0, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    else:   # spoked ring: collar ring + a boss around each bolt + radial spoke from the hub to each boss
+        part += Pos(0, 0, zf0) * Cylinder(P['ring_r'], zf1 - zf0, align=(Align.CENTER, Align.CENTER, Align.MIN))
+        for x, y in FLANGE_HOLES:
+            part += Pos(x, y, zf0) * Cylinder(P['bolt_boss_r'], zf1 - zf0, align=(Align.CENTER, Align.CENTER, Align.MIN))
+        if P['flange_style'] == 'hybrid':   # full-radius plate on the arm side (y > sector_y) to tie the 3 arm roots together
+            plate = Pos(0, 0, zf0) * Cylinder(P['flange_r'], zf1 - zf0, align=(Align.CENTER, Align.CENTER, Align.MIN))
+            plate = plate & Pos(0, P['sector_y'] + 100, (zf0 + zf1) / 2) * Box(200, 200, zf1 - zf0 + 2)
+            part += plate
+            for ang in P['hybrid_pockets']:
+                a = math.radians(ang); r = (P['ring_r'] + P['flange_r']) / 2 + 1
+                part -= Pos(r*math.cos(a), r*math.sin(a), zf1 - 10) * Rot(0, 0, ang + 90) * extrude(RectangleRounded(20, 9, 4.5), amount=11)
     # ear bosses + lugs to the hub
     for (x, y), d, (z0, z1) in EAR_HOLES:
         part += Pos(x, y, z0) * Cylinder(P['ear_boss_d']/2, z1 - z0, align=(Align.CENTER, Align.CENTER, Align.MIN))
@@ -90,22 +115,36 @@ def build():
     if P['tongue_pocket_depth'] > 0:
         pkt = Pos(0, -113.25, tz1 - P['tongue_pocket_depth']) * extrude(RectangleRounded(TONGUE_X[1]-TONGUE_X[0]-2*P['wall'], 30.0, P['pocket_r']), amount=P['tongue_pocket_depth'] + 1)
         part -= pkt
+    if P['tongue_bottom_pocket'] > 0:
+        pkb = Pos(0, -113.25, tz0 - 1) * extrude(RectangleRounded(TONGUE_X[1]-TONGUE_X[0]-2*P['wall'], 30.0, P['pocket_r']), amount=P['tongue_bottom_pocket'] + 1)
+        if P['floor_r'] > 0:
+            try: pkb = fillet(pkb.edges().filter_by(lambda e: abs(e.center().Z - (tz0 + P['tongue_bottom_pocket'])) < 0.01), P['floor_r'])
+            except Exception: pass
+        part -= pkb
+    # tongue-root blend: 45-degree fill prisms along both tongue side faces where they meet the flange top (it4 hot spot (15,-42,82))
+    if P['tongue_blend'] > 0:
+        Lb = P['tongue_blend']; zt = P['flange_z'][1]
+        pl = Plane(origin=(0, -36.0, 0), x_dir=(1, 0, 0), z_dir=(0, -1, 0))
+        for sx in (1, -1):
+            x0 = TONGUE_X[1] if sx > 0 else TONGUE_X[0]
+            tri = Polygon((x0 - sx * 2, zt - 2), (x0 + sx * Lb, zt - 2), (x0 + sx * Lb, zt), (x0 - sx * 2, zt + Lb), align=None)
+            part += pl * extrude(tri, amount=P['tongue_blend_len'])
     # tongue root gusset down into the flange ring
     part += hbar((0, -45, 80), (0, -95, tz0 + 8), 30.0, 26.0, end_clear=60.0, hint=(1, 0, 0))
     # arms to the eyes (H-section), start on the flange ring outside the drive-shaft keep-out
     e = EYES
-    part += hbar((-50, 40, 76), e['left_eye']['c'], P['arm_w'], P['left_arm_h'] or P['arm_h'])
-    part += hbar((45, 45, 82), e['right_eye']['c'], P['arm_w'], P['arm_h'])
-    part += hbar((-5, 55, 78), e['top_eye']['c'], P['arm_w'], P['arm_h'], hint=(1, 0, 0))
+    part += hbar(P['left_root'], e['left_eye']['c'], *P['arm_left'])
+    part += hbar(P['right_root'], e['right_eye']['c'], *P['arm_right'])
+    part += hbar(P['top_root'], e['top_eye']['c'], *P['arm_top'], hint=(1, 0, 0))
     # rib: strut-clamp tongue -> right lateral eye (around the drive shaft), and tongue -> left eye via the flange
     part += hbar((4, -62, 96), (60, 0, 100), 24.0, 30.0, end_clear=14.0)
-    part += hbar((60, 0, 100), e['right_eye']['c'], 24.0, 30.0, end_clear=14.0)
+    part += hbar((60, 0, 100), e['right_eye']['c'], *P['rib_r2'], end_clear=14.0)
     part += hbar((-4, -60, 92), (-62, 10, 80), 24.0, 30.0, end_clear=14.0)
     part += hbar((-62, 10, 80), e['left_eye']['c'], 24.0, 30.0, end_clear=14.0)
     # eyes (exact OD/length)
     for k, v in e.items(): part += tube(v['c'], v['axis'], v['od'], v['length'])
     # flange-ring lightening pockets between the bolt holes, from +Z
-    if P['flange_pockets']:
+    if P['flange_pockets'] and P['flange_style'] == 'disc':
         for ang in P['flange_pocket_angles']:
             a = math.radians(ang); r = (P['hub_od']/2 + P['flange_r']) / 2 + 2
             pk = Pos(r*math.cos(a), r*math.sin(a), zf1 - 10) * Rot(0, 0, ang + 90) * extrude(RectangleRounded(26, 13, 6.0), amount=11)
