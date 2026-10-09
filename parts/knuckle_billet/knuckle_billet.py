@@ -20,7 +20,7 @@ P = dict(hub_od=92.0, flange_r=71.0, flange_z=(62.0, 82.0), tongue_y=(-166.0, -4
          tongue_pocket_depth=12.0, arm_w=34.0, arm_h=42.0, wall=6.0, web=6.0, edge_r=4.0, pocket_r=6.0,
          ear_boss_d=26.0, side_boss_d=32.0, keepout_r=45.0, flange_pockets=True, flange_pocket_angles=(95, 189), junction_r=6.0, ear_lug_to_flange_top=False, left_arm_h=None,
          flange_style='disc', ring_r=56.0, bolt_boss_r=11.5, floor_r=0.0, tongue_bottom_pocket=0.0, tongue_junction_r=0.0,
-         left_root=(-50, 40, 76), right_root=(45, 45, 82), top_root=(-5, 55, 78), arm_left=None, arm_right=None, arm_top=None, rib_r2=(24.0, 30.0), tongue_blend=0.0, tongue_blend_len=32.0, sector_y=-12.0, hybrid_pockets=())
+         left_root=(-50, 40, 76), right_root=(45, 45, 82), top_root=(-5, 55, 78), arm_left=None, arm_right=None, arm_top=None, rib_r2=(24.0, 30.0), tongue_blend=0.0, tongue_blend_len=32.0, sector_y=-12.0, hybrid_pockets=(), tongue_root_patch=0.0, tongue_under_wedge=0.0, wedge_flare=0.0)
 if len(sys.argv) > 1 and sys.argv[1].endswith('.json'): P.update(json.load(open(sys.argv[1])))
 for k in ('arm_left', 'arm_right', 'arm_top'):
     if P[k] is None: P[k] = (P['arm_w'], P['left_arm_h'] or P['arm_h']) if k == 'arm_left' else (P['arm_w'], P['arm_h'])
@@ -129,6 +129,17 @@ def build():
             x0 = TONGUE_X[1] if sx > 0 else TONGUE_X[0]
             tri = Polygon((x0 - sx * 2, zt - 2), (x0 + sx * Lb, zt - 2), (x0 + sx * Lb, zt), (x0 - sx * 2, zt + Lb), align=None)
             part += pl * extrude(tri, amount=P['tongue_blend_len'])
+    # chunk 4 options for the braking peak at the tongue lower side edge (-14.9,-69.1,75)
+    if P['tongue_root_patch'] > 0:   # A: keep the full-radius disc under the tongue root (|x| <= patch half-width, y < 0)
+        zf0, zf1 = P['flange_z']; hw = P['tongue_root_patch']
+        patch = Pos(0, 0, zf0) * Cylinder(P['flange_r'], zf1 - zf0, align=(Align.CENTER, Align.CENTER, Align.MIN))
+        patch = patch & Pos(0, -50, (zf0 + zf1) / 2) * Box(2 * hw, 100, zf1 - zf0 + 2)
+        part += patch
+    if P['tongue_under_wedge'] > 0:  # B: ramp under the tongue from the ring bottom out along the tongue bottom face
+        Lw = P['tongue_under_wedge']; zf0 = P['flange_z'][0]; tz0 = P['tongue_z'][0]; y0 = -(P['ring_r'] - 6.0)
+        plw = Plane(origin=(TONGUE_X[0] - P['wedge_flare'], 0, 0), x_dir=(0, 1, 0), z_dir=(1, 0, 0))   # local x = global Y, local y = global Z
+        tri = Polygon((y0, zf0), (y0, tz0 + 2), (y0 - Lw, tz0 + 2), (y0 - Lw, tz0), align=None)
+        part += plw * extrude(tri, amount=TONGUE_X[1] - TONGUE_X[0] + 2 * P['wedge_flare'])
     # tongue root gusset down into the flange ring
     part += hbar((0, -45, 80), (0, -95, tz0 + 8), 30.0, 26.0, end_clear=60.0, hint=(1, 0, 0))
     # arms to the eyes (H-section), start on the flange ring outside the drive-shaft keep-out

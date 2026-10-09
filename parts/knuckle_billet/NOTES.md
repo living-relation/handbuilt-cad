@@ -58,3 +58,16 @@
 - **it10:** it9 with the top arm back to 34x42 and the left arm at 34x48. That is it4's arm set on the hybrid flange.
 - **it10, best so far** (2.32 kg): cornering 2.22, combined 2.30, bump 5.5, fatigue Goodman 5.96 (fully reversed 3.68), all passing. Braking 1.84 is the one case short of 2. Its peak is the tongue's lower side edge at (-14.9,-69.1,75), just past the ring on the tongue side. Next fix: add a fill under the tongue's lower side edges where the tongue leaves the ring (like the top-side blend), or keep the full disc under the tongue root.
 - **Mass is not converging toward 1.6 kg.** Spoking the flange costs strength faster than it saves mass. To get under 1.6 kg the tongue (about 0.35 kg solid) and hub tube need rethinking (e.g. a C-section tongue with the clamp faces kept as lands), which needs Daniel's answers on the strut-bracket clamp extent.
+
+## 2026-10-09 chunk 4
+
+- **Daniel's answer (strut clamp extent):** the strut clamp bracket covers only the 2 strut bolt holes (y = -147.5 and -79), down to 12 mm below the bottom bolt (the one nearer the hub). I've taken that as y ≈ -67 measured from the bolt centre, with the clamp zone running from the tongue tip (y -166) to y ≈ -67. If he meant 12 mm from the hole edge, it ends at y ≈ -60. This zone stays full solid clamp lands at x = ±15. A C-section is allowed only between the clamp zone and the flange, y ≈ -67 to the ring.
+- **Braking fix, option A (it11):** keep the full r71 disc under the tongue root, |x| ≤ 30, y < 0.
+- **Braking fix, option B (it12):** a ramp under the tongue from the ring bottom out 24 mm along the tongue bottom, flared 7 mm past each side face.
+- **Results:**
+  - **it11 (option A) is the pick:** 2.327 kg (+10 g vs it10). SFs: bump 7.43, cornering 2.18, braking 2.00, combined 2.33. Fatigue Goodman 5.97, fully reversed 3.69. Interface 24/24, one valid solid.
+  - **it11 margin:** braking only just passes (robust 251 MPa against a 251.5 limit). The peak moved to the patch edge at (-15.1,-69.4,75.8), where the r71 patch ends under the tongue's lower side edge.
+  - **it12 (option B):** braking 1.83, rejected. The ramp mostly overlapped the existing under-tongue gusset, and its flare edges at y = -70 added a notch.
+- **Next steps:**
+  1. Give braking more margin by blending the patch edge into the tongue, e.g. a fillet or a chamfered patch end at r71. Keep it inside |x| ≤ 15 past y -67 so it stays clear of the clamp bracket.
+  2. Make the tongue a C-section only between the clamp lands (y ≤ -67, kept solid) and the flange. The free tongue length is short (about y -67 to -60), so the C-section mass gain there is small. Most remaining mass is in the solid clamp zone, which must stay solid. The real mass lever is the hub tube and arms.

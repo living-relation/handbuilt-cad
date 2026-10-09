@@ -79,3 +79,6 @@ Values are typical ASM / MatWeb handbook numbers [4]. Aluminium has no true endu
 2. ToyoDIY parts catalogue, 1990/1991 Celica ST185 48-04 rear spring and shock absorber: https://www.toyodiy.com/parts/p_E_1991_TOYOTA_CELICA_ST185L-BLMVZG_4804.html
 3. Toyota IRS rear suspension service article (Celica: one-piece axle carrier, 2 arms, strut rod, stabilizer): https://www.shoarmateam.nl/upload/Celica%20turbo/ST165/Toyota%20Celica%201989/suspension%20rear.pdf
 4. ASM Aerospace Specification Metals / MatWeb data sheets for 6061-T6 and 7075-T6.
+
+## Strut clamp extent (Daniel, 2026-10-09)
+The strut clamp bracket covers only the 2 strut bolt holes (y -147.5 and -79, axis X) and reaches 12 mm below the bottom bolt toward the hub (y ≈ -67 from the bolt centre). Clamp load goes into the tongue's x = ±15 faces only over that zone. The tongue between the clamp zone and the flange carries the strut moment unsupported.
