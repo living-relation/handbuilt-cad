@@ -71,3 +71,49 @@
 - **Next steps:**
   1. Give braking more margin by blending the patch edge into the tongue, e.g. a fillet or a chamfered patch end at r71. Keep it inside |x| ≤ 15 past y -67 so it stays clear of the clamp bracket.
   2. Make the tongue a C-section only between the clamp lands (y ≤ -67, kept solid) and the flange. The free tongue length is short (about y -67 to -60), so the C-section mass gain there is small. Most remaining mass is in the solid clamp zone, which must stay solid. The real mass lever is the hub tube and arms.
+
+## 2026-10-09 chunk 5: topology optimisation
+
+- **Tool:** my own voxel SIMP code, `topo_simp.py`, on the box in `/workspace/kbvenv`. It uses hex8 elements, multi-load compliance minimisation with a volume constraint, a density filter (rmin = 2h), OC updates with move limit 0.15, penalty p = 3, and pypardiso (MKL) direct solves for all 5 load cases at once. Each case's compliance is normalised by its initial value.
+  - **Why not BESO / ToOptix on CalculiX:** they would need 5 CalculiX solves per iteration on a re-meshed part (about 3-4 min per iteration here). The voxel solver does one iteration in about 1-15 s.
+  - **Supports and loads:** they mirror `fea_v4b.py` exactly. The bearing seat is a rigid ring carrying the tyre force and moment, distributed through the inverse polar inertia so the resultant is exact. Strut bolts are fixed xyz, the lateral eyes fixed in z, the top eye fixed in x, and brake torque goes into the 2 ear holes. Material is 7075-T651, E = 71.7 GPa.
+- **Design space:** voxels inside it11 or the repaired v4b, closed twice and dilated by 1 voxel, minus these:
+  - the drive-shaft column (r < 45 above z 66)
+  - the bore
+  - every hole
+  - the eye end-face zones
+  - the clamp-bracket zone (|x| > 15 for y ≤ -67, from Daniel's answer)
+- **Non-design (forced solid):**
+  - hub tube r ≤ 46
+  - r11.5 bosses around the 4 flange bolts
+  - r12 ear bosses
+  - r15 side boss
+  - full eye tubes (OD × length)
+  - solid strut clamp lands, |x| ≤ 15, y -166..-67, z 72-116
+- **Runs** (launched detached with setsid nohup, logs in `topo/*.out`):
+  - `m18_h3`: 1.8 kg, h = 3 mm
+  - `m16_h4`: 1.6 kg, h = 4 mm
+  - `m20_h4`: 2.0 kg, h = 4 mm
+- **Machinability bias:** none in this pass. A two-sided milling (±Z no-undercut) projection would be next. Minimum member size comes from the filter radius (2h = 6-8 mm), which meets the ≥ 4 mm rule.
+- **Post-processing:** `topo_post.py` makes the iso-surface (rho = 0.5) STL and a read-out of material by region against it11.
+- **Topo results** (full read-out in `topo/READOUT.md`):
+
+  | Run | Target | rho > 0.5 mass | Grey fraction | Iterations |
+  |---|---|---|---|---|
+  | m16_h4 | 1.6 kg | 1.38 kg | 0.31 | 70 |
+  | m18_h3 | 1.8 kg | 1.68 kg | 0.34 | 70, about 15 min |
+  | m20_h4 | 2.0 kg | 1.84 kg | 0.41 | 70 |
+
+  All three show the same layout:
+  - the tongue root blends broadly into the tongue-side flange ring
+  - the ribs over the drive shaft are removed
+  - the arm-side plate is mostly removed
+  - a closed frame ties left eye, top eye and right eye together, with 2 struts back to the flange and hub
+  - the ear-2 lug stays and the ear-1 lug slims down
+- **Renders:** `renders_iter/topo_m16|m18|m20_{iso,back}.png`, plain grey rho = 0.5 iso-surfaces.
+- **Memory:** `trimesh.contains` on about 100k points got OOM-killed while the h3 run was going, so `topo_post.py` uses voxelisation now.
+- **Next:** it13 rebuild in build123d (frame layout, see `READOUT.md`), then verify with CalculiX. Ideas for the next topo run:
+  - a stress-aware pass (p-norm) or a higher volume fraction, so struts come out strength-sized
+  - a ±Z milling (no-undercut) projection for machinability
+  - p-continuation and Heaviside projection to cut the 31-41% grey
+- **Not done:** it13 wasn't started (time).
