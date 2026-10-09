@@ -1,5 +1,5 @@
 #!/bin/bash
-D=/mnt/c/projects/active/handbuilt-models/sim-tools/smoke/openfoam
+D=/home/daniel/projects/handbuilt-models/sim-tools/smoke/openfoam
 mkdir -p $D
 OFBASH=$(ls -d /opt/openfoam*/etc/bashrc | sort -V | tail -1)
 source $OFBASH

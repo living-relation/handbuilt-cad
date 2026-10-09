@@ -1,5 +1,5 @@
 #!/bin/bash
-RB=/mnt/c/projects/active/handbuilt-models/sim-tools/rollback
+RB=/home/daniel/projects/handbuilt-models/sim-tools/rollback
 cp $RB/wsl-packages-before.txt $RB/wsl-packages-before.BROKEN.txt
 grep -h ' install ' /var/log/dpkg.log | awk '$1=="2026-10-09" && $2>="16:19:00" {print $4}' | sed 's/:.*//' | sort -u > /tmp/added_today.txt
 echo "installed today since 16:19: $(wc -l < /tmp/added_today.txt)"

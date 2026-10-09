@@ -1,11 +1,11 @@
 from paraview.simple import *
 import glob
-f = sorted(glob.glob('/mnt/c/projects/active/handbuilt-models/sim-tools/smoke/ccx/beam_u*.vtu'))[-1]
+f = sorted(glob.glob('/home/daniel/projects/handbuilt-models/sim-tools/smoke/ccx/beam_u*.vtu'))[-1]
 r = XMLUnstructuredGridReader(FileName=[f])
 w = WarpByVector(Input=r); w.Vectors = ['POINTS', 'U']; w.ScaleFactor = 50.0
 v = GetActiveViewOrCreate('RenderView'); v.ViewSize = [1200, 600]
 d = Show(w, v); ColorBy(d, ('POINTS', 'U', 'Magnitude')); d.SetScalarBarVisibility(v, True)
 o = Show(r, v); o.SetRepresentationType('Wireframe'); o.Opacity = 0.3
 v.CameraPosition = [50, -250, 60]; v.CameraFocalPoint = [50, 5, 0]; v.CameraViewUp = [0, 0, 1]; v.ResetCamera()
-SaveScreenshot('/mnt/c/projects/active/handbuilt-models/sim-tools/smoke/paraview/beam_displacement_x50.png', v, ImageResolution=[1200, 600])
+SaveScreenshot('/home/daniel/projects/handbuilt-models/sim-tools/smoke/paraview/beam_displacement_x50.png', v, ImageResolution=[1200, 600])
 print('screenshot saved from', f)

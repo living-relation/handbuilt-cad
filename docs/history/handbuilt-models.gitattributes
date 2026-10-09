@@ -1,3 +1,5 @@
 *.sh text eol=lf
 *.step binary
 *.stl binary
+*.bat text eol=crlf
+*.ps1 text eol=crlf

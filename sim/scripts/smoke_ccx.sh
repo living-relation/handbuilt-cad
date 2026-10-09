@@ -1,7 +1,7 @@
 #!/bin/bash
-D=/mnt/c/projects/active/handbuilt-models/sim-tools/smoke/ccx
+D=/home/daniel/projects/handbuilt-models/sim-tools/smoke/ccx
 mkdir -p $D && cd $D
-$HOME/simvenv/bin/python /mnt/c/projects/active/handbuilt-models/sim-tools/scripts/gen_ccx.py $D
+$HOME/simvenv/bin/python /home/daniel/projects/handbuilt-models/sim-tools/scripts/gen_ccx.py $D
 ccx -i beam > beam_ccx.log 2>&1; echo "beam ccx exit $?"
 ccx -i heat > heat_ccx.log 2>&1; echo "heat ccx exit $?"
 python3 - <<'EOF'

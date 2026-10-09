@@ -1,8 +1,8 @@
 #!/bin/bash
 # Removes everything the Oct 9 2026 sim-tools install added to WSL Ubuntu.
-# Run from Windows:  wsl -d Ubuntu -u root -- bash /mnt/c/projects/active/handbuilt-models/sim-tools/rollback/uninstall_wsl_sim_tools.sh
+# Run from Windows:  wsl -d Ubuntu -u root -- bash /home/daniel/projects/handbuilt-models/sim-tools/rollback/uninstall_wsl_sim_tools.sh
 # Add --dry-run to only show what would happen.
-RB=/mnt/c/projects/active/handbuilt-models/sim-tools/rollback
+RB=/home/daniel/projects/handbuilt-models/sim-tools/rollback
 DRY=0; [ "$1" = "--dry-run" ] && DRY=1
 run(){ echo "+ $*"; [ $DRY = 1 ] || "$@"; }
 BEFORE=$(cut -f1 $RB/wsl-packages-before.txt)
