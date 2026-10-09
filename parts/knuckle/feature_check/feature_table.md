@@ -1,0 +1,43 @@
+| feature | model mm | scan mm | size err | axis pos err mm | axis angle err deg | fit rms |
+|---|---|---|---|---|---|---|
+| Hub OD (bearing housing) | 88.0 | 87.91 | -0.09 | 0.02 | 0.36 | 0.08 |
+| Hub OD top (above flare) | 94.0 | 93.8 | -0.2 | 0.1 | 4.25 | 0.18 |
+| Bore bottom counterbore (z 0.0-10.5) | 75.0 | 75.13 | 0.13 | 0.03 | 0.25 | 0.07 |
+| Bore circlip groove (z 10.5-13.5) | 78.0 | 77.94 | -0.06 | 0.14 | 4.17 | 0.17 |
+| Bore bearing seat (z 13.5-46.0) | 74.0 | 73.87 | -0.13 | 0.03 | 0.14 | 0.13 |
+| Bore stop lip (z 46.0-50.5) | 67.0 | 66.66 | -0.34 | 0.11 | 5.27 | 0.18 |
+| Bore above lip (z 50.5-58.5) | 75.0 | 75.01 | 0.01 | 0.13 | 0.26 | 0.11 |
+| Bore top counterbore (z 58.5-66.0) | 79.2 | 79.27 | 0.07 | 0.13 | 0.6 | 0.07 |
+| Flange bolt hole 1 (-56,18) | 10.5 | 10.3 | -0.2 | 0.05 | 1.58 | 0.23 |
+| Flange bolt hole 2 (-48,-35) | 10.5 | 10.08 | -0.42 | 0.04 | 2.36 | 0.23 |
+| Flange bolt hole 3 (54,-25) | 10.5 | 10.08 | -0.42 | 0.05 | 2.64 | 0.25 |
+| Flange bolt hole 4 (52,29) | 10.5 | 9.9 | -0.6 | 0.38 | 4.86 | 0.19 |
+| Ear hole (-102,29) | 10.0 | 9.66 | -0.34 | 0.07 | 0.73 | 0.25 |
+| Ear hole (-41,-97) | 9.0 | 8.85 | -0.15 | 0.16 | 7.15 | 0.36 |
+| Side boss hole (X) | 17.0 | 16.68 | -0.32 | 0.66 | 0.73 | 0.43 |
+| Lower arm hole, outer (X) - shock/link mount | 14.5 | 8.85 | -5.65 | 3.81 | 0.52 | 0.13 |
+| Lower arm hole, inner (X) - shock/link mount | 14.5 | 13.94 | -0.56 | 1.67 | 1.0 | 0.31 |
+| left_eye bore | 35.0 | 35.28 | 0.28 | 0.68 | 1.55 | 0.75 |
+| left_eye outside dia | 46.0 | 45.06 | -0.94 | 0.94 | 5.06 | 0.63 |
+| right_eye bore | 35.5 | 35.37 | -0.13 | 0.66 | 1.07 | 0.28 |
+| right_eye outside dia | 46.5 | 46.65 | 0.15 | 0.48 | 0.2 | 0.41 |
+| top_eye bore | 40.0 | 41.32 | 1.32 | 0.34 | 1.22 | 0.67 |
+| top_eye outside dia | 52.0 | 51.29 | -0.71 | 0.15 | 0.41 | 0.74 |
+
+| face | offset scan vs model mm | angle err deg |
+|---|---|---|
+| left_eye end face (+) | 0.07 | 1.27 |
+| left_eye end face (-) | 0.33 | 0.86 |
+| right_eye end face (+) | 0.03 | 0.46 |
+| right_eye end face (-) | -0.27 | 1.23 |
+| top_eye end face (+) | -0.16 | 0.99 |
+| top_eye end face (-) | -0.16 | 0.69 |
+| Hub bottom face | -0.02 | 0.04 |
+
+NOTE lower-arm (shock/link mount) X holes: the v4 positions were wrong. Full-length free cylinder fits on the scan:
+| feature | v4 model | scan fit | fix in v4b |
+|---|---|---|---|
+| Lower arm hole outer | y-145.5 z99.4 d14.5 | y-147.5 z96.2 d14.26 (rms 0.36, axis within 0.3 deg of X) | moved 3.8 mm, d14.3 |
+| Lower arm hole inner | y-78.3 z95.8 d14.5 | y-79.0 z93.7 d14.04 (rms 0.33, axis within 1.4 deg of X) | moved 2.2 mm, d14.0 |
+Angle errors on short features (3-8 mm long: circlip groove, stop lip, flare top, 10.5 bolt holes) are fit noise, not real tilt.
+Overlays (v4b feature positions): red = holes/eye bores (extended past the part), blue = hub bore steps, orange = eye ODs + hub OD band.

@@ -1,0 +1,105 @@
+{
+ "scan_to_result_median_mm": 0.2069520652294159,
+ "scan_to_result_p95_mm": 36.93986129760742,
+ "pct_within_0.2mm": 49.251333333333335,
+ "pct_within_0.5mm": 66.24,
+ "pct_within_1mm": 72.711,
+ "n_scan_points": 300000,
+ "result_extents_mm": [
+  183.1476151637708,
+  316.7347303264204,
+  254.5002229645276
+ ],
+ "pct_scan_points_on_fitted_patches": 77.4,
+ "on_patch_median_mm": 0.12067601084709167,
+ "on_patch_p95_mm": 1.1690024137496948,
+ "on_patch_pct_within_0.2mm": 63.6322136089578,
+ "on_patch_pct_within_0.5mm": 85.5813953488372,
+ "n_faces": 9,
+ "runtime_s": 24.9,
+ "cell_mm": 2.5,
+ "tol_mm": 0.25,
+ "patches": [
+  {
+   "patch": 0,
+   "area_mm2": 5899.861696793148,
+   "grid": [
+    51,
+    56
+   ],
+   "ok": true
+  },
+  {
+   "patch": 1,
+   "area_mm2": 37286.62754003127,
+   "grid": [
+    90,
+    62
+   ],
+   "ok": true
+  },
+  {
+   "patch": 2,
+   "area_mm2": 9623.233713613186,
+   "grid": [
+    56,
+    47
+   ],
+   "ok": true
+  },
+  {
+   "patch": 3,
+   "area_mm2": 43869.010532115804,
+   "grid": [
+    90,
+    90
+   ],
+   "ok": true
+  },
+  {
+   "patch": 4,
+   "area_mm2": 10629.196703910095,
+   "grid": [
+    55,
+    55
+   ],
+   "ok": true
+  },
+  {
+   "patch": 5,
+   "area_mm2": 3606.1773482581916,
+   "grid": [
+    29,
+    47
+   ],
+   "ok": true
+  },
+  {
+   "patch": 6,
+   "area_mm2": 4725.242479044931,
+   "grid": [
+    46,
+    26
+   ],
+   "ok": true
+  },
+  {
+   "patch": 7,
+   "area_mm2": 2721.1374020501153,
+   "grid": [
+    25,
+    51
+   ],
+   "ok": true
+  },
+  {
+   "patch": 8,
+   "area_mm2": 3004.75798502429,
+   "grid": [
+    45,
+    56
+   ],
+   "ok": true
+  }
+ ]
+}
