@@ -78,3 +78,23 @@ Grippin-Body (.stl/.obj/.3mf), modified clamp (main / cad mouse stand), gear_sel
   Top eye bore looks 41.3 on the scan vs 40.0 in the model (rough surface, rms 0.67): unconfirmed.
 - v4 STEP on the PC (_scratch\handbuilt\knuckle\v4\knuckle.step, 247 MB): opens in 16 s, valid, 1 solid, 407 faces, 934 cm3.
 - v4b = v4 with the two corrected shock-mount holes; building on the box (/workspace/handbuilt/knuckle/v4b).
+
+## 2026-10-09 16:15-16:30 ET - knuckle v4 feature check, v4b, bezel v1/v2
+(An earlier append at 16:20 was overwritten by the folder-copy job; this replaces it.)
+### Knuckle feature check (knuckle\feature_check\)
+- feature_table.md, feature_check.py, overlay_top/right/iso/bottom.png (grey scan + model features: red = holes/eye bores, blue = bore steps, orange = eye ODs + hub OD).
+- Within about 1 mm / 1 deg (most within 0.3 mm): hub OD 88, all 6 bore steps, 4 flange bolt holes, 2 ear holes, side boss hole, 3 eye bores + ODs, eye end faces, hub bottom face.
+- Real error: the 2 lower-arm X holes (shock/link mount) were 2.2 and 3.8 mm too high in z. Re-fitted on the scan: outer y-147.5 z96.2 d14.3, inner y-79.0 z93.7 d14.0.
+- Unconfirmed: top eye bore reads 41.3 on the scan vs 40.0 in the model (rough surface). Scan holes read 0.2-0.6 mm small (normal for scans); model keeps nominal sizes.
+- v4 STEP (_scratch\handbuilt\knuckle\v4\knuckle.step, 247 MB): reopened on the PC in 16 s, valid, 1 solid, 407 faces, 934 cm3.
+- knuckle\v4b = v4 + the corrected shock-mount holes. Box build: valid, 1 solid. PC STEP job started 16:27 (pid 24916) -> knuckle\v4b\knuckle.step, log v4b\step_job.log/.err (about 2 min, about 245 MB).
+### Bezel (bezel\)
+- Scan: 151 x 405 x 67 mm, 117 cm3, watertight. About 43% axis-aligned flats, about 27% curved walls. Gauge-cluster bezel: 3 round gauge openings, thin plate, back wall with a visor lip, curved front skirt, clip tabs.
+- frame_hb.json: on top of Fairsolid's frame, tilted 1.6 deg so the plate top face is z=0 (straight back edge along Y at x about 25).
+- v2 (bezel\v2\bezel.py; v1 is the plate/wall/hood only): plate 2.7 thick; gauges centre d103.4 at (79.0, 203.07), sides d89.6 at (73.1, 203.07 +/- 101.95); 1 mm round on the gauge top edges;
+  2 small holes d9 (120.6,134.1),(119.9,271.7); 2 triangular end windows R2.5; back wall x24.5-27 to z33 with 3 windows (z17-30); visor lip z30-33;
+  curved skirt 2 thick z-10..3; 3 snap tabs down to z-26 on ledges; round nose boss d27.2 on the back wall.
+  Valid, 1 solid, 107 cm3, STEP 1.1 MB. Fit (sampled): median 0.71, p95 10.0, 41/59% within 0.5/1.0 mm.
+  Renders: bezel\renders_v2\ (shaded model next to grey scan).
+- Bezel NEXT: raised curved front rim (rises to about z+12 at the ends), back-wall middle is lower (top about z17, dips to 5-10 around y180-260), end walls/gussets,
+  underside ribs between the gauges, turn-signal arrow windows, exact clip shapes. Check: is the nose boss a light-sensor/trip button? Are the d9 holes real?
