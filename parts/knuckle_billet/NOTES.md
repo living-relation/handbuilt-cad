@@ -234,3 +234,4 @@
   2. Fix the it26 boolean, e.g. by moving the L2 rib end off the strut axis, or by building the left rib as one merged gusset plate.
   3. Then verify with CalculiX.
   4. Or recalibrate the voxel allowable around this junction, e.g. a junction stress-concentration factor of about 1.5, so the optimiser keeps the rib.
+- **it24 result** (2.247 kg, hub OD 100): bump 5.19, cornering 1.07, braking 1.52, combined 0.95, fatigue Goodman 3.43. It fails at the same ear-1 lug / flange-top corner as it25.
