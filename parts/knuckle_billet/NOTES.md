@@ -259,3 +259,36 @@
 ## Chunk 12 (middle variant)
 - Build options: hbar(pockets=...), `rib_pockets` and `lug_pockets` (no change for the it11 ribs and lugs, which were already unpocketed).
 - From easy + tongue +Z pocket 14 + floor r4 + arm pockets: web 22 → 2.370 kg (not run), web 26 (M2) → 2.383 kg SF 1.97 (cornering at (-11,65.8,84.4)), **web 30 (M5) → 2.397 kg, SF bump 8.40 / cornering 2.33 / braking 2.73 / combined 2.75, Goodman 6.96, 24/24 → final/middle.**
+
+## Chunk 13: other methods for a lighter passing knuckle
+Saved: best, middle and easy (STEP, STL, renders) and MACHINING.md committed on **main** in WSL handbuilt-models. **No git remote is configured, so nothing was pushed.**
+Backup: C:\projects\_archive\knuckle_billet_final_2026-10-09.zip (31 entries, 2.94 MB).
+
+Methods considered (never loosening the loads or SF targets):
+- **a. Parameter optimisation driving the real Gmsh + CalculiX** (picked this chunk). Start with one-at-a-time sensitivities from best
+  (wall 5, smaller top/right arms, hybrid-plate pockets, smaller outer rib), then combine the ones that pass. Next: a Nelder-Mead /
+  Bayesian (scikit-optimize gp_minimize) loop over about 8 parameters, using the 7 mm mesh for screening and confirming at 5 mm.
+  Robust stress scatters about ±5 % with the mesh, so screen with a margin (accept SF >= 2.1 at screening).
+- **b. BESO on the CalculiX mesh**: remove elements under about 15 % of the allowable stress, 2 % per step, across all 5 cases. True FE stress, but the result
+  needs re-interpreting as pockets, the same way the SIMP results did. That's the medium-term option.
+- **c. Topology with a milling (±Z extrusion) constraint**: add a column-wise density projection to topo_stress.py (one variable per (x, y)
+  column per side, depth-from-face parameterisation). It maps straight to 2.5D pockets. Voxel stress calibration is still the weak link.
+- **d. Two-piece layout**: a bolt-on strut tongue, a 30 × 44 × 126 mm block with 2-4 M10 12.9 bolts into the flange top. Main body Z height drops from
+  153 to about 110 mm, so the stock goes from 6.5" plate to 4.5" plate (about 34 kg → 24 kg). The tongue can be a 7075 bar with L along the bending axis. Costs: bolted joint
+  mass (+60-90 g of bosses and bolts), joint slip and fatigue (needs preload and a dowel or shear key), and one more interface to tolerance. That's a real option
+  if stock and machine envelope matter more than the last 100 g.
+- **e. Local pads plus lightening**: an r8-r10 pad at the two known hot spots (rib/keep-out corner (45.7,2.1,88.5), tongue lower edge
+  (-15,-69,76)) to buy margin, then spend it on deeper pockets elsewhere (arms with SF > 3 in all but cornering).
+Results this chunk (real Gmsh + CalculiX, 5 mm mesh, one change at a time from final best, 2.328 kg):
+- P1 wall 5 (all pockets wider): 2.225 kg, SF **0.86** (left arm under the eye at (-66,60,71) gives way). P2 top arm 30×40 + right arm 32×40: 2.301 kg, SF 0.26
+  (braking robust 1937 MPa at (-58,16,95): something degenerates locally; investigate). P3 four hybrid-plate pockets: the STEP won't mesh (HXT overlapping facets, also in WSL gmsh 4.15).
+  P4 outer rib 22×26: 2.310 kg, SF 1.90. P5 top-arm wall 5: 2.319 kg, SF 0.85 (braking peak at the right eye). P6 right-arm wall 5: no geometric change (that arm is too short to pocket).
+  **Conclusion: best sits on a sharp optimum. Every one-parameter step that saves mass fails. The robust stress also scatters about ±5 % with the mesh, so a
+  derivative-free optimiser (method a) needs a 2.1 screening margin and will find at most about 20-40 g.**
+- **full-arm** (Daniel): fa2 = easy + tongue pockets 14/12 + floor r4 → 2.426 kg, SF 2.43, fatigue 7.07 → final/full-arm. fa3 (junction r8) → 2.26.
+  fa4 (deeper tongue pockets, narrower tongue patch, plate from y 0) → 2.402 kg, SF 2.27, but it leaves a 2 mm overhanging flap, so it's rejected (fix: trim the fillet prism).
+- WSL detached FEA: run_wsl.sh works, but gmsh 4.15.2 there failed HXT on P3. The box gmsh with ALG2D=1 also failed on P3, so it's a geometry problem, not a WSL problem.
+**Recommendation for next:** (e) local pads + (b) BESO. Specifically: 1) put r8-r10 pads at the two hot spots on best
+  (rib/keep-out corner (45.7,2.1,88.5) and tongue lower edge) to buy ~10-15 % margin; 2) run BESO in CalculiX on that padded mesh to find which
+  pocket regions can deepen; 3) turn those into 2.5D pockets in build123d. (d) two-piece (bolt-on tongue) is the way to cut stock (6.5" → 4.5" plate),
+  not mass. Method (a) is only worth running as a final polish with the 2.1 screening margin.

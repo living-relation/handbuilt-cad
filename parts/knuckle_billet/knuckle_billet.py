@@ -21,7 +21,7 @@ P = dict(hub_od=92.0, flange_r=71.0, flange_z=(62.0, 82.0), tongue_y=(-166.0, -4
          ear_boss_d=26.0, side_boss_d=32.0, keepout_r=45.0, flange_pockets=True, flange_pocket_angles=(95, 189), junction_r=6.0, ear_lug_to_flange_top=False, left_arm_h=None,
          flange_style='disc', ring_r=56.0, bolt_boss_r=11.5, floor_r=0.0, tongue_bottom_pocket=0.0, tongue_junction_r=0.0,
          left_root=(-50, 40, 76), right_root=(45, 45, 82), top_root=(-5, 55, 78), arm_left=None, arm_right=None, arm_top=None, rib_r2=(24.0, 30.0), tongue_blend=0.0, tongue_blend_len=32.0, sector_y=-12.0, hybrid_pockets=(), tongue_root_patch=0.0, tongue_under_wedge=0.0, wedge_flare=0.0,
-         layout='arms', ribs=True, frame_lt=(30.0, 36.0), frame_tr=(30.0, 36.0), strip_w=26.0, ear1_link_w=0.0, left_strut2=None, ties=(), rib_size=None, rib_end_clear=14.0, rib_inner_solid=False, ribs_left=False, left_gusset=None, blend_mode='chamfer', arm_pockets=True, rib_pockets=True, lug_pockets=True)
+         layout='arms', ribs=True, frame_lt=(30.0, 36.0), frame_tr=(30.0, 36.0), strip_w=26.0, ear1_link_w=0.0, left_strut2=None, ties=(), rib_size=None, rib_end_clear=14.0, rib_inner_solid=False, ribs_left=False, left_gusset=None, blend_mode='chamfer', arm_pockets=True, rib_pockets=True, lug_pockets=True, wall_right=None, wall_top=None)
 if len(sys.argv) > 1 and sys.argv[1].endswith('.json'): P.update(json.load(open(sys.argv[1])))
 for k in ('arm_left', 'arm_right', 'arm_top'):
     if P[k] is None: P[k] = (P['arm_w'], P['left_arm_h'] or P['arm_h']) if k == 'arm_left' else (P['arm_w'], P['arm_h'])
@@ -37,14 +37,14 @@ def tube(c, axis, od, length):
 def frame(A, B, hint=(0, 0, 1)):
     A, B = V(*A), V(*B); x = (B - A).normalized(); h = V(*hint)
     n = (h - x * h.dot(x)).normalized(); return Plane(origin=(A + B) * 0.5, x_dir=x, z_dir=n), (B - A).length
-def hbar(A, B, w, h, end_clear=18.0, hint=(0, 0, 1), pockets=True):
+def hbar(A, B, w, h, end_clear=18.0, hint=(0, 0, 1), pockets=True, wall=None):
     """H-section arm: solid bar with long edges filleted, pocketed from both local +/-z faces (3+2 machinable)."""
     pl, L = frame(A, B, hint)
     bar = Box(L, w, h)
     try: bar = fillet(bar.edges().filter_by(Axis.X), P['edge_r'])
     except Exception: pass
     bar = pl * bar
-    pl_len = L - 2 * end_clear; pw = w - 2 * P['wall']; pd = (h - P['web']) / 2
+    pl_len = L - 2 * end_clear; pw = w - 2 * (wall or P['wall']); pd = (h - P['web']) / 2
     if P['arm_pockets'] and pockets and pl_len > 2 * P['pocket_r'] + 2 and pw > 2 * P['pocket_r'] + 1 and pd > 0.5:
         for s in (1, -1):
             sk = Plane(origin=(0, 0, s * h / 2), z_dir=(0, 0, -s)) * RectangleRounded(pl_len, pw, P['pocket_r'])
@@ -182,8 +182,8 @@ def build():
             part += hbar((ux * 44, uy * 44, (zf0 + zf1) / 2), (root[0] + ux * 6, root[1] + uy * 6, (zf0 + zf1) / 2), P['strip_w'], zf1 - zf0, end_clear=40.0, pockets=P['lug_pockets'])
     else:
         part += hbar(P['left_root'], e['left_eye']['c'], *P['arm_left'])
-        part += hbar(P['right_root'], e['right_eye']['c'], *P['arm_right'])
-        part += hbar(P['top_root'], e['top_eye']['c'], *P['arm_top'], hint=(1, 0, 0))
+        part += hbar(P['right_root'], e['right_eye']['c'], *P['arm_right'], wall=P['wall_right'])
+        part += hbar(P['top_root'], e['top_eye']['c'], *P['arm_top'], hint=(1, 0, 0), wall=P['wall_top'])
     # rib: strut-clamp tongue -> right lateral eye (around the drive shaft), and tongue -> left eye via the flange
     if P['ribs'] or P['ribs_left']:
         rs = P['rib_size']; r2 = P['rib_r2'] if rs is None else rs; rs = (24.0, 30.0) if rs is None else rs

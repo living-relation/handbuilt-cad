@@ -24,6 +24,26 @@ yield 503 MPa. The fatigue case is 1 g + 0.5 g lateral at 10^6 cycles, Goodman R
 Middle (chunk 12) starts from easy and adds back only the tongue +Z pocket and shallow (6 mm) arm pockets, so it is about 65 g lighter than easy.
 Deeper pockets (13 mm, web 16 → 2.373 kg) or a 26 mm web (2.383 kg) dropped cornering to SF 1.96–1.97, so the 30 mm web is the lightest that passes.
 
+
+## Variant 4: full-arm (chunk 13, Daniel's request)
+Control-arm mounts at **full strength**: lateral-arm eyes, strut-rod eye and all three arms are fully solid at the easy-variant sizes
+(left 34×48, right and top 34×42, r6 long edges, no pockets), with r6 junction fillets at the arm roots (r8 was tried: OCC only gets 5 of the 7 edges and SF drops to 2.26, so r6 stays).
+All the weight saving comes from the tongue (+Z 14 mm and −Z 12 mm pockets, r4 floors) compared with easy. Hub, flange and ribs are as easy/best.
+- mass **2.426 kg**; SF yield (robust) bump 8.90 / cornering 2.43 / braking 2.79 / combined 2.66; fatigue Goodman 7.07, reversed 4.37; 24/24; 1 solid
+- setups: as easy (3–4), plus the tongue −Z pocket in Op 2 (no extra setup). Tools: as easy, plus a 12 mm r4 bull nose for the tongue pocket floors.
+- complexity about 0.6 (easy 0.55)
+- tried and rejected: deeper tongue pockets 18/16 + a narrower tongue-root disc (20) + hybrid plate from y 0 → 2.402 kg, SF 2.27. That version
+  leaves a 2 mm overhanging flap where the r10 tongue-root fillet extends past the narrowed disc at (22–25, −57…−68, 80–82), so it's rejected for machining.
+  It's fixable later by trimming the fillet prism to the disc width.
+
+| | best | middle | full-arm | easy |
+|---|---|---|---|---|
+| mass | 2.328 | 2.397 | 2.426 | 2.462 kg |
+| worst SF (yield, robust) | 2.00 | 2.33 | 2.43 | 2.23 |
+| fatigue (Goodman) | 5.57 | 6.96 | 7.07 | 6.77 |
+| setups | ~6 | ~5 | 3–4 | 3–4 |
+| arms | H-pocketed | shallow pockets | solid | solid |
+
 ## What changed from it11 (it_final)
 - The 45-degree tongue-root "stand-in" prisms are now **true r10 concave fillets**: a prism with an exact r10 arc profile, tangent to the tongue side face and the flange top. This is built as geometry, not with OCC fillet(), so it never fails.
 - Pocket floor corner radius is r4 (it11 used r3). Pocket corners are r6 (pocket_r 6); arm long edges are r4 (easy: r6).
