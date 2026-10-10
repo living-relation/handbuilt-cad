@@ -2,7 +2,7 @@
 
 [← Home](../../README.md)
 
-This repo is public so AI tools can read it. If you are an AI agent working on it:
+This repo is public so AI tools can read it. Start with [How to use](How-To-Use.md) (it has a short section for AI assistants). If you are an AI agent working on it:
 
 1. **Read first:** this wiki, then the part's own `NOTES.md` / `PLAN.md` / `MEASURED.md`, then the top of the part script.
 2. **Where to run:** in WSL Ubuntu at `~/projects/handbuilt-models`, with `.venv/bin/python` for models and `source sim-tools/wsl-env.sh` for simulation. Don't run solvers on `/mnt/c` paths (slow); use `~/sim-runs/`.

@@ -11,7 +11,7 @@
 
 Key versions: build123d 0.13.0 (OCP 8.0.1.1), trimesh 5.1.1, numpy 2.5.3, scipy 1.18.1.
 
-Recreate: `bash sim-tools/scripts/setup_venv_wsl.sh` (build venv, uses `uv`) and `bash sim-tools/scripts/install_sim_tools_wsl.sh` (sim tools + simvenv).
+Recreate everything: `bash setup.sh` (see [Setup](Setup.md)).
 
 ## Simulation tools (WSL Ubuntu 26.04)
 

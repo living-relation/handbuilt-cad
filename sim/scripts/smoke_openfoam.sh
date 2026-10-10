@@ -1,5 +1,6 @@
 #!/bin/bash
-D=/home/daniel/projects/handbuilt-models/sim-tools/smoke/openfoam
+REPO="${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"; export REPO
+D=$REPO/sim-tools/smoke/openfoam
 mkdir -p $D
 OFBASH=$(ls -d /opt/openfoam*/etc/bashrc | sort -V | tail -1)
 source $OFBASH

@@ -1,7 +1,8 @@
 #!/bin/bash
+REPO="${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"; export REPO
 # Elmer steady heat: Al block 50x20x20 mm, both x-ends at 20 C, uniform heat generation 1e7 W/m^3.
 # Exact 1-D answer: Tmax = 20 + Q L^2 / (8 k) = 20 + 1e7*0.05^2/(8*167) = 38.71 C
-D=/home/daniel/projects/handbuilt-models/sim-tools/smoke/elmer; mkdir -p $D
+D=$REPO/sim-tools/smoke/elmer; mkdir -p $D
 W=$HOME/sim-runs/elmer-heat; rm -rf $W; mkdir -p $W; cd $W
 cat > block.geo <<'EOF'
 SetFactory("OpenCASCADE");

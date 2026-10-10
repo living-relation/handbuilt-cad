@@ -1,0 +1,8 @@
+{
+ "tolerance_mm": 0.05,
+ "holes": [
+  {"name": "base bolt 1 (M6 clearance)", "x": 38.0, "y": -12.0, "z": 0.0, "d": 6.6, "axis": "z"},
+  {"name": "base bolt 2 (M6 clearance)", "x": 38.0, "y": 12.0, "z": 0.0, "d": 6.6, "axis": "z"},
+  {"name": "upright hole (M8 clearance)", "x": 0.0, "y": 0.0, "z": 30.0, "d": 8.5, "axis": "x"}
+ ]
+}

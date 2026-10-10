@@ -48,3 +48,7 @@ knuckle_billet/final/**/*.vtu
 mcp.json
 CLAUDE.local.md
 .claude/
+
+# --- toolkit (2026-10-10): personal part models stay local ---
+knuckle_billet/baseline_al/
+parts/
