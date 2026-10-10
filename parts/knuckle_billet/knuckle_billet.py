@@ -21,7 +21,7 @@ P = dict(hub_od=92.0, flange_r=71.0, flange_z=(62.0, 82.0), tongue_y=(-166.0, -4
          ear_boss_d=26.0, side_boss_d=32.0, keepout_r=45.0, flange_pockets=True, flange_pocket_angles=(95, 189), junction_r=6.0, ear_lug_to_flange_top=False, left_arm_h=None,
          flange_style='disc', ring_r=56.0, bolt_boss_r=11.5, floor_r=0.0, tongue_bottom_pocket=0.0, tongue_junction_r=0.0,
          left_root=(-50, 40, 76), right_root=(45, 45, 82), top_root=(-5, 55, 78), arm_left=None, arm_right=None, arm_top=None, rib_r2=(24.0, 30.0), tongue_blend=0.0, tongue_blend_len=32.0, sector_y=-12.0, hybrid_pockets=(), tongue_root_patch=0.0, tongue_under_wedge=0.0, wedge_flare=0.0,
-         layout='arms', ribs=True, frame_lt=(30.0, 36.0), frame_tr=(30.0, 36.0), strip_w=26.0, ear1_link_w=0.0, left_strut2=None, ties=(), rib_size=None, rib_end_clear=14.0, rib_inner_solid=False, ribs_left=False, left_gusset=None)
+         layout='arms', ribs=True, frame_lt=(30.0, 36.0), frame_tr=(30.0, 36.0), strip_w=26.0, ear1_link_w=0.0, left_strut2=None, ties=(), rib_size=None, rib_end_clear=14.0, rib_inner_solid=False, ribs_left=False, left_gusset=None, blend_mode='chamfer', arm_pockets=True)
 if len(sys.argv) > 1 and sys.argv[1].endswith('.json'): P.update(json.load(open(sys.argv[1])))
 for k in ('arm_left', 'arm_right', 'arm_top'):
     if P[k] is None: P[k] = (P['arm_w'], P['left_arm_h'] or P['arm_h']) if k == 'arm_left' else (P['arm_w'], P['arm_h'])
@@ -45,7 +45,7 @@ def hbar(A, B, w, h, end_clear=18.0, hint=(0, 0, 1)):
     except Exception: pass
     bar = pl * bar
     pl_len = L - 2 * end_clear; pw = w - 2 * P['wall']; pd = (h - P['web']) / 2
-    if pl_len > 2 * P['pocket_r'] + 2 and pw > 2 * P['pocket_r'] + 1:
+    if P['arm_pockets'] and pl_len > 2 * P['pocket_r'] + 2 and pw > 2 * P['pocket_r'] + 1 and pd > 0.5:
         for s in (1, -1):
             sk = Plane(origin=(0, 0, s * h / 2), z_dir=(0, 0, -s)) * RectangleRounded(pl_len, pw, P['pocket_r'])
             pk = extrude(sk, amount=pd)
@@ -130,8 +130,14 @@ def build():
         pl = Plane(origin=(0, -36.0, 0), x_dir=(1, 0, 0), z_dir=(0, -1, 0))
         for sx in (1, -1):
             x0 = TONGUE_X[1] if sx > 0 else TONGUE_X[0]
-            tri = Polygon((x0 - sx * 2, zt - 2), (x0 + sx * Lb, zt - 2), (x0 + sx * Lb, zt), (x0 - sx * 2, zt + Lb), align=None)
-            part += pl * extrude(tri, amount=P['tongue_blend_len'])
+            if P['blend_mode'] == 'fillet':   # true concave radius Lb tangent to the tongue side face and the flange top (no 45-deg facet)
+                rect = Polygon((x0 - sx * 2, zt - 2), (x0 + sx * Lb, zt - 2), (x0 + sx * Lb, zt + Lb), (x0 - sx * 2, zt + Lb), align=None)
+                prof = pl * extrude(rect, amount=P['tongue_blend_len'])
+                cut = Plane(origin=(x0 + sx * Lb, -36.0, zt + Lb), x_dir=(1, 0, 0), z_dir=(0, -1, 0)) * Cylinder(Lb, P['tongue_blend_len'] + 2, align=(Align.CENTER, Align.CENTER, Align.MIN))
+                part += prof - Pos(0, 1, 0) * cut
+            else:
+                tri = Polygon((x0 - sx * 2, zt - 2), (x0 + sx * Lb, zt - 2), (x0 + sx * Lb, zt), (x0 - sx * 2, zt + Lb), align=None)
+                part += pl * extrude(tri, amount=P['tongue_blend_len'])
     # chunk 4 options for the braking peak at the tongue lower side edge (-14.9,-69.1,75)
     if P['tongue_root_patch'] > 0:   # A: keep the full-radius disc under the tongue root (|x| <= patch half-width, y < 0)
         zf0, zf1 = P['flange_z']; hw = P['tongue_root_patch']

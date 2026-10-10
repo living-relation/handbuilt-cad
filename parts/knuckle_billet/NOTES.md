@@ -245,3 +245,12 @@
 - it33 (it30 + hybrid flange y>25): worst SF 1.45. The cornering peak just moves to the plate edge at (52.7,23.7,82). This variant is worse.
 - **Best of chunk 10: it30, 2.301 kg, worst SF 1.64 (cornering). No passing design yet.** it11 (2.327 kg, SF 2.0) is still the lightest design that passes.
 - **Next**: the cornering peak sits on the spoked-ring flange top at r=63 between the right-arm root and the spokes. Thicken the ring locally (a boss or pad on the flange top, from about 20 to 60 deg) or increase floor_r/junction_r at the ring/arm junction. Keep the it26 gusset, which fixed the left side. If the ring pad gets it30 to SF 2, the mass should come out around 2.32 kg, roughly the same as it11. That means the frame layout gains nothing over it11, so the better path for weight is to lighten it11 further.
+
+## Chunk 11 (final variants)
+- Stopped: no topology runs were still going; killed the two hidden `wsl.exe -e sleep 7200` keep-alives and two stray wsl shells.
+- New build options: `blend_mode='fillet'` (true r10 concave tongue-root fillet prisms in place of the 45-degree prisms) and `arm_pockets` (False = solid arms).
+- final/best (it11 + true fillets + floor r4): 2.328 kg, worst SF 2.00 (cornering 251 MPa robust, braking 2.03), Goodman 5.57. PASS, 24/24.
+- final/easy (solid arms, solid tongue, edge r6, true fillets): 2.462 kg, worst SF 2.23, Goodman 6.77. PASS, 24/24.
+- final/middle: not finished. web 16 → 1.96; floor r3 → 1.99; + rib 28×34 → 1.94 (2.390 kg, peak moves to (-65.7,59.5,71) on the left arm under the eye); rib 30×38 (2.431 kg) was OOM-killed and rerun.
+- The cornering spot (45.7,2.1,88.5) scatters ±5 % with the mesh (bisect: old prisms 1.91, floor r3 1.90). Next for middle: make the arms solid (as in easy) but keep the tongue pocket, or take easy and pocket only the tongue.
+- wall_check.py: the 0.1 % percentile is 4.48 mm on all three; <0.05 % of samples fall below 4 mm, and those are feather edges at the eye spot-face run-outs (deburr).
