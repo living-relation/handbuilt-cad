@@ -52,3 +52,32 @@ CLAUDE.local.md
 # --- toolkit (2026-10-10): personal part models stay local ---
 knuckle_billet/baseline_al/
 parts/
+
+# --- personal part work kept on the PC only (realign 2026-10-10) ---
+/knuckle_billet/edge_break.py
+/knuckle_billet/fab/
+/knuckle_billet/final/middle-flow/
+/knuckle_billet/final/middle-smooth/
+/knuckle_billet/iter/opt_P3.step
+/knuckle_billet/iter/opt_P3_mesh.log
+/knuckle_billet/iter/opt_P4.step
+/knuckle_billet/iter/opt_P4_ccx.log
+/knuckle_billet/iter/opt_P4_deck.log
+/knuckle_billet/iter/opt_P4_mesh.log
+/knuckle_billet/iter/padA.step
+/knuckle_billet/iter/padA_ccx.log
+/knuckle_billet/iter/padA_deck.log
+/knuckle_billet/iter/padA_deck_info.json
+/knuckle_billet/iter/padA_mesh.log
+/knuckle_billet/iter/padA_post.log
+/knuckle_billet/iter/padA_results.json
+/knuckle_billet/iter/spooles.out
+/knuckle_billet/loads17/
+/knuckle_billet/loads17_results.md
+/knuckle_billet/reference/
+/knuckle_billet/render_closeup.py
+/knuckle_billet/sum17.py
+/knuckle_billet/topo/sc3_h4.json
+/knuckle_billet/topo/sc4_h4_kt.json
+/knuckle_billet/topo/sc4_h4_kt.log
+/knuckle_billet/topo/sc4_h4_kt.npz
