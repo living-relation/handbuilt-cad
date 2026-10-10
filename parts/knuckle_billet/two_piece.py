@@ -6,10 +6,12 @@ OUTDIR = sys.argv[3]
 exec(open('knuckle_billet.py').read().split("if __name__ == '__main__':")[0])
 full = build(); full = max(full.solids(), key=lambda s: s.volume)
 ZJ = P['flange_z'][1]                       # joint plane = flange top z 82
-FOOT = dict(x=34.0, y0=-69.0, y1=-38.0, t=16.0)
+TP = P.get('tp', {}); FOOT = dict(x=34.0, y0=-69.0, y1=-38.0, t=16.0); FOOT.update(TP.get('foot', {}))
 # tongue region: everything above the flange top in the tongue strip + everything beyond the flange disc edge in the strip
-Treg = Pos(0, (FOOT['y1'] - 200) / 2, ZJ + 50) * Box(2 * FOOT['x'], 200 + FOOT['y1'], 100)
-Treg += Pos(0, (FOOT['y0'] - 200) / 2, 66.0 + 50) * Box(32.0, 200 + FOOT['y0'], 100)   # tongue beyond the disc edge: x +/-16, z >= 66 (clears the ear-2 lug)
+YC = TP.get('cut_y', FOOT['y1'])
+Treg = Pos(0, (YC - 200) / 2, ZJ + 50) * Box(2 * max(FOOT['x'], 34.0), 200 + YC, 100)
+YT = TP.get('tongue_y', FOOT['y0']); ZT = TP.get('tongue_zmin', 66.0)
+Treg += Pos(0, (YT - 200) / 2, ZT + 50) * Box(32.0, 200 + YT, 100)   # tongue beyond the disc edge: x +/-16, z >= 66 (clears the ear-2 lug)
 tongue = full & Treg
 main = full - Treg
 foot = Pos(0, (FOOT['y0'] + FOOT['y1']) / 2, ZJ + FOOT['t'] / 2) * Box(2 * FOOT['x'], FOOT['y1'] - FOOT['y0'], FOOT['t'])
@@ -17,11 +19,16 @@ try: foot = fillet(foot.edges().filter_by(Axis.Z), 6.0)
 except Exception: pass
 tongue = tongue + (foot - Pos(0, 0, 66.0) * Cylinder(P['keepout_r'], 200, align=(Align.CENTER, Align.CENTER, Align.MIN)))
 # joint: 4x M12 12.9 through-bolts (d13), inner pair fitted, foot -> flange with nuts under the flange, 2x d8 dowels (H7), all along Z
-BOLTS = [(-10.0, -57.1), (10.0, -57.1), (-28.0, -50.8), (28.0, -50.8)]   # on an r58 arc: >=2 mm to the r45 keep-out and the r71 flange edge, 20 mm pitch
+BOLTS = [tuple(b) for b in TP.get('bolts', [(-10.0, -57.1), (10.0, -57.1), (-28.0, -50.8), (28.0, -50.8)])]   # on an r58 arc: >=2 mm to the r45 keep-out and the r71 flange edge, 20 mm pitch
 DOWELS = []   # location by the inner pair as fitted shoulder bolts (d11 reamed) + foot shoulder on the main body at y -38
 for (bx, by) in BOLTS:
-    c = Pos(bx, by, ZJ - 20.0 - 1) * Cylinder(6.5, 20.0 + FOOT['t'] + 2, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    c = Pos(bx, by, ZJ - 20.0 - 1) * Cylinder(TP.get('bolt_r', 6.5), 20.0 + FOOT['t'] + 2, align=(Align.CENTER, Align.CENTER, Align.MIN))
     tongue -= c; main -= c
+for (bx, by) in TP.get('cbore_bolts', []):
+    c = Pos(bx, by, ZJ - 20.0 - 1) * Cylinder(TP.get('bolt_r', 6.5), 120, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    cb = Pos(bx, by, TP.get('cbore_z', 100.0)) * Cylinder(TP.get('cbore_r', 10.0), 40, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    tongue -= c; tongue -= cb; main -= c
+    BOLTS.append((bx, by))
 for (bx, by) in DOWELS:
     c = Pos(bx, by, ZJ - 10.0) * Cylinder(4.0, 20.0, align=(Align.CENTER, Align.CENTER, Align.MIN))
     tongue -= c; main -= c

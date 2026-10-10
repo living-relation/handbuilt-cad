@@ -1,62 +1,65 @@
-# Two-piece bolted knuckle (chunk 14, first pass: **NOT PASSING YET**, work in progress)
+# Two-piece bolted knuckle (chunk 15, tp6)
 
-**Split:** main body (hub, bearing bore, flange, 3 solid arms and eyes, ears, side boss, ribs) + **bolt-on strut tongue** (the strut clamp
-with both strut bolt holes, the tongue pockets, and a foot plate that sits on the flange top at z 82).
-Base geometry = **full-arm** (solid arms, no tilted arm pockets), so neither piece needs 3+2 pocketing.
-All 24 v4b interface features are checked on the assembly: **24/24**. Each piece is one valid solid.
+**Split:** the main body (hub and bearing bore, flange, three solid arms and eyes, ears, side boss, ribs) plus a **bolt-on strut tongue**.
+The tongue carries the strut clamp, both strut bolt holes and the tongue pockets, and has a foot plate that sits on the flange top at z 82.
+The base geometry is **full-arm** (solid arms, no tilted pockets), with the tongue-root fillet set to r5 and the full disc under the tongue widened to |x| ≤ 40.
+All 24 v4b interface features check out on the assembly (**24/24**), and each piece is one valid solid.
+tp3, the first pass that failed, is kept in `tp3/` for history.
 
-| piece | mass (7075) | envelope X×Y×Z (mm) | stock |
-|---|---|---|---|
-| main | 1.981 kg | 198.5 × 274.1 × 152.7 | 6.5" (165 mm) plate, 8.5" × 11.5" (216 × 292 mm), about 29 kg. **Not ≤ 4"** (see below) |
-| tongue | 0.412 kg | 68 × 128 × 50 | **2" (50.8 mm) plate**, 3" × 5.5" (76 × 140 mm), about 1.5 kg |
-| aluminium total | **2.393 kg** | | was 34 kg of 6.5" stock for one piece; now about 30.5 kg |
-| hardware | about 0.25–0.35 kg | 4× M12 12.9 (inner pair fitted shoulder bolts, reamed Ø13 H7), hardened washers; nuts under the flange, or tapped 7075 + steel thread inserts to save about 70 g | |
+## Changes from tp3
+- **Bolts moved off the tongue-root fillets:** 2× M12 12.9 at (±28, −50.5) on a foot widened to |x| ≤ 40, plus **1× M12 on the centreline at (0, −61), counterbored Ø20 down
+  through the tongue** (counterbore floor at z 100, so the head sits inside the tongue). All the holes sit 6.5–10 mm from the drive-shaft keep-out (r45) and the
+  flange edge (r71).
+- Cleaned up the thin slivers at the joint. The tongue now takes everything above the flange top for y < −28 (the old cut at −38 left a 2 mm sliver between the keep-out and the cut).
+  It also takes everything beyond the flange disc edge for y < −72 and z ≥ 60. Wall check: the 0.1 % percentile is ≥ 4.48 mm on both pieces. The only spots under 4 mm are the known feather edge at the left-eye spot face and 2 samples on the tongue.
+- **Re-mesh check on the suspect tp3 result:** re-meshing tp3 at 4.5 mm gave braking 261 MPa there, not 627. The 627 MPa at the left-arm root was a bad mesh, not a real stress.
 
-**Why the main body is still 6.5":** the Z height runs from the hub face (z 0) to the top of the strut-rod eye (z 152.7). Both are fixed v4b interfaces,
-so splitting off the tongue does not reduce the main body's stock thickness. Getting to ≤ 4" needs a further split: either a bolt-on strut-rod
-eye arm (top eye is z 107–153) or a horizontal split at the flange top (hub + flange about 82 mm = 3.5" plate, arms/eyes about 71 mm = 3" plate). That is the next step.
+## Pieces, stock, axes
+| piece | mass (7075) | envelope X×Y×Z (mm) | stock plate | machine / setups |
+|---|---|---|---|---|
+| main | 1.984 kg | 198.5 × 274.1 × 152.7 | **6.5"** (165 mm) 7075-T651/-T7351, sawn 8.5" × 11.5" | 3-axis. Op 1 +Z (joint face fly-cut flat, 3 bolt holes, arm tops, keep-out), Op 2 −Z (bore + bearing seat, ears, nut spot-faces). **Plus 1 vise turn** (left eye along X, side boss and X holes) **and 2 angle-block setups** (right eye 13.6°, top eye 8.7°): the eye axes are fixed v4b positions |
+| tongue | 0.432 kg | 80 × 138 × 51 | **2.25"** (57 mm) plate, 3.5" × 6" | 3-axis. Op 1 +Z (profile, top pocket, counterbore, bolt holes), Op 2 −Z (bottom pocket, joint face). **Plus 1 vise turn** to drill and ream the 2 strut bolt holes (along X) |
+| hardware | about 0.25 kg | 3× M12 12.9 (2 fitted/reamed Ø12 H7 shanks as positive location), hardened Ø24 washers, nuts under the flange, a friction shim (µ ≥ 0.5) in the joint | | |
+| **total** | **2.416 kg Al** (+ about 0.25 kg hardware) | | stock about 29 + 2 kg (was 34 kg for the single piece) | no 4/5-axis needed; 3+3 setups + 2 vise turns + 2 angle blocks |
 
-## FEA (CalculiX, 5 cases, joint modelled bonded, i.e. the two pieces fused with the bolt holes in)
-| run | bolts | mass Al | bump | cornering | braking | combined | fatigue Goodman | status |
-|---|---|---|---|---|---|---|---|---|
-| tp1 | 4× M10 at (±24,−47), (±24,−62) | 2.406 | 7.5 | 2.30 | 2.62 | **2.01** | 6.18 | passes FEA, **but the outer holes break through the r71 flange edge by 0.75 mm, so it's invalid** |
-| tp3 (geometry in this folder) | 4× M12 on an r58 arc | 2.393 | 4.7 | 1.69 | **0.80** | 1.84 | 3.59 | **fails** |
-
-What makes tp3 fail:
-1. The outer bolt holes (±28, −50.8) cut into the r10 tongue-root fillets, which run from |x| 15 to 25 on the foot top. That leaves a notch at (−23.4, −55.4, 99), which governs cornering, combined and fatigue.
-2. Braking reads 627 MPa robust at (−53.6, 46.1, 69.4), at the left-arm root, far from the joint. Nothing changed there between tp1 and tp3, so it's probably a bad mesh. Re-mesh before trusting it.
-
-Fix for the next pass: put the bolts where they don't touch the fillets. Either use 2 bolts per side at |x| ≥ 34 on a wider foot (this needs the flange disc
-patch widened to |x| ≤ 42), or counterbore 2–3 bolts down through the tongue on the centreline (long M12 bolts with heads inside the tongue pocket).
-
-The bonded model gives the parts' stresses. The joint itself is checked by hand below from the actual CalculiX strut-bolt reactions
-(run iter/fa2r: full-arm deck with NODE PRINT on STRUTO/STRUTI).
-
-## Joint check (joint_check.py, VDI-2230 style; iter/fa2r_joint_M12.json)
-4× M12 12.9 on an r 58 arc at (±10, −57.1), (±28, −50.8). That keeps ≥ 6 mm to the Ø90 drive-shaft keep-out and to the r 71 flange edge.
-Assembly preload: Fv,min 44 kN / Fv,max 70 kN. Load factor Φ 0.25.
-
-| case | worst external bolt pull-off (kN) | bolt utilisation (of 1100 MPa) | residual clamp / bolt (kN) | joint-plane shear eq. (kN) | slip SF µ 0.2 (bare Al) | slip SF µ 0.5 (friction shim) |
+## FEA: CalculiX, 5 cases, robust stress, yield 503 MPa (the joint is modelled bonded: both pieces fused, bolt holes open)
+| mesh | bump | cornering | braking | combined | fatigue Goodman / reversed | worst |
 |---|---|---|---|---|---|---|
-| bump | 7.7 | 0.78 | 38.2 | 17.3 | 1.97 | 4.9 |
-| cornering | 28.7 | 0.83 | 22.5 | 7.7 | 4.6 | 11.5 |
-| braking | 3.1 | 0.76 | 41.7 | 25.5 | 1.36 | 3.4 |
-| combined | 21.7 | 0.81 | 27.7 | 23.8 | 1.48 | 3.7 |
-| fatigue | 4.0 | 0.77 | 41.0 | 4.6 | 7.6 | 18.9 |
+| 5.0 mm (tp6) | 7.40 | 2.33 | 2.75 | 2.54 | 6.83 / 4.22 | **2.33** |
+| 4.5 mm (tp6m, re-mesh check) | 6.99 | 2.32 | 2.58 | 2.42 | 6.71 / 4.15 | **2.32** |
+Both meshes agree. The governing spot is the main body's arm root at the flange top, (−26.1, 55.6, 82), the same as full-arm, not the joint.
+The highest stress at the joint is a braking peak at the outer bolt hole edge, (−34.4, −49.2, 82): robust 183–195 MPa.
+(tp4, the same layout with the slivers still in, gave 2.38.)
 
-- **No gapping** in any case: the residual clamp stays ≥ 22 kN per bolt. The cornering prying moment, from the strut lateral reaction about the bolt group, is the worst case.
-- **Slip:** bare Al-Al (µ 0.2) gives only 1.36 in braking, so **use a friction shim (µ ≥ 0.5, e.g. a diamond-coated steel shim) → slip SF ≥ 3.4**. The fitted inner pair is a
-  positive backstop: if all the shear went through 2 fitted Ø12 shanks, τ ≈ 113 MPa (12.9: SF > 4) and bearing on 7075 ≈ 90 MPa (SF > 5).
-- Bolt fatigue: the alternating force in the fatigue case is Φ·4.0 kN/2 = 0.5 kN → σa ≈ 6 MPa, against about 50 MPa for rolled threads. OK.
-- Bearing under the heads and nuts: use hardened Ø24 washers → about 200 MPa on 7075 (the limit pressure is about 400–500 MPa). OK.
-- An M10 version was also checked: no gapping, but residual clamp is down to 8.5 kN in cornering and slip SF is 0.92 bare. Not recommended.
-- **Not done yet:** an FE contact model of the joint (frictional contact + pretension). The bonded FEA plus this hand calc is the current evidence.
+## Joint check (joint_check.py → joint_M12.json; VDI-2230-style hand calc using the real CalculiX strut-bolt reactions from iter/fa2r)
+3× M12 12.9: Fv,min 44 kN / Fv,max 70 kN, load factor Φ 0.25. Prying is modelled with the foot pivoting on its compressed edge.
+The centroid model, which is more pessimistic, is also in the JSON.
+| case | worst bolt pull-off (kN) | bolt utilisation | residual clamp / bolt (kN) | joint shear eq. (kN) | slip SF µ 0.2 (bare) | slip SF µ 0.5 (shim) |
+|---|---|---|---|---|---|---|
+| bump | 4.3 | 0.77 | 40.7 | 17.2 | 1.47 | 3.69 |
+| cornering | 5.5 | 0.77 | 39.9 | 7.6 | 3.47 | 8.69 |
+| braking | 2.4 | 0.76 | 42.2 | 24.5 | **1.06** | 2.64 |
+| combined | 4.8 | 0.77 | 40.4 | 23.1 | 1.14 | 2.86 |
+| fatigue | 1.0 | 0.76 | 43.3 | 4.6 | 5.74 | 14.3 |
+- No gapping in any case: the residual clamp stays ≥ 39.9 kN per bolt.
+- **Bare aluminium does not hold against slip in braking or combined** (SF 1.06 and 1.14). **Use a friction shim (µ ≥ 0.5) for slip SF ≥ 2.6.**
+  Two fitted Ø12 H7 shanks act as a positive backstop: if they took all the shear, τ = 24.5 kN / (2 × 113 mm²) = 108 MPa (12.9 shear strength about 700 → SF 6.5),
+  and bearing on the 7075 = 24.5 / 2 / (12 × 16) = 64 MPa (SF > 7).
+- Bolt fatigue: Φ·1.0 kN / 2 / 84 mm² ≈ 1.5 MPa alternating, against about 50 MPa allowed. OK.
+- Under the heads and nuts: hardened Ø24 washers give ≤ 220 MPa on 7075. OK. Counterbore floor: 5 mm walls either side of the Ø20 counterbore.
+- **Not done yet:** an FE contact model (bolt pretension plus frictional contact, µ 0.2 and µ 0.5). It's the next step.
+  Plan: mesh main and tongue separately, *CONTACT PAIR (surface-to-surface, penalty) on the foot and flange faces with *FRICTION µ, bolts as B31 beams with *PRE-TENSION SECTION, step 1 preload, then the 5 load steps.
 
-## Machining: axes and setups
-**Tongue (3-axis, 2 setups + 1 vise turn):** the plate lies flat with Z = the knuckle Z. Op 1 (+Z): profile, top pocket, foot top, 4 bolt holes (Z).
-Op 2 (−Z): bottom pocket, foot bottom face (the joint face, ground or fly-cut flat to 0.01).
-**The 2 strut bolt holes run along X, so they need a vise turn (the part on its side in the vise) and a drill/ream.** That's an off-axis hole op, not a 4/5-axis op.
-**Main body (3-axis, 2 setups + 3 fixture ops):** Op 1 (+Z): flange top/joint face, arm tops, the 4 bolt holes, keep-out bore. Op 2 (−Z): bore and bearing seat,
-ears and ear holes, nut spot-faces. With solid arms there are no tilted pocket ops. **But the three eyes are on fixed v4b axes: the left eye is along X (vise turn),
-the right eye is 13.6° from X (13.6° angle block) and the top eye is 8.7° from Z (8.7° sine plate). The side boss and the 2 lower X holes run along X (vise turn).**
-So on a 3-axis mill the main body takes 2 setups + 1 vise turn + 2 angle-block setups. Removing those would mean moving interface axes, which isn't allowed.
+## Getting each piece to ≤ 4" plate
+The main body's Z height comes from fixed interfaces. The hub face is at z 0. The strut-rod (top) eye reaches z 152.7, the right eye about z 138, the left eye about z 106, and the tongue z 116.
+So **no 2-piece split gets the main body under about 4.2"**. Options:
+1. **Horizontal split at the flange top (z 82):** a lower hub + flange + ears piece (z 0–82, **3.5" plate**, 3-axis 2 setups + a vise turn for the side-boss X hole)
+   and an upper "frame" piece (arms + eyes + tongue, z 82–153 = 71 mm, **3" plate**, but its eyes still need the vise turn and 2 angle blocks).
+   **Problem:** the left eye (z 60–106) and the side boss (z 56–89) straddle z 82, so both would have to move into one piece. That shifts the split plane to z ≥ 106,
+   which puts the lower piece back at 4.2–4.5". The joint would also carry *all* of the wheel loads (much more than the tongue joint), with a large bolted flange ring needed.
+2. **Bolt-on eye arms (4–5 pieces):** take off the top-eye arm and the right-eye arm as bolted links, each machined lying on its side from about 2" plate with its eye bore
+   along that piece's own Z. That gets rid of the angle blocks. The main body then ends at the left eye top (z 106): **4.5" plate**. Taking the left-eye arm off too gives
+   hub + flange + ears at about z 82 → **3.5" plate**, which is ≤ 4" for every piece.
+   Each piece is then 3-axis, 2 setups, with eye bores straight down Z, plus a vise turn only where a hole truly runs crosswise. The cost is 3–4 extra bolted joints, each needing the same check as the tongue joint.
+   That probably adds +0.3–0.5 kg of bosses and bolts, and the eye positions then depend on joint tolerances (they'd need dowels).
+**Recommendation:** keep the 2-piece tp6 as the build candidate. Only go to option 2 if plate cost or the angle-block setups matter more than about 0.4 kg and the extra joints.

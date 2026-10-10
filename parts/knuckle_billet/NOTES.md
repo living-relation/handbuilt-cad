@@ -311,3 +311,12 @@ Results this chunk (real Gmsh + CalculiX, 5 mm mesh, one change at a time from f
 - Next: (1) FE contact model of the joint (pretension + friction, CalculiX *PRE-TENSION SECTION / *CONTACT PAIR).
   (2) Horizontal split or a bolt-on top-eye arm to get each piece ≤ 4" plate.
   (3) Fix bs6's braking edge with a straight 45° chamfer pad *inside* the tongue envelope (not a cone), then re-screen.
+
+## Chunk 15: two-piece tp6 (passes)
+- tp4: 2× M12 on a wide foot (|x| ≤ 40) + 1× M12 on the centreline, counterbored through the tongue. Tongue-root fillet r5, full disc under the tongue |x| ≤ 40. SF 2.38 bonded.
+  The wall check found slivers: the tongue/flange-edge crescent, the gusset remnant in main, the keep-out/cut slivers at y -38, and the counterbore 3 mm from the keep-out.
+- tp6 fixes them: centreline bolt moved to (0,-61), tongue takes y < -28 above z 82 and y < -72, z ≥ 60. Walls OK (0.1 % percentile ≥ 4.48 mm). **SF 2.33 at the 5 mm mesh, 2.32 at 4.5 mm, fatigue 6.8. 24/24, 2 single solids.
+  2.416 kg Al + about 0.25 kg hardware.** → final/two-piece/ (tp3 kept in final/two-piece/tp3/).
+- The tp3 re-mesh at 4.5 mm cleared the suspect 627 MPa at the left-arm root (now 261), so it was a bad mesh.
+- Joint hand calc (3× M12): no gapping (≥ 39.9 kN clamp left per bolt). Slip with bare Al is 1.06 in braking, so it **needs a µ ≥ 0.5 friction shim (SF ≥ 2.6)**. Fitted shanks are the backstop.
+- Not done: the FE contact/pretension model (planned in TWO_PIECE.md). The path to ≤ 4" plate per piece is written up in TWO_PIECE.md: it needs bolt-on eye arms (4–5 pieces).
