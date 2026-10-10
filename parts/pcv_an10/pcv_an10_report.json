@@ -1,0 +1,38 @@
+[
+ {
+  "angle": 45.0,
+  "valid": true,
+  "n_solids": 1,
+  "volume": 10849.0,
+  "axial_len": 52.004,
+  "zmin": 0.0,
+  "zmax": 52.004,
+  "xspan": 38.2,
+  "leg_len": 24.68,
+  "nose_center": [
+   21.55,
+   0.0,
+   46.25
+  ],
+  "mass_g_pa12": 11.0,
+  "mass_g_6061": 29.3
+ },
+ {
+  "angle": 35.0,
+  "valid": true,
+  "n_solids": 1,
+  "volume": 10657.2,
+  "axial_len": 51.812,
+  "zmin": 0.0,
+  "zmax": 51.812,
+  "xspan": 34.78,
+  "leg_len": 24.68,
+  "nose_center": [
+   16.68,
+   0.0,
+   47.14
+  ],
+  "mass_g_pa12": 10.8,
+  "mass_g_6061": 28.8
+ }
+]
