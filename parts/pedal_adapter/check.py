@@ -1,3 +1,4 @@
+import os
 """Distance check: scan points -> model surface, plus renders."""
 import sys, json, numpy as np, trimesh
 from common import load_scan, render
@@ -26,7 +27,7 @@ if far.any():
     for c in comps[:15]:
         c = list(c); q = P[c]
         print("far area %6.1f mm2  ctr %s  max %.2f  bbox %s..%s" % (w[c].sum(), q.mean(0).round(1), d[c].max(), q.min(0).round(1), q.max(0).round(1)))
-out = r"C:\Users\danie\agent-tools\pedal-parametric\work_"
+out = os.environ.get("PEDAL_WORK_DIR", os.path.join(os.path.expanduser("~"), "agent-tools", "pedal-parametric")) + r"\work_"
 tag = sys.argv[1] if len(sys.argv) > 1 else "chk"
 render([(s, None)], out + tag + "_dist.png", views=("iso", "iso2", "isob", "isob2"), size=(650, 600), scalar=np.minimum(d, 2.0), cmap_range=(0, 2.0), bar_title="mm")
 render([(s, None)], out + tag + "_dist2.png", views=("top", "bottom", "right", "left"), size=(650, 600), scalar=np.minimum(d, 2.0), cmap_range=(0, 2.0), bar_title="mm")

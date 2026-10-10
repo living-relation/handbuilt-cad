@@ -1,3 +1,4 @@
+import os
 from common import *
 import trimesh.intersections as TI
 import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
@@ -16,7 +17,7 @@ def secplot(normal, levels, path, ax_idx, labels):
         ax.set_yticks(np.arange(np.floor(s.bounds[0][ax_idx[1]]/10)*10, s.bounds[1][ax_idx[1]]+3, 10))
         ax.tick_params(labelsize=7)
     plt.tight_layout(); plt.savefig(path, dpi=70); plt.close()
-out = r"C:\Users\danie\agent-tools\pedal-parametric\work_"
+out = os.environ.get("PEDAL_WORK_DIR", os.path.join(os.path.expanduser("~"), "agent-tools", "pedal-parametric")) + r"\work_"
 secplot([0,0,1], [-2, 3, 8, 14, 16.5, 18, 22, 30, 40, 48, 51.2, 53, 56, 60, 64, 67], out+"secz.png", (0,1), "xyz")
 secplot([1,0,0], [-38, -32, -25, -15, -5, 5, 15, 25, 32, 34, 36.5, 38.5], out+"secx.png", (1,2), "yzx")
 secplot([0,1,0], [-88, -80, -70, -60, -50, -40, -30, -20, -10, 0, 10, 20, 30, 40, 45, 50], out+"secy.png", (0,2), "xzy")

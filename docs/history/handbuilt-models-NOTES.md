@@ -4,7 +4,7 @@ Started 2026-10-09. Tools: build123d 0.13 (scratch venv C:\projects\_scratch\ped
 the same versions were used on the agent box for the heavy work). Scale is never changed. Only rigid moves are used.
 Fairsolid: no code changes so far. The checkout stays on main.
 
-## Step 1 - scan list (C:\Users\danie\agent-tools\scan-list.txt)
+## Step 1 - scan list (%USERPROFILE%\agent-tools\scan-list.txt)
 - Searched C:\project_3D_scans (the Creality save folder), Creality AppData projects, OneDrive (Desktop, Documents),
   Downloads, C:\projects (not shipping), and other C:\ folders. C: is the only drive. Google Drive was skipped (photos and CAD only).
 - 5323 hits went down to 485 after dropping compiled ESP32 `.c.obj` files.

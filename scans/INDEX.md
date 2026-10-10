@@ -6,7 +6,7 @@ Raw scans are **not** stored in this repo (private, and 10-460 MB each). This ta
 
 - **size_MB / triangles** from the scan search; `points-only` means a point cloud with no faces.
 - **sha256_16** = first 16 hex characters of the file's SHA-256 (computed 2026-10-10), to confirm you have the same file.
-- `%USERPROFILE%` = the Windows user folder. Creality project data (`.obscan`, caches) is not listed; only exported meshes.
+- `%USERPROFILE%` = the Windows user folder; `<your OneDrive>` = the personal OneDrive folder. Creality project data (`.obscan`, caches) is not listed; only exported meshes.
 - Used by: knuckle → `knuckle/` (via Fairsolid run `knuckle`); bezel → `bezel/`; pedal adapter → `pedal_adapter/`; oil catch → `catch_can_refscan/`. Other scans are not modelled yet.
 
 | Part | File | Size MB | Triangles | sha256_16 | Extents mm | Modified |
@@ -48,7 +48,7 @@ Raw scans are **not** stored in this repo (private, and 10-460 MB each). This ta
 | pedal adapter | `C:\projects\active\fairsolid\runs\pedal_adapter\00_scan.ply` | 69.03 | 2760232 | `9c9dce2278143b1f` | [108.0, 111.8, 90.4] | 2026-06-12 17:09 |
 | ? | `C:\projects\active\fairsolid\runs\pump_hanger_1009\00_scan.stl` | 96.53 | 1930690 | `13c72431111fbc5c` | [166.9, 324.5, 167.1] | 2026-06-20 11:20 |
 | ? | `C:\projects\active\fairsolid\runs\scan0608_1009\00_scan.stl` | 17.69 | 353752 | `5360dbe7a3859ca8` | [23.4, 57.5, 34.0] | 2026-06-08 13:53 |
-| rear knuckle | `%USERPROFILE%\.personal OneDrive\OneDrive\Desktop\3D Models\Rear R Knuckle.stl` | 151.15 | 3023013 | `6ad55a3e44757486` | [199.6, 152.8, 328.1] | 2026-06-09 17:44 |
+| rear knuckle | `<your OneDrive>\Desktop\3D Models\Rear R Knuckle.stl` | 151.15 | 3023013 | `6ad55a3e44757486` | [199.6, 152.8, 328.1] | 2026-06-09 17:44 |
 | ? | `%USERPROFILE%\AppData\Local\Creality\CrealityScan 4\Projects\Audi Oil Catch Bracket\pQOed_LNOG_w6QJ_qkQ8\result\Mesh.ply` | 16.77 | 669573 | `d4cbd6ae790dbeef` | [304.8, 181.4, 251.2] | 2026-06-09 14:57 |
 | ? | `%USERPROFILE%\AppData\Local\Creality\CrealityScan 4\Projects\Audi Oil Catch Bracket\s5vMCxP_mKEhUs_2A93DI_lzikJr\result\Fused.ply` | 304.22 | 12156798 | `3568f1e5c869f22c` | [687.7, 541.9, 450.2] | 2026-02-09 18:01 |
 | ? | `%USERPROFILE%\AppData\Local\Creality\CrealityScan 4\Projects\Audi Oil Catch Bracket\scxmb2o_PucX20_EWVlSj_JfKUBf\result\Fused.ply` | 9.55 | 381648 | `846673f5aaae1b6d` | [23.4, 57.0, 28.9] | 2026-06-06 16:36 |

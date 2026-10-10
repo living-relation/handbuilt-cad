@@ -42,4 +42,4 @@ If the venv is missing: `bash sim-tools/scripts/setup_venv_wsl.sh` (uses `uv`, P
 ## Notes
 
 - This is a local git repo with no remote. STEP/STL files over 50 MB (for example `knuckle/v4/knuckle.step`, about 247 MB) are kept on disk but left out of git; they are listed in `.gitignore`.
-- The pre-move originals are still in `C:\projects\_scratch\pedal-parametric`, `C:\projects\_scratch\handbuilt` and `C:\Users\danie\agent-tools\`; this folder is a copy.
+- The pre-move originals are still in `C:\projects\_scratch\pedal-parametric`, `C:\projects\_scratch\handbuilt` and `%USERPROFILE%\agent-tools\`; this folder is a copy.

@@ -4,7 +4,7 @@ from common import load_scan, render
 import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt, matplotlib.image as mpimg
 s = load_scan(); m = trimesh.load("pedal_adapter.stl")
 c = s.bounds.mean(0); r = np.linalg.norm(s.vertices - c, axis=1).max()
-D = r"C:\Users\danie\agent-tools\pedal-parametric"
+D = os.environ.get("PEDAL_WORK_DIR", os.path.join(os.path.expanduser("~"), "agent-tools", "pedal-parametric"))
 render([(m, (0.62, 0.70, 0.82))], D + r"\pedal_model_iso.png", views=("iso",), size=(1100, 950), titles=["New model (clean solid)"], center=c, radius=r * 0.8)
 names = {"iso": "front-right, from above", "iso2": "back-left, from above", "isob": "front-right, from below", "isob2": "back-left, from below"}
 for i, (v, label) in enumerate(names.items(), 1):

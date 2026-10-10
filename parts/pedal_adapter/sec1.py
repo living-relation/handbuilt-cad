@@ -1,3 +1,4 @@
+import os
 from common import *
 import sys, trimesh.intersections as TI
 import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
@@ -16,6 +17,6 @@ def one(axis, L, path, lims=None, step=5):
     ax.set_xticks(np.arange(np.ceil(lims[0]/step)*step, lims[1], step)); ax.set_yticks(np.arange(np.ceil(lims[2]/step)*step, lims[3], step))
     ax.grid(True, lw=0.3); ax.tick_params(labelsize=7); ax.set_title(f"{axis}={L}  ({'xyz'[a]} across, {'xyz'[b]} up)")
     plt.tight_layout(); plt.savefig(path, dpi=80); plt.close()
-out = r"C:\Users\danie\agent-tools\pedal-parametric\work_s_"
+out = os.environ.get("PEDAL_WORK_DIR", os.path.join(os.path.expanduser("~"), "agent-tools", "pedal-parametric")) + r"\work_s_"
 for spec in sys.argv[1:]:
     ax, L = spec[0], float(spec[1:]); one(ax, L, out + spec + ".png")
