@@ -1,5 +1,21 @@
 # PCV tube, -10 AN angled variants (pcv_an10)
 
+## v2 (2026-10-10 00:50 ET) - no hex, real helical thread
+Daniel: remove the hex, model accurate threads. Changes vs v1 below:
+- Hex removed. After the bend: 0.5 mm of 16.4 tube, 30 deg step up to a 19.63 x 1.8 mm relief land (thread runout), then the thread.
+- Thread is real geometry: 60 deg UNF form, flat crest P/8 swept along a right-hand helix (build123d Helix + Frenet sweep),
+  fused to a minor-dia core. 45 deg runout into the relief, 45 deg start chamfer into the 37 deg flare cone.
+  bd_warehouse is not in the project venv, so I didn't install it; the script uses its own sweep.
+- 7/8-14 UNF-2A (ASME B1.1): P = 1.8143 mm; major 22.177 mm (2A max .8731 in, range .8647-.8731);
+  pitch dia .8216-.8267 in (20.87-21.00 mm, reference); root/minor 20.000 mm (UNR minor max .7874 in); thread depth 1.088 mm.
+  Root modelled flat (0.33 mm), not rounded UNR radius.
+- Thread length nose -> relief 15.9 mm (AS4395 J .625 in); flare cone, 13.0 bore, stock O-ring end unchanged.
+- Results: both one valid solid, STEP re-imports valid (1 solid, 4 B-spline thread faces).
+  45 deg: axial 49.39 mm, X span 35.6, 7790 mm3 (21.0 g 6061). 35 deg: axial 48.78 mm, X span 32.7, 7599 mm3 (20.5 g 6061).
+- Renders (box): /workspace/handbuilt/pcv_an10/pcv_an10_{45,35}.png and pcv_an10_{45,35}_thread.png.
+
+# v1 notes (hex + cosmetic thread, superseded)
+
 Built 2026-10-10 from `pcv_adapter/pcv_adapter.py` v3 (Audi 06H103223A, EA888 2.0T). Script: `pcv_an10.py`
 (parametric, `build(angle_deg)`; run `../.venv/bin/python pcv_an10.py [angles]`, default 45 and 35).
 

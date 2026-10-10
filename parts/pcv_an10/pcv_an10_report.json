@@ -3,36 +3,36 @@
   "angle": 45.0,
   "valid": true,
   "n_solids": 1,
-  "volume": 10849.0,
-  "axial_len": 52.004,
+  "volume": 7790.5,
+  "axial_len": 49.388,
   "zmin": 0.0,
-  "zmax": 52.004,
-  "xspan": 38.2,
-  "leg_len": 24.68,
+  "zmax": 49.388,
+  "xspan": 35.59,
+  "leg_len": 20.98,
   "nose_center": [
-   21.55,
+   18.93,
    0.0,
-   46.25
+   43.63
   ],
-  "mass_g_pa12": 11.0,
-  "mass_g_6061": 29.3
+  "mass_g_pa12": 7.9,
+  "mass_g_6061": 21.0
  },
  {
   "angle": 35.0,
   "valid": true,
   "n_solids": 1,
-  "volume": 10657.2,
-  "axial_len": 51.812,
+  "volume": 7598.7,
+  "axial_len": 48.782,
   "zmin": 0.0,
-  "zmax": 51.812,
-  "xspan": 34.78,
-  "leg_len": 24.68,
+  "zmax": 48.782,
+  "xspan": 32.65,
+  "leg_len": 20.98,
   "nose_center": [
-   16.68,
+   14.56,
    0.0,
-   47.14
+   44.11
   ],
-  "mass_g_pa12": 10.8,
-  "mass_g_6061": 28.8
+  "mass_g_pa12": 7.7,
+  "mass_g_6061": 20.5
  }
 ]
