@@ -15,6 +15,19 @@ Key versions: build123d 0.13.0 (OCP 8.0.1.1), trimesh 5.1.1, numpy 2.5.3, scipy 
 
 Recreate everything: `bash setup.sh` (see [Setup](Setup.md)).
 
+## Repo tools (`tools/`, for the agent)
+
+| Tool | What it does |
+|---|---|
+| `features.py` | Lists round holes/bosses and checks them against a `spec.json` |
+| `cnc_check.py` | CNC screen: setups, inside/vertical corners, thin walls |
+| `quick_fea.py` | Quick linear strength check (Gmsh + CalculiX, sim venv) |
+| `views.py` | 6-view picture sheet (`--six` plain 6 views) |
+| `viewer.py` | Spin-around 3D viewer in one HTML file |
+| `an_fitting.py` | Male AN / JIC 37° flare fitting end (`-10`, `-6`) with a real helical UNF thread; import `male_an_leg` in part scripts or run it to write a checked STEP |
+
+Usage and examples: [How to use it](How-To-Use.md#tool-cheat-sheet).
+
 ## Simulation tools (WSL Ubuntu 26.04)
 
 | Tool | Version | Where |

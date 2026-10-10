@@ -83,6 +83,12 @@ This holds the bottom of the base still (`z:min`), pushes the top of the upright
 ```
 You get `bracket_views.png` and `bracket_viewer.html` (open it in a browser to spin it). With `--six` the sheet is just the six labelled views (FRONT, BACK, LEFT, RIGHT, TOP, BOTTOM, each saying which side it looks from) in plain grey, plus the size and volume in the title. `--name` sets the part name on the labels. Leave `--six` off to get the older sheet with a 7th iso (3D) panel.
 
+**Parts with AN fittings (for the agent).** Don't draw AN threads by hand. Build the male end with `tools/an_fitting.py`:
+```bash
+../../.venv/bin/python ../../tools/an_fitting.py --size 10 -o an10.step --stl
+```
+You should see a JSON line (length, major diameter, volume, `"solids": 1, "valid": true`) and `PASS: one valid solid`. Sizes in the table: `-10` (7/8-14 UNF-2A) and `-6` (9/16-18 UNF-2A). In your own part script, `from an_fitting import AN, male_an_leg` gives the outer solid only (`leg, L = male_an_leg(AN[10], lead=0.5)`, nose face at `+Z = L`), so fuse it to your body first and cut one bore through everything. The `-6` nose, cone and thread length are scaled from the `-10`, so tell the owner to check them against a real `-6` fitting before machining.
+
 **Now change it:** open `bracket.py`, set `THICK = 8.0`, and run `bash run_all.sh` again. The bracket is thicker, the hole check still passes, and the safety factor goes up.
 
 ## Make your own part
@@ -101,6 +107,7 @@ Rename things, change the shape and sizes, and update `spec.json` with the holes
 | `$SIM_VENV/bin/python tools/quick_fea.py part.step --fix AX:min --load AX:max --force X,Y,Z [--E --nu --yield --size]` | Quick linear strength check. Units: mm, N, MPa |
 | `.venv/bin/python tools/views.py part.stl\|part.step [-o sheet.png] [--six] [--name NAME]` | 6-view + iso picture sheet; `--six` = only the 6 labelled plain-grey views |
 | `.venv/bin/python tools/viewer.py part.stl [more.stl] -o view.html` | Interactive 3D viewer in one HTML file |
+| `.venv/bin/python tools/an_fitting.py --size 10\|6 [-o end.step] [--stl] [--no-bore] [--lead MM]` | Male AN / JIC 37° flare fitting end with a real UNF thread; checks it's one valid solid (exit 1 if not) |
 | `bash setup.sh --check` | What's installed |
 
 Units everywhere: **millimetres, newtons, MPa, degrees, kilograms**.
