@@ -2,6 +2,24 @@
 
 [← Home](../../README.md) · next: [Setup](Setup.md) · [How to use](How-To-Use.md)
 
+## The whole thing in 3 steps
+
+1. **Install it** (below). This is the only part you might do by hand, and your agent can do it for you too.
+2. **Point your AI agent at this repo** (Claude Code, Cursor, Codex, Grok Bot or similar). Tell it where the folder is and to read `README.md`.
+3. **Hand it your scan, mesh or idea.** The agent measures, builds, checks and shows you the result.
+
+You never need to run the commands on the other wiki pages. They're instructions for the agent.
+
+**What to tell your agent** (copy, then change the details):
+
+> Use the handbuilt-models repo in `~/handbuilt-models` (start with `README.md` and `docs/wiki/AI-agents.md`). Here's a scan of my bracket: `~/scans/bracket.stl`. Make a clean STEP I can machine from 6061, keep the holes where they are on the scan, run the fit, CNC and strength checks, and show me the 6-view sheet before you call it done.
+
+Or start from an idea instead of a scan:
+
+> Using handbuilt-models, design a 90° -10 AN adapter pipe, no longer than 53 mm, with a smooth bore. Show me the 6-view sheet and the checks.
+
+## Installing
+
 **What you get:** a folder of tools that turn measurements into clean CAD parts (STEP files) for CNC machining, and check them (fit, strength, pictures). It runs on **Linux**. On Windows it runs inside **WSL** (a small Linux that lives inside Windows).
 
 You need: internet, about **5 GB** free disk, and your login password (for installing programs).

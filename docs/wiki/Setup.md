@@ -1,6 +1,8 @@
-# Setup: what `setup.sh` installs (ELI5)
+# Setup: what `setup.sh` installs (for the agent)
 
 [← Home](../../README.md) · back: [Install](Install.md) · next: [How to use](How-To-Use.md)
+
+> **For the agent.** You (the person) don't need to run anything on this page. Your AI agent reads it and runs the commands. Your part is the 3 steps on the [home page](../../README.md#start-here-you-dont-run-any-of-this-yourself).
 
 Think of it as three toolboxes. `setup.sh` checks each one and only adds what's missing, so running it again is safe.
 

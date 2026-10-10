@@ -2,6 +2,8 @@
 
 [← Home](../../README.md)
 
+> **For the agent.** You (the person) don't need to run anything on this page. Your AI agent reads it and runs the commands. Your part is the 3 steps on the [home page](../../README.md#start-here-you-dont-run-any-of-this-yourself).
+
 ## Python environments (WSL)
 
 | Env | Path | Python | Used for | Pinned list |

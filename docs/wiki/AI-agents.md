@@ -2,6 +2,8 @@
 
 [← Home](../../README.md)
 
+> **For the agent.** You (the person) don't need to run anything on this page. Your AI agent reads it and runs the commands. Your part is the 3 steps on the [home page](../../README.md#start-here-you-dont-run-any-of-this-yourself).
+
 This repo is public so AI tools can read it. Start with [How to use](How-To-Use.md) (it has a short section for AI assistants). If you are an AI agent working on it:
 
 1. **Read first:** this wiki, then the part's own `NOTES.md` / `PLAN.md` / `MEASURED.md`, then the top of the part script.

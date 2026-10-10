@@ -2,7 +2,25 @@
 
 A small, free toolkit for turning measurements (and 3D scans) into clean, machinable CAD parts, and checking them before you cut metal: build123d scripts → STEP for Fusion/CAM → hole/fitment checks → quick strength checks (Gmsh + CalculiX) → 6-view picture sheets and a browser 3D viewer → machining notes. Runs on Linux or Windows (WSL).
 
-**New here? Start with these three pages:**
+## Start here: you don't run any of this yourself
+
+This toolkit is driven by an **AI agent** (Claude Code, Cursor, Codex, Grok Bot or similar). You never have to type the commands on the other pages. They're written for the agent. All you do:
+
+1. **Install it.** One script, once. See [Install](docs/wiki/Install.md).
+2. **Point your AI agent at this repo.** Tell it where the folder is and to read this README.
+3. **Hand it your scan, mesh or idea.** A `.stl`/`.ply`/`.obj` file, a 3D scan, or just a description and some sizes. The agent builds the part, checks it, and shows you pictures and a STEP for your CAM.
+
+**What to tell your agent** (copy, then change the details):
+
+> Use the handbuilt-models repo in `~/handbuilt-models` (start with `README.md` and `docs/wiki/AI-agents.md`). Here's a scan of my bracket: `~/scans/bracket.stl`. Make a clean STEP I can machine from 6061, keep the holes where they are on the scan, run the fit, CNC and strength checks, and show me the 6-view sheet before you call it done.
+
+Or start from an idea instead of a scan:
+
+> Using handbuilt-models, design a 90° -10 AN adapter pipe, no longer than 53 mm, with a smooth bore. Show me the 6-view sheet and the checks.
+
+Everything below is the technical detail the agent reads.
+
+**For the agent: start with these three pages:**
 
 1. **[Install](docs/wiki/Install.md)**: get it running on a new PC (one script).
 2. **[Setup](docs/wiki/Setup.md)**: what got installed and how to check it.
@@ -20,17 +38,17 @@ This README is the front page of a small wiki:
 
 | Page | What it answers |
 |---|---|
-| [Install](docs/wiki/Install.md) | ELI5: install on a new Windows (WSL) or Linux PC |
-| [Setup](docs/wiki/Setup.md) | ELI5: what setup.sh installs, options, how to check it worked |
-| [How to use](docs/wiki/How-To-Use.md) | ELI5: everyday workflow, worked example, tool cheat-sheet, tips for AI assistants |
+| [Install](docs/wiki/Install.md) | For you: the 3 steps, and installing on a new Windows (WSL) or Linux PC |
+| [Setup](docs/wiki/Setup.md) | For the agent: what setup.sh installs, options, how to check it worked |
+| [How to use](docs/wiki/How-To-Use.md) | For the agent: everyday workflow, worked example, tool cheat-sheet |
 | [Overview](docs/wiki/Overview.md) | What this is, the big picture, what lives where (PC / WSL / box / GitHub) |
 | [Layout](docs/wiki/Layout.md) | Where every folder and file goes, and where new work should go |
 | [Workflow](docs/wiki/Workflow.md) | Scan → triage → Fairsolid helper → hand-built script → STEP/Fusion → FEA/topology → machining |
 | [Parts index](docs/wiki/Parts.md) | Every part, its status, key numbers and files |
-| [Tools & dependencies](docs/wiki/Tools.md) | Python venvs, CAD/FEA tools, versions, how to reinstall |
-| [Interactions](docs/wiki/Interactions.md) | Which script calls what, and what runs on the PC, in WSL, or on the agent box |
+| [Tools & dependencies](docs/wiki/Tools.md) | For the agent: Python venvs, CAD/FEA tools, versions, how to reinstall |
+| [Interactions](docs/wiki/Interactions.md) | For the agent: which script calls what, and what runs on the PC, in WSL, or on the agent box |
 | [Conventions](docs/wiki/Conventions.md) | Rules: true scan scale, smooth machined-look solids, units, git habits |
-| [For AI agents](docs/wiki/AI-agents.md) | How an AI tool should read, run and change this repo safely |
+| [For AI agents](docs/wiki/AI-agents.md) | For the agent: how an AI tool should read, run and change this repo safely |
 | [Scans index](scans/INDEX.md) | The raw scans (not stored here): where they are, size, triangle count, hash |
 
 ## Toolkit files
