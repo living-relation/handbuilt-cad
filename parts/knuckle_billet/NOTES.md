@@ -254,3 +254,4 @@
 - final/middle: not finished. web 16 → 1.96; floor r3 → 1.99; + rib 28×34 → 1.94 (2.390 kg, peak moves to (-65.7,59.5,71) on the left arm under the eye); rib 30×38 (2.431 kg) was OOM-killed and rerun.
 - The cornering spot (45.7,2.1,88.5) scatters ±5 % with the mesh (bisect: old prisms 1.91, floor r3 1.90). Next for middle: make the arms solid (as in easy) but keep the tongue pocket, or take easy and pocket only the tongue.
 - wall_check.py: the 0.1 % percentile is 4.48 mm on all three; <0.05 % of samples fall below 4 mm, and those are feather edges at the eye spot-face run-outs (deburr).
+- midB (rib 30x38, 2.431 kg) reran: worst SF 1.69. The braking peak is back at the tongue lower edge (-15,-70,76), so a bigger rib pulls load into the tongue root. Middle is still open.
