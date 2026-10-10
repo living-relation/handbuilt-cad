@@ -172,3 +172,44 @@
   1. Add strength before cutting weight. Fillet the tongue patch edge at (-15,-69,76) and the top-arm root at (-26,56,82); they are the two governing spots in every variant.
   2. Then retry the hub OD90 and plate-pocket savings (about 0.05-0.06 kg) on top.
   3. A proper stress-constrained topology run (p-norm with adjoint sensitivities and MMA) is still the route to a step change in mass.
+
+## 2026-10-09 chunk 8: stress-constrained topology optimisation (multi-session)
+
+- **Code:** `topo_stress.py`. It reuses `topo_simp.py`'s setup (grid, design space, non-design solids, supports, loads) by exec'ing its setup section.
+  - Problem: minimise design volume subject to a stress constraint in each of the 5 cases.
+  - Stress measure: qp-relaxed von Mises (σ_e = x̄^0.5 · σ0_e), aggregated per case with a p-norm (p = 8) and adaptively normalised so it tracks the maximum (c_k = max/PN, re-set every 10 evaluations, damped 50/50).
+  - Sensitivities: adjoint (one extra solve per case, sharing the pardiso factorisation).
+  - Filter and projection: density filter (rmin = 2h = 8 mm, which meets the ≥ 4 mm minimum member) and Heaviside projection with β = 1 → 2 → 4 → 8.
+  - Optimiser: MMA from nlopt (LD_MMA).
+  - Non-design: as in topo_simp. The ribs and the ear-1 lug are not locked, so the optimiser decides.
+  - Elements touching support or load node sets (+1 voxel) are excluded from the stress measure, like the robust 3 mm exclusion in the CalculiX post-processing.
+- **Validation against CalculiX on it11** (h = 4 mm voxels, `topo/validate_h4.json`), as the voxel 99.99th percentile divided by the CalculiX robust value:
+
+  | Stress location | bump | corner | brake | combined | fatigue |
+  |---|---|---|---|---|---|
+  | element centre | 0.54 | 0.49 | 0.44 | 0.49 | 0.41 |
+  | Gauss points | 0.82 | 0.76 | 0.66 | 0.66 | 0.60 |
+  | element corners (SPT=1) | 1.03 | 1.02 | 0.89 | 0.80 | 0.80 |
+
+  - With corner stresses, the voxel maximum vs CalculiX robust is 1.43, 1.06, 1.04, 0.93 and 0.82.
+  - Adopted: corner stress, maximum over the 8 corners, with the governing corner used in the adjoint. The allowable is 230 MPa instead of 251, which covers the 8-20% under-prediction on combined/fatigue.
+  - Bump, corner and brake are within 15% at the 99.99th percentile; combined and fatigue are about 20% low.
+  - Linear hex8 elements are stiff in bending (shear locking) and centre stress is averaged, hence the low ratios in the first two rows.
+- **Run `sc_h4`:** h = 4 mm, 20 evaluations per β stage, detached on the box. The log is `topo/sc_h4.out`; its "smax/251" column is actually divided by S_ALLOW = 230.
+- **Run 1 (`sc_h4`)** started all densities at 0.7 and restarted MMA every 10 evaluations, 80 evaluations in all (5 min).
+  - Not converged. Each restart resets the MMA asymptotes, so mass jumps between about 2.0 and 2.6 kg. At the evaluations near 2.09 kg all stress ratios were ≤ 0.85 of the 230 allowable, so the constraint never became active.
+  - Saved result: rho > 0.5 mass 2.016 kg including the 1.01 kg non-design. Grey fraction is still 0.56, so it is not crisp.
+  - Connectivity (`topo_connect.py`, 26-connected): 2 components, the main one holds 99.8% of the material and 100% of the non-design. The other is a 3 g island.
+- **Where run 1 puts material** (`topo/sc_h4_readout.json`, it11 kept fraction):
+  - hub-tube outer web toward the ears: 82%, plus a lower frame through the 3 eyes (as in the compliance runs)
+  - tongue root: 28%; tongue-side ring: 36%; arm-side plate: 30%
+  - ear 1: 28%; ear 2: 23%
+  - clamp-to-eye ribs over the drive shaft: 2-3%, i.e. removed again
+- **Caution:** this contradicts the CalculiX it17 result, where removing the ribs dropped cornering to SF 1.31. The voxel model under-resolves notch stresses at junctions, so any rebuilt solid must be verified in CalculiX.
+- **Render:** `renders_iter/topo_sc_h4_{iso,back}.png`
+- **Run 2 (`sc2_h4`, started 21:20 on the box, detached):** densities start at 0.5, one MMA run of 40 evaluations per β stage (c_k fixed within a stage), 160 evaluations total (about 11 min). Log `topo/sc2_h4.out`; it saves `topo/sc2_h4.npz` every 3 evaluations.
+- **Plan for the next chunk:**
+  1. Check sc2 convergence, i.e. whether the stress constraint is active at about 1.0 of the allowable. If not, give MMA more evaluations per stage and raise β to 16-32 for a crisp 0/1 result. Consider h = 3 on WSL, whose memory is separate from the box.
+  2. Recalibrate the allowable after a CalculiX check of the first rebuilt solid.
+  3. Optionally add a ±Z milling (no-undercut) projection.
+  4. Rebuild the converged layout as a build123d solid (it24) with solid gusseted nodes and ≥ 6 mm fillets at junctions, then verify with the 5-case CalculiX loop and the 24 interface checks.
