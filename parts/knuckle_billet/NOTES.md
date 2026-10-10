@@ -144,3 +144,31 @@
 - **it17 result:** cornering 1.31, braking 1.70, combined 1.38, bump 5.4, fatigue Goodman 4.5. Removing the drive-shaft ribs costs a lot of strength: cornering drops from it11's 2.18 to 1.31. So the compliance-only topology run's "ribs removable" finding is wrong for strength. The ribs carry the cornering moment from the left/top arm roots (-26,56,82) round to the strut tongue.
 - **Status after chunk 6:** it11 (2.33 kg) is still the only design with SF ≥ 2 in every case. Best frame candidate: it14, 2.01 kg, worst SF 0.96.
 - **Next:** a stress-constrained (p-norm von Mises) topology run, or SIMP with the it11 ribs and the ear-1 lug as non-design. Then either rebuild the frame with solid gusseted nodes and verify, or lighten it11 locally (pockets in the ribs instead of removing them).
+
+## 2026-10-09 chunk 7: lighten it11 (track B) + stress-aware topology (track A)
+
+- **B: new options in `knuckle_billet.py`:**
+  - `rib_size`: makes the clamp-to-eye ribs pocketed I-sections
+  - `rib_inner_solid`: keeps the 2 inner rib segments solid. They skirt the r45 drive-shaft keep-out, so a pocket there opens into the keep-out and leaves slivers.
+  - `hybrid_pockets`: top pockets in the arm-side plate. The pocket is now 20x10 r4.5; 20x9 failed because it was not more than 2r.
+- **it19** (2.25 kg): ribs 28x34 pocketed on all 4 segments, plate pockets at 72/118/182°, and 5 mm walls/webs everywhere. Braking collapsed to 0.34 (robust 1490 MPa at (-37,-32,83), where the inner-rib pocket breaks into the keep-out). Cornering fell to 1.63 at the left-arm underside (-64,58,76) from the 5 mm walls. Rejected.
+- **it18** (it19 with 6 mm walls): its ccx was OOM-killed while the topology run was going. It was superseded by it20.
+- **it20:** it18 with the inner rib segments kept solid, so only the outer rib segments (to the eyes) are pocketed 28x34. 2.30 kg (-25 g vs it11).
+- **A: `topo_simp_v2.py`:**
+  - The it11 ribs (4 segments, 24x30) and the ear-1 deep lug are locked as non-design solid.
+  - It adds a stress-aware heuristic: per-case weights scale with the p-norm (p = 8) relaxed von Mises from element-centre stresses, raised to the power 2, and the sensitivities are amplified by (1 + (σ/251)²).
+  - Run `s21_h4`: 2.1 kg target, 4 mm voxels, 60 iterations. rho > 0.5 mass is 1.82 kg, grey 0.37, and the change never settled (it stayed at 0.15 because the weights move every iteration).
+  - At rho = 0.5 the strut-rod eye ends up disconnected, so the heuristic isn't reliable. A real p-norm stress constraint with adjoint sensitivities (MMA) is needed.
+  - What it still shows: the arm-side plate is mostly removable (16% kept), and once the ribs are locked the tongue-side ring and ear-2 lug carry little (2-14%).
+  - Render: `renders_iter/topo_s21_{iso,back}.png`
+- **it20 result** (2.30 kg): cornering 1.58, braking 1.94, combined 1.85, bump 6.7, fatigue Goodman 5.2. The cornering peak at (-64.5,57.3,75.8) is where the pocketed outer left rib (L2) merges into the left arm underside. It's the same spot as it16's second left strut. Pocketing L2 makes a notch at its pocket-floor edge, so L2 stays solid.
+- **it21** (it20 plus hub OD90 and ring r58): stopped. It still had the L2 notch.
+- **it22:** it11 with plate pockets 72/118/182°, hub OD 90 (5.4 mm wall at the 79.2 seat) and ring r58. Ribs unchanged. 2.267 kg (-60 g vs it11).
+- **it22 result** (2.267 kg): cornering 1.71 (peak (16.2,68.8,82), where the 72° plate pocket notches the top-arm root), braking 1.90 (tongue patch edge; the smaller ring/hub costs margin there), combined 2.24. Rejected.
+- **it23:** it11 with hub OD 90 and plate pockets at 118/182° only. The 72° pocket is dropped and the ring stays r60.
+- **it23 result** (2.274 kg): cornering 1.84, braking 1.89, combined 1.98, bump 7.25, fatigue Goodman 5.4. Not passing. The thinner hub (OD 90) takes margin from braking at the tongue patch edge (-15,-69,76) and from cornering at the top-arm root (-24,52,82).
+- **Chunk 7 conclusion:** it11 (2.327 kg) is still the lightest design with SF ≥ 2 robust in all cases. Every local lightening tried here (pocketed ribs, plate pockets, thinner hub, smaller ring, 5 mm walls) dropped at least one case below 2. it11's margins are only 2.00 (braking) and 2.18 (cornering), so there is almost no slack to trade.
+- **Next:**
+  1. Add strength before cutting weight. Fillet the tongue patch edge at (-15,-69,76) and the top-arm root at (-26,56,82); they are the two governing spots in every variant.
+  2. Then retry the hub OD90 and plate-pocket savings (about 0.05-0.06 kg) on top.
+  3. A proper stress-constrained topology run (p-norm with adjoint sensitivities and MMA) is still the route to a step change in mass.
