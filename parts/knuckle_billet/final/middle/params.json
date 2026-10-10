@@ -8,7 +8,7 @@
  "arm_w": 34.0,
  "arm_h": 42.0,
  "wall": 6.0,
- "web": 16.0,
+ "web": 30.0,
  "tongue_pocket_depth": 14.0,
  "junction_r": 6.0,
  "ear_lug_to_flange_top": true,
@@ -56,5 +56,7 @@
  ],
  "sector_y": -12.0,
  "tongue_root_patch": 30.0,
- "blend_mode": "fillet"
+ "blend_mode": "fillet",
+ "arm_pockets": true,
+ "edge_r": 6.0
 }

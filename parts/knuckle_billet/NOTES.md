@@ -255,3 +255,7 @@
 - The cornering spot (45.7,2.1,88.5) scatters ±5 % with the mesh (bisect: old prisms 1.91, floor r3 1.90). Next for middle: make the arms solid (as in easy) but keep the tongue pocket, or take easy and pocket only the tongue.
 - wall_check.py: the 0.1 % percentile is 4.48 mm on all three; <0.05 % of samples fall below 4 mm, and those are feather edges at the eye spot-face run-outs (deburr).
 - midB (rib 30x38, 2.431 kg) reran: worst SF 1.69. The braking peak is back at the tongue lower edge (-15,-70,76), so a bigger rib pulls load into the tongue root. Middle is still open.
+
+## Chunk 12 (middle variant)
+- Build options: hbar(pockets=...), `rib_pockets` and `lug_pockets` (no change for the it11 ribs and lugs, which were already unpocketed).
+- From easy + tongue +Z pocket 14 + floor r4 + arm pockets: web 22 → 2.370 kg (not run), web 26 (M2) → 2.383 kg SF 1.97 (cornering at (-11,65.8,84.4)), **web 30 (M5) → 2.397 kg, SF bump 8.40 / cornering 2.33 / braking 2.73 / combined 2.75, Goodman 6.96, 24/24 → final/middle.**

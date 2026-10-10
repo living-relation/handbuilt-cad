@@ -10,16 +10,19 @@ yield 503 MPa. The fatigue case is 1 g + 0.5 g lateral at 10^6 cycles, Goodman R
 
 | | **best** | **middle** | **easy** |
 |---|---|---|---|
-| mass (7075) | 2.328 kg | **not finished**: 2.37–2.43 kg candidates | 2.462 kg |
-| worst SF yield (robust) | 2.00 (cornering, braking 2.03) | 1.96 (web 16) / 1.94 (rib 28×34); rib 30×38 (2.431 kg) still running | 2.23 (cornering) |
-| fatigue SF (Goodman / fully reversed) | 5.57 / 3.45 | 5.5–5.8 / 3.4–3.6 | 6.77 / 4.19 |
-| arms | H-section, 18 mm pockets each side, 6 mm web, r4 floors | H-section, 13 mm pockets each side, 16 mm web, r4 floors | solid rectangular bars, r6 long edges |
-| tongue | pocketed +Z (14 mm) and -Z (12 mm) | pocketed +Z only | solid |
-| setups (est.) | 6 (±Z + 4 tilted 3+2) | 5 (±Z + 3 tilted) | 3–4 (±Z + 1–2 tilted for the eye faces) |
-| tools | 20/12/8 mm flat + 8 mm (r4) bull, 6 mm ball, drills + boring bar | same as best | 20/12 mm flat, 12 mm r6 bull, drills + boring bar |
+| mass (7075) | 2.328 kg | 2.397 kg | 2.462 kg |
+| worst SF yield (robust) | 2.00 (cornering, braking 2.03) | 2.33 (cornering; bump 8.4, braking 2.73, combined 2.75) | 2.23 (cornering) |
+| fatigue SF (Goodman / fully reversed) | 5.57 / 3.45 | 6.96 / 4.30 | 6.77 / 4.19 |
+| arms | H-section, 18 mm pockets each side, 6 mm web, r4 floors | easy's solid-edge arms (r6) + shallow 6 mm pockets each side (9 mm on the 48 mm-tall left arm), 30 mm web, r6 corners / r4 floors; ribs and ear lugs solid | solid rectangular bars, r6 long edges |
+| tongue | pocketed +Z (14 mm) and -Z (12 mm) | pocketed +Z only (14 mm) | solid |
+| setups (est.) | 6 (±Z + 4 tilted 3+2) | ~5 (±Z with the shallow arm pockets cut there via small 3+2 tilts; X side; 2 eye tilts) | 3–4 (±Z + 1–2 tilted for the eye faces) |
+| tools | 20/12/8 mm flat + 8 mm (r4) bull, 6 mm ball, drills + boring bar | 20/12 mm flat, 12 mm bull r4 (floors), r6 corners, drills + boring bar | 20/12 mm flat, 12 mm r6 bull, drills + boring bar |
 | est. complexity / cycle time | high, ~1.0 (reference) | ~0.8 | ~0.55 |
 
 "Easy" came out at 2.46 kg, below the 2.5–2.7 kg Daniel was prepared to accept, because the it11 layout is already lean. Making the arms solid and the tongue solid is what turns the arm pockets into plain profiling.
+
+Middle (chunk 12) starts from easy and adds back only the tongue +Z pocket and shallow (6 mm) arm pockets, so it is about 65 g lighter than easy.
+Deeper pockets (13 mm, web 16 → 2.373 kg) or a 26 mm web (2.383 kg) dropped cornering to SF 1.96–1.97, so the 30 mm web is the lightest that passes.
 
 ## What changed from it11 (it_final)
 - The 45-degree tongue-root "stand-in" prisms are now **true r10 concave fillets**: a prism with an exact r10 arc profile, tangent to the tongue side face and the flange top. This is built as geometry, not with OCC fillet(), so it never fails.
