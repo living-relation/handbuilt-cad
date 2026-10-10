@@ -1,0 +1,8 @@
+# Build venv (.venv, Python 3.13) - hand-built models and scan measuring
+build123d==0.13.0
+trimesh==5.1.1
+numpy==2.5.3
+scipy==1.18.1
+matplotlib==3.11.2
+rtree==1.4.1
+scikit-learn==1.9.1

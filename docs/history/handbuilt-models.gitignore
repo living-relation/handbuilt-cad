@@ -22,3 +22,29 @@ knuckle/v4b/knuckle.step
 knuckle_billet/baseline/*.frd
 knuckle_billet/baseline/*.vtu
 knuckle_billet/baseline/*.npz
+
+# --- added 2026-10-10 for the public repo ---
+# Solver / mesh output from iteration and topology runs (summaries in JSON/CSV/PNG are kept)
+knuckle_billet/iter/*.frd
+knuckle_billet/iter/*.vtu
+knuckle_billet/iter/*.12d
+knuckle_billet/iter/*.cvg
+knuckle_billet/iter/*.sta
+knuckle_billet/iter/*.dat
+knuckle_billet/iter/*.inp
+knuckle_billet/iter/*_mesh.npz
+knuckle_billet/final/**/*.frd
+knuckle_billet/final/**/*.vtu
+# Raw scans and scanner project data
+*.obscan
+*.obproj
+*.obp
+*.obmc
+# Secrets and local agent files (never commit)
+.env
+.env.*
+*.pem
+*.key
+mcp.json
+CLAUDE.local.md
+.claude/

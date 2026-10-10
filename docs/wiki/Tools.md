@@ -1,0 +1,37 @@
+# Tools & dependencies
+
+[← Home](../../README.md)
+
+## Python environments (WSL)
+
+| Env | Path | Python | Used for | Pinned list |
+|---|---|---|---|---|
+| Build venv | `.venv/` in this repo | 3.13 | build123d models, scan measuring (trimesh, numpy, scipy, rtree, scikit-learn, matplotlib) | `requirements.txt` |
+| Sim venv | `~/simvenv` | 3.14 | meshing and FEA post (gmsh 4.15.2, meshio, pygmsh, vtk 9.7.1, ccx2paraview), topology (nlopt 2.11, pypardiso 0.4.7, scikit-image) | `requirements-sim.txt` |
+
+Key versions: build123d 0.13.0 (OCP 8.0.1.1), trimesh 5.1.1, numpy 2.5.3, scipy 1.18.1.
+
+Recreate: `bash sim-tools/scripts/setup_venv_wsl.sh` (build venv, uses `uv`) and `bash sim-tools/scripts/install_sim_tools_wsl.sh` (sim tools + simvenv).
+
+## Simulation tools (WSL Ubuntu 26.04)
+
+| Tool | Version | Where |
+|---|---|---|
+| CalculiX `ccx` | 2.21 (apt) in WSL; 2.23 is used on the agent box | `/usr/bin/ccx` |
+| Gmsh | 4.14 (apt) + 4.15.2 Python module | `/usr/bin/gmsh` |
+| Elmer FEM | 26.2.1, built from source | `/opt/elmer` |
+| OpenFOAM | 14 (openfoam.org apt) | `/opt/openfoam14` |
+| ParaView | 6.0.1 (apt), `pvpython` headless via `xvfb-run` | `/usr/bin/paraview` |
+
+Load them with `source sim-tools/wsl-env.sh`. Full details, smoke tests and rollback: [`sim-tools/SIM_TOOLS.md`](../../sim-tools/SIM_TOOLS.md).
+
+## Windows side
+
+- **FreeCAD 1.1.4** portable at `C:\projects\_tools\FreeCAD` (`FreeCAD.bat`; `ccx_wsl.bat` / `gmsh_wsl.bat` wrappers let it use the WSL solvers).
+- **Fusion** opens the STEP files.
+- **Ollama** with `qwen2.5-coder:14b` is available locally for helper/coding tasks (optional; nothing in this repo requires it).
+- **Creality Scan** for scanning.
+
+## Related repo
+
+- **Fairsolid** — <https://github.com/living-relation/fairsolid> (pinned commit `bbc57143a6d83980548e497ca624567174f7d17d`). Has its own setup; see its README.
