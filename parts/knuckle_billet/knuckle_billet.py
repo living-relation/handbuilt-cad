@@ -21,7 +21,7 @@ P = dict(hub_od=92.0, flange_r=71.0, flange_z=(62.0, 82.0), tongue_y=(-166.0, -4
          ear_boss_d=26.0, side_boss_d=32.0, keepout_r=45.0, flange_pockets=True, flange_pocket_angles=(95, 189), junction_r=6.0, ear_lug_to_flange_top=False, left_arm_h=None,
          flange_style='disc', ring_r=56.0, bolt_boss_r=11.5, floor_r=0.0, tongue_bottom_pocket=0.0, tongue_junction_r=0.0,
          left_root=(-50, 40, 76), right_root=(45, 45, 82), top_root=(-5, 55, 78), arm_left=None, arm_right=None, arm_top=None, rib_r2=(24.0, 30.0), tongue_blend=0.0, tongue_blend_len=32.0, sector_y=-12.0, hybrid_pockets=(), tongue_root_patch=0.0, tongue_under_wedge=0.0, wedge_flare=0.0,
-         layout='arms', ribs=True, frame_lt=(30.0, 36.0), frame_tr=(30.0, 36.0), strip_w=26.0, ear1_link_w=0.0, left_strut2=None, ties=(), rib_size=None, rib_end_clear=14.0, rib_inner_solid=False, ribs_left=False)
+         layout='arms', ribs=True, frame_lt=(30.0, 36.0), frame_tr=(30.0, 36.0), strip_w=26.0, ear1_link_w=0.0, left_strut2=None, ties=(), rib_size=None, rib_end_clear=14.0, rib_inner_solid=False, ribs_left=False, left_gusset=None)
 if len(sys.argv) > 1 and sys.argv[1].endswith('.json'): P.update(json.load(open(sys.argv[1])))
 for k in ('arm_left', 'arm_right', 'arm_top'):
     if P[k] is None: P[k] = (P['arm_w'], P['left_arm_h'] or P['arm_h']) if k == 'arm_left' else (P['arm_w'], P['arm_h'])
@@ -151,6 +151,21 @@ def build():
         part += hbar(P['left_root'], e['left_eye']['c'], *P['arm_left'])
         part += hbar(P['right_root'], e['right_eye']['c'], *P['arm_right'])
         part += hbar(e['left_eye']['c'], e['top_eye']['c'], *P['frame_lt'], end_clear=26.0)
+        if P['left_gusset']:   # merged left gusset plate: tongue root -> ear-1 lug corner -> left strut root -> left eye (replaces ribs L1/L2)
+            g = P['left_gusset']; pts = [tuple(p_) for p_ in g['pts']]
+            face = make_face(Polyline(*pts, close=True))
+            plate = extrude(Pos(0, 0, g['z0']) * face, amount=g['z1'] - g['z0'])
+            try: plate = fillet(plate.edges().filter_by(Axis.Z), 6.0)
+            except Exception: pass
+            if g.get('pocket', 0) > 0:
+                try:
+                    inner = offset(face, -g.get('wall', 6.0))
+                    pk = extrude(Pos(0, 0, g['z1'] - g['pocket']) * inner, amount=g['pocket'] + 1)
+                    try: pk = fillet(pk.edges().filter_by(Axis.Z), 5.0)
+                    except Exception: pass
+                    plate = plate - pk
+                except Exception as ex: print('gusset pocket failed', ex)
+            part += plate
         for A_, B_, w_, h_ in P['ties']:   # solid cross-ties / gusset webs (no pockets) closing strut-frame triangles
             part += hbar(tuple(A_), tuple(B_), w_, h_, end_clear=1e3)
         if P['left_strut2']:   # second left strut: flange/ear-1 lug corner -> left eye (old rib L2 path)

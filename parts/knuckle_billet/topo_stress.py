@@ -38,6 +38,15 @@ for k_, v_ in S.items(): sup[v_] = True
 near = sup[en].any(1)
 nb = np.zeros(nn, bool); nb[np.unique(en[near])] = True; smask = ~nb[en].any(1)
 say(f'stress-measure elements {smask.sum()} of {ne}')
+# junction stress-concentration factor: design elements within KT_R voxels of a non-design (interface) solid get stress x KT
+KT = float(__import__('os').environ.get('KT', '1.0')); KT_R = int(__import__('os').environ.get('KT_R', '2'))
+kt = np.ones(ne)
+if KT > 1.0:
+    import scipy.ndimage as ndi
+    gnd = np.zeros(int(np.prod(n)), bool); gnd[ea[isnd]] = True
+    gd = ndi.binary_dilation(gnd.reshape(tuple(n)), iterations=KT_R).reshape(-1)
+    jn = gd[ea] & ~isnd; kt[jn] = KT; say(f'junction SCF {KT} on {jn.sum()} elements (r={KT_R} voxels)')
+smaskf = smask * kt
 def solve(xp):
     Ee = 1e-6 + xp ** PS * (1 - 1e-6)
     K = sp.coo_matrix(((KE.ravel()[None, :] * Ee[:, None]).ravel(), (I, J)), shape=(3 * nn, 3 * nn)).tocsr()
@@ -81,7 +90,7 @@ def evaluate(xv):
     x, xt, xp = physical(xv); Kf, U, Ee = solve(xp)
     G = np.zeros((3 * nn, len(cases))); PN = np.zeros(len(cases)); dPNe = np.zeros((ne, len(cases))); smax = np.zeros(len(cases))
     for k in range(len(cases)):
-        s, v, ix = vm0(U, k, True); se = (xp ** Q) * v * smask; smax[k] = se.max()
+        s, v, ix = vm0(U, k, True); se = (xp ** Q) * v * smaskf; smax[k] = se.max()
         pn = (np.sum(se ** PN_P)) ** (1 / PN_P); PN[k] = pn
         dpn_dse = pn ** (1 - PN_P) * se ** (PN_P - 1)                         # d PN / d sigma_e
         # adjoint load: d sigma_e / d u_e = xp^q * (V s)^T DB / v
@@ -89,9 +98,9 @@ def evaluate(xv):
         for j_, DBi in enumerate(DBs):
             m_ = ix == j_
             if m_.any(): w[m_] = sv[m_] @ DBi                                  # d vM / d u_e at the governing corner
-        w *= (dpn_dse * xp ** Q / v)[:, None]
+        w *= (dpn_dse * xp ** Q * kt / v)[:, None]
         np.add.at(G[:, k], edof.ravel(), w.ravel())
-        dPNe[:, k] = dpn_dse * Q * np.maximum(xp, 1e-6) ** (Q - 1) * v * smask           # explicit part
+        dPNe[:, k] = dpn_dse * Q * np.maximum(xp, 1e-6) ** (Q - 1) * v * smaskf           # explicit part
     Lm = np.zeros((3 * nn, len(cases))); Lm[free] = pypardiso.spsolve(Kf, G[free])
     for k in range(len(cases)):
         dPNe[:, k] -= PS * xp ** (PS - 1) * (1 - 1e-6) * np.einsum('ij,jk,ik->i', Lm[edof, k], KE, U[edof, k])
@@ -108,7 +117,7 @@ def f_obj(xv, grad):
     mass = (xp_mass := (r['xp'] > 0.5).sum() * h**3 * RHO_AL)
     rat = r['smax'] / S_ALLOW; state['hist'].append(dict(ev=state['nev'], beta=state['beta'], vol=float(r['vol']), mass_thr=float(mass), smax=r['smax'].round(1).tolist(), PN=r['PN'].round(1).tolist()))
     say(f"ev {state['nev']:3d} b{state['beta']:.0f} vol {r['vol']:.4f} mass(>0.5) {mass:.3f} kg  smax/251 {np.round(rat, 2).tolist()}  {time.time()-t0:.0f}s")
-    if state['nev'] % 3 == 0: np.savez_compressed(OUTS + '.npz', n=n, lo=lo, h=h, ea=ea, rho=r['xp'], isnd=isnd)
+    if state['nev'] % 3 == 0 and np.all(np.isfinite(r['xp'])): np.savez_compressed(OUTS + '.npz', n=n, lo=lo, h=h, ea=ea, rho=r['xp'], isnd=isnd)
     return float(r['vol'])
 def make_con(k):
     def con(xv, grad):
@@ -126,8 +135,12 @@ for beta in tuple(float(b) for b in __import__("os").environ.get("BETAS", "1,2,4
         opt.set_min_objective(f_obj)
         for k in range(len(cases)): opt.add_inequality_constraint(make_con(k), 1e-3)
         opt.set_maxeval(SUBN); opt.set_param('inner_maxeval', 5) if hasattr(opt, 'set_param') else None
+        xprev = xv.copy()
         try: xv = opt.optimize(xv)
         except Exception as ex: say('nlopt stop', type(ex).__name__, ex); xv = state['last'][0] if state['last'] else xv
+        if not np.all(np.isfinite(xv)) or not np.all(np.isfinite(evaluate(xv)['smax'])):   # NaN guard (sc3 blew up at beta 16)
+            say('non-finite step -> revert and end this beta stage'); xv = xprev; break
+        np.savez_compressed(OUTS + f'_b{int(beta)}.npz', n=n, lo=lo, h=h, ea=ea, rho=physical(xv)[2], isnd=isnd)   # per-stage snapshot
         say(f'beta {beta} sub {sub} ck {np.round(state["ck"], 3).tolist()}')
 r = evaluate(xv); np.savez_compressed(OUTS + '.npz', n=n, lo=lo, h=h, ea=ea, rho=r['xp'], isnd=isnd)
 json.dump(dict(h=h, S_ALLOW=S_ALLOW, q=Q, p=PN_P, hist=state['hist']), open(OUTS + '.json', 'w'))
