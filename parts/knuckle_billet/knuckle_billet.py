@@ -21,7 +21,7 @@ P = dict(hub_od=92.0, flange_r=71.0, flange_z=(62.0, 82.0), tongue_y=(-166.0, -4
          ear_boss_d=26.0, side_boss_d=32.0, keepout_r=45.0, flange_pockets=True, flange_pocket_angles=(95, 189), junction_r=6.0, ear_lug_to_flange_top=False, left_arm_h=None,
          flange_style='disc', ring_r=56.0, bolt_boss_r=11.5, floor_r=0.0, tongue_bottom_pocket=0.0, tongue_junction_r=0.0,
          left_root=(-50, 40, 76), right_root=(45, 45, 82), top_root=(-5, 55, 78), arm_left=None, arm_right=None, arm_top=None, rib_r2=(24.0, 30.0), tongue_blend=0.0, tongue_blend_len=32.0, sector_y=-12.0, hybrid_pockets=(), tongue_root_patch=0.0, tongue_under_wedge=0.0, wedge_flare=0.0,
-         layout='arms', ribs=True, frame_lt=(30.0, 36.0), frame_tr=(30.0, 36.0), strip_w=26.0, ear1_link_w=0.0, left_strut2=None, ties=(), rib_size=None, rib_end_clear=14.0, rib_inner_solid=False, ribs_left=False, left_gusset=None, blend_mode='chamfer', arm_pockets=True, rib_pockets=True, lug_pockets=True, wall_right=None, wall_top=None)
+         layout='arms', ribs=True, frame_lt=(30.0, 36.0), frame_tr=(30.0, 36.0), strip_w=26.0, ear1_link_w=0.0, left_strut2=None, ties=(), rib_size=None, rib_end_clear=14.0, rib_inner_solid=False, ribs_left=False, left_gusset=None, blend_mode='chamfer', arm_pockets=True, rib_pockets=True, lug_pockets=True, wall_right=None, wall_top=None, pads=(), tongue_root_pocket=None)
 if len(sys.argv) > 1 and sys.argv[1].endswith('.json'): P.update(json.load(open(sys.argv[1])))
 for k in ('arm_left', 'arm_right', 'arm_top'):
     if P[k] is None: P[k] = (P['arm_w'], P['left_arm_h'] or P['arm_h']) if k == 'arm_left' else (P['arm_w'], P['arm_h'])
@@ -203,6 +203,18 @@ def build():
             part -= pk
     # junction fillets: concave edges where arms/lugs/tongue meet the flange-ring faces (old braking spike zone included)
     part = junction_fillets(part)
+    # chunk 14 BESO-guided pocket in the low-stress tongue root (between the flange and the clamp zone), 2.5D from +Z
+    if P['tongue_root_pocket']:
+        tp = P['tongue_root_pocket']; tz1_ = P['tongue_z'][1]; wv = TONGUE_X[1] - TONGUE_X[0] - 2 * tp.get('wall', P['wall'])
+        pk = Pos(0, (tp['y0'] + tp['y1']) / 2, tz1_ - tp['depth']) * extrude(RectangleRounded(wv, tp['y1'] - tp['y0'], min(6.0, wv / 2 - 0.5)), amount=tp['depth'] + 1)
+        try: pk = fillet(pk.edges().filter_by(lambda e: abs(e.center().Z - (tz1_ - tp['depth'])) < 0.01), 4.0)
+        except Exception as ex: print('tongue root pocket floor fillet failed', ex)
+        part -= pk
+    # chunk 14 local pads at known hot spots: frustums (45-deg-ish flanks) blending a corner, trimmed by the interface cuts below
+    for pd_ in P['pads']:
+        a = V(*pd_['axis']).normalized()
+        cone = Plane(origin=tuple(pd_['c']), z_dir=tuple(a)) * Cone(pd_['r0'], pd_['r1'], pd_['h'], align=(Align.CENTER, Align.CENTER, Align.MIN))
+        part += cone
     # ---------------- interface cuts (exact v4b)
     part -= Pos(0, 0, 66.0) * Cylinder(P['keepout_r'], 200, align=(Align.CENTER, Align.CENTER, Align.MIN))  # drive-shaft keep-out above the hub
     for z0, z1, d in BORE: part -= Pos(0, 0, z0) * Cylinder(d/2, z1 - z0, align=(Align.CENTER, Align.CENTER, Align.MIN))

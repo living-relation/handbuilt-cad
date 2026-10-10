@@ -292,3 +292,22 @@ Results this chunk (real Gmsh + CalculiX, 5 mm mesh, one change at a time from f
   (rib/keep-out corner (45.7,2.1,88.5) and tongue lower edge) to buy ~10-15 % margin; 2) run BESO in CalculiX on that padded mesh to find which
   pocket regions can deepen; 3) turn those into 2.5D pockets in build123d. (d) two-piece (bolt-on tongue) is the way to cut stock (6.5" → 4.5" plate),
   not mass. Method (a) is only worth running as a final polish with the 2.1 screening margin.
+
+## Chunk 14: pads + BESO map, then the two-piece design (Daniel's new priority)
+- (e) Pads on best. A `pads` option adds frustum pads, trimmed by the interface cuts.
+  - pad1 (rib/keep-out cone r14→5 + tongue-edge cones r9→3): SF 1.82. pad2 (r18→6 + r12→3 cones): SF 0.96.
+  - The horizontal cones at the tongue lower edges stick below the tongue (z ~60-65) and make a **new braking notch** at (-15,-72,65). Rejected.
+  - The rib/keep-out cone alone (padA) does lower cornering about 5 % (238 vs 251 MPa in pad2).
+- (b) BESO step-0 map (beso_map.py): element envelope over the 5 cases, below 15 % of 251 MPa, interfaces kept.
+  - 0.42 kg of low-stress material outside the interfaces: ribs about 0.12 kg (inner rib over the hub), flange/plate 0.09, left-arm root 0.06, tongue root 0.04, ears 0.04, right arm 0.03.
+  - **Mistake caught:** the first map treated the strut clamp zone as y < -90. The real lower strut bolt is at y -79 (d14), so the clamp lands run to about y -60.
+    bs1-bs4 (tongue-root pockets at y -90…-52) cut into the clamp land, so they were deleted unrun or stopped.
+  - bs6 (padA + 2.5D +Z tongue-root pocket y -60…-45, depth 22, outside the clamp zone): 2.316 kg, **SF 1.96** (braking at the tongue lower edge 257 MPa). A near miss; not passed.
+  - The WSL padA run used the stale WSL post_iter.py (no robust/singular exclusion), so its numbers aren't comparable. Re-run padA on the box before using it.
+- **Two-piece** → final/two-piece/ (see TWO_PIECE.md): full-arm main body + bolt-on tongue on a Z-bolted foot (flange top z 82), 4× M12 12.9 on an r58 arc.
+  - Mass: main 1.981 + tongue 0.412 = 2.393 kg Al. **Not passing yet.** tp1 (M10, old positions) SF 2.01, but its holes break through the r71 flange edge. tp3 (M12 on an r58 arc) SF 0.80: the holes notch the tongue-root fillets, plus a suspect braking result at the left-arm root (re-mesh). See TWO_PIECE.md.
+  - Joint hand calc from the real strut-bolt reactions (iter/fa2r): no gapping, slip SF ≥ 3.4 with a µ0.5 friction shim.
+  - Tongue: 2" plate, 2 setups + a vise turn for the X strut holes. The main body is still 6.5" plate, set by the fixed hub-to-top-eye height.
+- Next: (1) FE contact model of the joint (pretension + friction, CalculiX *PRE-TENSION SECTION / *CONTACT PAIR).
+  (2) Horizontal split or a bolt-on top-eye arm to get each piece ≤ 4" plate.
+  (3) Fix bs6's braking edge with a straight 45° chamfer pad *inside* the tongue envelope (not a cone), then re-screen.
