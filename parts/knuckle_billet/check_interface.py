@@ -55,7 +55,7 @@ for (y, z), d, x0, x1 in ns['X_HOLES'][1:]:
 for (x, y), d, (z0, z1) in ns['EAR_HOLES']:
     minwall(f'caliper ear ({x},{y}) (M10 major)', (x, y, (z0 + z1) / 2), (0, 0, 1), 5.0, MINWALL['caliper_ear'], [-5, 0, 5], 0.9)
 minwall('ABS boss (d17)', (60, 0.9, 72.5), (1, 0, 0), 8.5, MINWALL['abs_boss'], [-3, 0, 3], 0.9)
-minwall('ABS screw (M6)', (60, -38.0, 63.0), (1, 0, 0), 3.0, MINWALL['abs_screw'], [-3, 0, 3], 0.9)
+minwall('ABS screw (M6)', (60, -39.4, 63.7), (1, 0, 0), 3.0, MINWALL['abs_screw'], [-3, 0, 3], 0.9)
 for x, y in ns['FLANGE_HOLES']:
     minwall(f'flange bolt ({x},{y})', (x, y, 74), (0, 0, 1), 5.25, MINWALL['flange_bolt'], [-4, 0, 4], 0.9)
 ok = all(c['ok'] for c in checks)
