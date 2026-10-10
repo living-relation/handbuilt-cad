@@ -91,7 +91,7 @@ def evaluate(xv):
             if m_.any(): w[m_] = sv[m_] @ DBi                                  # d vM / d u_e at the governing corner
         w *= (dpn_dse * xp ** Q / v)[:, None]
         np.add.at(G[:, k], edof.ravel(), w.ravel())
-        dPNe[:, k] = dpn_dse * Q * xp ** (Q - 1 + 1e-12) * v * smask           # explicit part
+        dPNe[:, k] = dpn_dse * Q * np.maximum(xp, 1e-6) ** (Q - 1) * v * smask           # explicit part
     Lm = np.zeros((3 * nn, len(cases))); Lm[free] = pypardiso.spsolve(Kf, G[free])
     for k in range(len(cases)):
         dPNe[:, k] -= PS * xp ** (PS - 1) * (1 - 1e-6) * np.einsum('ij,jk,ik->i', Lm[edof, k], KE, U[edof, k])
@@ -117,7 +117,7 @@ def make_con(k):
         return float(r['PN'][k] * c / S_ALLOW - 1.0)
     return con
 xv = np.full(nvar, float(__import__('os').environ.get('X0', '0.7')))
-for beta in (1.0, 2.0, 4.0, 8.0):
+for beta in tuple(float(b) for b in __import__("os").environ.get("BETAS", "1,2,4,8").split(",")):
     state['beta'] = beta; state['last'] = None
     SUBN = int(__import__('os').environ.get('SUBN', '10'))
     for sub in range(max(1, NEV // SUBN)):                                         # re-normalise c_k every SUBN evals (PN -> max)

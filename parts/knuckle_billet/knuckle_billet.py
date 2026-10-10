@@ -21,7 +21,7 @@ P = dict(hub_od=92.0, flange_r=71.0, flange_z=(62.0, 82.0), tongue_y=(-166.0, -4
          ear_boss_d=26.0, side_boss_d=32.0, keepout_r=45.0, flange_pockets=True, flange_pocket_angles=(95, 189), junction_r=6.0, ear_lug_to_flange_top=False, left_arm_h=None,
          flange_style='disc', ring_r=56.0, bolt_boss_r=11.5, floor_r=0.0, tongue_bottom_pocket=0.0, tongue_junction_r=0.0,
          left_root=(-50, 40, 76), right_root=(45, 45, 82), top_root=(-5, 55, 78), arm_left=None, arm_right=None, arm_top=None, rib_r2=(24.0, 30.0), tongue_blend=0.0, tongue_blend_len=32.0, sector_y=-12.0, hybrid_pockets=(), tongue_root_patch=0.0, tongue_under_wedge=0.0, wedge_flare=0.0,
-         layout='arms', ribs=True, frame_lt=(30.0, 36.0), frame_tr=(30.0, 36.0), strip_w=26.0, ear1_link_w=0.0, left_strut2=None, rib_size=None, rib_end_clear=14.0, rib_inner_solid=False)
+         layout='arms', ribs=True, frame_lt=(30.0, 36.0), frame_tr=(30.0, 36.0), strip_w=26.0, ear1_link_w=0.0, left_strut2=None, ties=(), rib_size=None, rib_end_clear=14.0, rib_inner_solid=False, ribs_left=False)
 if len(sys.argv) > 1 and sys.argv[1].endswith('.json'): P.update(json.load(open(sys.argv[1])))
 for k in ('arm_left', 'arm_right', 'arm_top'):
     if P[k] is None: P[k] = (P['arm_w'], P['left_arm_h'] or P['arm_h']) if k == 'arm_left' else (P['arm_w'], P['arm_h'])
@@ -151,6 +151,8 @@ def build():
         part += hbar(P['left_root'], e['left_eye']['c'], *P['arm_left'])
         part += hbar(P['right_root'], e['right_eye']['c'], *P['arm_right'])
         part += hbar(e['left_eye']['c'], e['top_eye']['c'], *P['frame_lt'], end_clear=26.0)
+        for A_, B_, w_, h_ in P['ties']:   # solid cross-ties / gusset webs (no pockets) closing strut-frame triangles
+            part += hbar(tuple(A_), tuple(B_), w_, h_, end_clear=1e3)
         if P['left_strut2']:   # second left strut: flange/ear-1 lug corner -> left eye (old rib L2 path)
             part += hbar((-62, 10, 80), e['left_eye']['c'], *P['left_strut2'], end_clear=14.0)
         part += hbar(e['top_eye']['c'], e['right_eye']['c'], *P['frame_tr'], end_clear=26.0)
@@ -162,11 +164,12 @@ def build():
         part += hbar(P['right_root'], e['right_eye']['c'], *P['arm_right'])
         part += hbar(P['top_root'], e['top_eye']['c'], *P['arm_top'], hint=(1, 0, 0))
     # rib: strut-clamp tongue -> right lateral eye (around the drive shaft), and tongue -> left eye via the flange
-    if P['ribs']:
+    if P['ribs'] or P['ribs_left']:
         rs = P['rib_size']; r2 = P['rib_r2'] if rs is None else rs; rs = (24.0, 30.0) if rs is None else rs
         ri = (24.0, 30.0) if P['rib_inner_solid'] else rs     # inner segments skirt the drive-shaft keep-out: keep them solid
-        part += hbar((4, -62, 96), (60, 0, 100), *ri, end_clear=P['rib_end_clear'])
-        part += hbar((60, 0, 100), e['right_eye']['c'], *r2, end_clear=P['rib_end_clear'])
+        if P['ribs']:
+            part += hbar((4, -62, 96), (60, 0, 100), *ri, end_clear=P['rib_end_clear'])
+            part += hbar((60, 0, 100), e['right_eye']['c'], *r2, end_clear=P['rib_end_clear'])
         part += hbar((-4, -60, 92), (-62, 10, 80), *ri, end_clear=P['rib_end_clear'])
         part += hbar((-62, 10, 80), e['left_eye']['c'], *rs, end_clear=P['rib_end_clear'])
     # eyes (exact OD/length)

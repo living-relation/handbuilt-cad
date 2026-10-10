@@ -213,3 +213,24 @@
   2. Recalibrate the allowable after a CalculiX check of the first rebuilt solid.
   3. Optionally add a ±Z milling (no-undercut) projection.
   4. Rebuild the converged layout as a build123d solid (it24) with solid gusseted nodes and ≥ 6 mm fillets at junctions, then verify with the 5-case CalculiX loop and the 24 interface checks.
+
+## 2026-10-09 chunk 9
+
+- **sc2_h4 (box):** stalled after 27 evaluations, with the log frozen for several minutes under box memory pressure (the balloon driver reported "Out of puff"). I killed it.
+  - Last saved state: β = 1, rho > 0.5 mass 1.90 kg, all cases ≤ 0.8 of the 230 allowable. Not converged and still grey, so not rendered (renders are for crisp results only).
+- **sc3_h4 (WSL, detached, about 3 s per evaluation):**
+  - Setup: `topo_stress.py` with β stages 1, 2, 4, 8, 16, 50 MMA evaluations per stage, densities starting at 0.45.
+  - Fix: `x̄^(q-1)` became NaN at x̄ = 0, so the explicit sensitivity now uses `max(x̄, 1e-6)`. The box copy has the same fix.
+  - Environment: pypardiso, nlopt, trimesh, rtree and scikit-image installed into `~/simvenv` (the first pip attempt hit an SSL error; the retry worked). `baseline/v4b_fixed.stl` and `iter/it11.stl` were copied to WSL for the design space.
+  - Status at report: β = 1 stage, evaluation 42, 1.75 kg, all cases ≤ 0.87. Log `topo/sc3_h4.out`, saved every 3 evaluations to `topo/sc3_h4.npz` (WSL only). Expected to finish about 10 minutes after the report.
+- **it24 / it25 (frame layout from the topology runs):** it14 frame plus solid gusset ties closing both strut-frame triangles, frame members 34x42, and a thicker hub web. Hub OD is 100 for it24 and 94 for it25.
+  - Gmsh's default 2D algorithm failed on overlapping boundary facets (surfaces 122/132). Meshing with `ALG2D=1` (MeshAdapt) plus HXT works; `run_iter.sh` passes the env through.
+  - **it25** (2.098 kg): bump 4.64, cornering 0.95, braking 1.56, combined 0.91, fatigue Goodman 3.12 (fully reversed 1.93). It fails at the ear-1 lug / flange-ring top corner (-64.7,31.3,82), the same frame-layout weak spot as it14/it15.
+  - **it24** (2.25 kg): CalculiX was still running on the box at report time.
+- **it26** (it25 plus the left ribs back via the new `ribs_left` option): the boolean fails (3 solids, invalid), with and without the left tie. Not run.
+- **Conclusion so far:** the frame layout needs the left rib path. It is the load path from the left strut root to the ear-1 lug corner. Every topology run removes it, and CalculiX says it is needed.
+- **Next chunk:**
+  1. Take sc3's crisp result (β 16) and render it.
+  2. Fix the it26 boolean, e.g. by moving the L2 rib end off the strut axis, or by building the left rib as one merged gusset plate.
+  3. Then verify with CalculiX.
+  4. Or recalibrate the voxel allowable around this junction, e.g. a junction stress-concentration factor of about 1.5, so the optimiser keeps the rib.
