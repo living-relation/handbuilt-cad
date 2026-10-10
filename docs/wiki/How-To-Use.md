@@ -19,9 +19,10 @@ source sim-tools/env.sh
 | 3. Hand-build | Copy `examples/bracket/bracket.py` into a new folder and change it. All sizes are named numbers at the top. | build123d |
 | 4. Export | The script writes `part.step` (for Fusion/CAM) and `part.stl` (for pictures/printing). | build123d |
 | 5. Fitment check | Write where the holes must be in `spec.json`, then check. | `tools/features.py` |
-| 6. Strength check | Hold one side, push another, read the safety factor. | `tools/quick_fea.py` (Gmsh + CalculiX) |
-| 7. Pictures | 6-view sheet (PNG) and a spin-around viewer (HTML for any browser). | `tools/views.py`, `tools/viewer.py` |
-| 8. Machining notes | Write stock size, setups, tools, tolerances in `MACHINING.md` next to the part. | a text file |
+| 6. CNC check | Can it be milled? Setups, inside corners tighter than your cutters, vertical corners, thin walls. | `tools/cnc_check.py` |
+| 7. Strength check | Hold one side, push another, read the safety factor. | `tools/quick_fea.py` (Gmsh + CalculiX) |
+| 8. Pictures | 6-view sheet (PNG) and a spin-around viewer (HTML for any browser). | `tools/views.py` (`--six` for the plain 6-view sheet), `tools/viewer.py` |
+| 9. Machining notes | Write stock size, setups, tools, tolerances in `MACHINING.md` next to the part. | a text file |
 
 ## Worked example: the sample L-bracket
 
@@ -45,16 +46,32 @@ You should see: `bracket: volume 2x.xx cm3, mass ~6x g (aluminium); wrote bracke
 You should see the holes listed, then `PASS` for each line in `spec.json` and `ALL PASS`. (If a hole moved, you get `FAIL` and the command exits with an error, which is handy in scripts.)
 
 ```bash
+../../.venv/bin/python ../../tools/cnc_check.py bracket.step --spec cnc_spec.json
+```
+This is a quick "can it be milled?" screen. It prints, and saves as `bracket_cnc.txt` + `bracket_cnc.json`:
+1. **Setups**: which directions the cutter has to come from (every flat face reachable, every hole on-axis). It's a lower bound, because it doesn't know when one part of the model blocks another.
+2. **Inside corners** with no radius (sharp) or a radius smaller than your smallest cutter, with their x, y, z.
+3. **Vertical inside corners** a cutter coming straight down can't make (they come out at the tool radius).
+4. **Thin walls** under the minimum wall, with locations.
+
+For the bracket you should see 3 directions (bottom, top, and the side for the upright hole), no corners and no thin walls, then `Result: nothing flagged`.
+`cnc_spec.json` lists the cutters you have and your minimum wall. Every key is optional; the defaults are:
+```json
+{"tool_radii_mm": [3.0, 5.0, 6.0], "min_wall_mm": 1.5, "spindle_axis": "z", "wall_samples": 20000, "max_listed": 25}
+```
+1.5 mm is an aluminium rule of thumb; use more for parts that carry load. Add `--strict` to make it exit with an error when anything is flagged (handy in scripts), and `--out PREFIX` to put the report somewhere else. Round holes (half a circle or more) count as drilled or bored, so they aren't reported as corners.
+
+```bash
 $SIM_VENV/bin/python ../../tools/quick_fea.py bracket.step --fix z:min --load z:max --force 500,0,0 --yield 276
 ```
 This holds the bottom of the base still (`z:min`), pushes the top of the upright sideways with 500 N (`z:max`, force X=500), and uses 6061-T6 aluminium (yield 276 MPa). You should see something like
 `peak stress ~60 MPa -> safety factor ~4 vs yield 276 MPa`. Results are in `bracket_fea/` (`summary.json`, and `result.vtu` to open in ParaView).
 
 ```bash
-../../.venv/bin/python ../../tools/views.py bracket.stl
+../../.venv/bin/python ../../tools/views.py bracket.stl --six --name "Sample bracket"
 ../../.venv/bin/python ../../tools/viewer.py bracket.stl -o bracket_viewer.html
 ```
-You get `bracket_views.png` (front/back/left/right/top/bottom/iso with the size and volume) and `bracket_viewer.html` (open it in a browser to spin it).
+You get `bracket_views.png` and `bracket_viewer.html` (open it in a browser to spin it). With `--six` the sheet is just the six labelled views (FRONT, BACK, LEFT, RIGHT, TOP, BOTTOM, each saying which side it looks from) in plain grey, plus the size and volume in the title. `--name` sets the part name on the labels. Leave `--six` off to get the older sheet with a 7th iso (3D) panel.
 
 **Now change it:** open `bracket.py`, set `THICK = 8.0`, and run `bash run_all.sh` again. The bracket is thicker, the hole check still passes, and the safety factor goes up.
 
@@ -70,8 +87,9 @@ Rename things, change the shape and sizes, and update `spec.json` with the holes
 | Command | What it does |
 |---|---|
 | `.venv/bin/python tools/features.py part.step [--spec spec.json]` | Lists round holes/bosses (diameter, axis, position) and checks them against a spec |
+| `.venv/bin/python tools/cnc_check.py part.step [--spec cnc_spec.json] [--strict] [--out PREFIX]` | CNC screen: setup directions, sharp or too-small inside corners, vertical corners, thin walls. Writes `_cnc.txt` + `_cnc.json` |
 | `$SIM_VENV/bin/python tools/quick_fea.py part.step --fix AX:min --load AX:max --force X,Y,Z [--E --nu --yield --size]` | Quick linear strength check. Units: mm, N, MPa |
-| `.venv/bin/python tools/views.py part.stl\|part.step [-o sheet.png]` | 6-view + iso picture sheet |
+| `.venv/bin/python tools/views.py part.stl\|part.step [-o sheet.png] [--six] [--name NAME]` | 6-view + iso picture sheet; `--six` = only the 6 labelled plain-grey views |
 | `.venv/bin/python tools/viewer.py part.stl [more.stl] -o view.html` | Interactive 3D viewer in one HTML file |
 | `bash setup.sh --check` | What's installed |
 
@@ -94,7 +112,7 @@ If you're an AI helping someone with this repo:
 
 1. Read `README.md`, this page, and [Conventions](Conventions.md). Run `bash setup.sh --check` before anything else.
 2. New parts go in a new folder (for example `parts/<name>/`), copied from `examples/bracket/`. Keep every size as a named number at the top.
-3. After every change: rebuild, run `tools/features.py --spec`, then `tools/quick_fea.py` for anything that carries load. Report the numbers (mass, PASS/FAIL, safety factor), not just "done".
+3. After every change: rebuild, run `tools/features.py --spec` and `tools/cnc_check.py`, then `tools/quick_fea.py` for anything that carries load. Report the numbers (mass, PASS/FAIL, safety factor), not just "done".
 4. Never scale scan data, never commit scans, secrets or big solver output, and never force-push. Keep personal part designs out of the public repo unless the owner says to share them.
 5. Use `.venv/bin/python` for CAD, `$SIM_VENV/bin/python` for meshing/FEA, and run heavy simulations in `~/sim-runs/`, not on `/mnt/c`.
 More detail: [For AI agents](AI-agents.md).
