@@ -94,7 +94,11 @@ You get `bracket_views.png` and `bracket_viewer.html` (open it in a browser to s
 ```bash
 ../../.venv/bin/python ../../tools/an_fitting.py --size 10 -o an10.step --stl
 ```
-You should see a JSON line (length, major diameter, volume, `"solids": 1, "valid": true`) and `PASS: one valid solid`. Sizes in the table: `-10` (7/8-14 UNF-2A) and `-6` (9/16-18 UNF-2A). In your own part script, `from an_fitting import AN, male_an_leg` gives the outer solid only (`leg, L = male_an_leg(AN[10], lead=0.5)`, nose face at `+Z = L`), so fuse it to your body first and cut one bore through everything. The `-6` nose, cone and thread length are scaled from the `-10`, so tell the owner to check them against a real `-6` fitting before machining.
+You should see a JSON line (length, major diameter, volume, `"solids": 1, "valid": true`) and `PASS: one valid solid`. Sizes in the table: `-10` (7/8-14 UNF-2A) and `-6` (9/16-18 UNF-2A). In your own part script, `from an_fitting import AN, male_an_leg` gives the outer solid only (`leg, L = male_an_leg(AN[10], lead=0.5)`, nose face at `+Z = L`), so fuse it to your body first and cut one bore through everything. Every flare-end number (nose-to-shoulder J, nose D, cone major C, 37°, nose-to-chamfer B, relief F × Q, root radius, bore A) comes from the `STD` table at the top of `an_fitting.py` (MS33656 / AS4395 / ISO 8434-2, with the source next to each value), and the threads from ASME B1.1 UNF-2A. The standard bore A is `AN[size]["bore_d"]` (12.29 for `-10`, 7.54 for `-6`); don't bore a male end bigger than that, or the nose face gets paper thin. After any change to the file, run the self-check:
+```bash
+../../.venv/bin/python ../../tools/an_fitting.py --selfcheck
+```
+It builds a `-6` and a `-10`, measures the meshes (not the parameters) and prints each dimension against its standard range. You should see `SELFCHECK PASS`; any `FAIL` row exits 1.
 
 **Now change it:** open `bracket.py`, set `THICK = 8.0`, and run `bash run_all.sh` again. The bracket is thicker, the hole check still passes, and the safety factor goes up.
 
@@ -115,6 +119,7 @@ Rename things, change the shape and sizes, and update `spec.json` with the holes
 | `.venv/bin/python tools/views.py part.stl\|part.step [-o sheet.png] [--six] [--name NAME]` | 6-view + iso picture sheet; `--six` = only the 6 labelled plain-grey views |
 | `.venv/bin/python tools/viewer.py part.stl [more.stl] -o view.html` | Interactive 3D viewer in one HTML file |
 | `.venv/bin/python tools/an_fitting.py --size 10\|6 [-o end.step] [--stl] [--no-bore] [--lead MM]` | Male AN / JIC 37° flare fitting end with a real UNF thread; checks it's one valid solid (exit 1 if not) |
+| `.venv/bin/python tools/an_fitting.py --selfcheck [--json rows.json]` | Measures built `-6` and `-10` ends against MS33656 / AS4395 / ISO 8434-2 and UNF-2A; exit 1 on any miss |
 | `bash setup.sh --check` | What's installed |
 
 Units everywhere: **millimetres, newtons, MPa, degrees, kilograms**.
