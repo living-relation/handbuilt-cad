@@ -100,6 +100,12 @@ You should see a JSON line (length, major diameter, volume, `"solids": 1, "valid
 ```
 It builds a `-6` and a `-10`, measures the meshes (not the parameters) and prints each dimension against its standard range. You should see `SELFCHECK PASS`; any `FAIL` row exits 1.
 
+**Blending where `fillet()` fails (for the agent).** Kernel fillets often fail where a lofted arm meets a plate. Don't sweep a circle along the junction by hand (those tubes come out invalid, or "valid" with a few % of the volume they should have). Use `tools/blend.py`: it finds the crease where the two solids meet, places a rolling ball of radius r on each section, lofts the fillet cross-sections, fuses them and checks the result. Try the demo first:
+```
+../../.venv/bin/python ../../tools/blend.py demo --angle 45 --r 6 -o tilt45
+```
+You should see `fused: valid True, solids 1, added ... vs expected ... -> PASS` and a JSON line with `"ok": true`. In your own script use `from blend import blend, fuse_blend`, then `res = blend(arm, plate, 6.0)` and `part, rep = fuse_blend(arm + plate, res, "part.step")`. Check `rep["ok"]` (valid, one solid, STEP re-import, and the volume check: the part must gain the expected fillet volume within 10 %) and read `res.notes`. A note about **sharp corners** in the crease means one body has a sharp edge or a flat end cap poking out through the other; the blend stops on each side of that corner, so fix the geometry if the corner shows. For two STEP files: `tools/blend.py pair arm.step plate.step --r 6 -o out`. It needs `shapely` (`uv pip install shapely` into the build venv).
+
 **Now change it:** open `bracket.py`, set `THICK = 8.0`, and run `bash run_all.sh` again. The bracket is thicker, the hole check still passes, and the safety factor goes up.
 
 ## Make your own part
@@ -120,6 +126,7 @@ Rename things, change the shape and sizes, and update `spec.json` with the holes
 | `.venv/bin/python tools/viewer.py part.stl [more.stl] -o view.html` | Interactive 3D viewer in one HTML file |
 | `.venv/bin/python tools/an_fitting.py --size 10\|6 [-o end.step] [--stl] [--no-bore] [--lead MM]` | Male AN / JIC 37° flare fitting end with a real UNF thread; checks it's one valid solid (exit 1 if not) |
 | `.venv/bin/python tools/an_fitting.py --selfcheck [--json rows.json]` | Measures built `-6` and `-10` ends against MS33656 / AS4395 / ISO 8434-2 and UNF-2A; exit 1 on any miss |
+| `.venv/bin/python tools/blend.py pair A.step B.step --r 6 [--base body.step] [-o OUT] [--path crease.step]` | Rolling-ball blend (fillet) between two solids where `fillet()` fails; fuses it and checks valid, one solid, STEP re-import and fillet volume (exit 1 on a miss). `demo --angle 45` and `compare` show it on a tilted cylinder |
 | `bash setup.sh --check` | What's installed |
 
 Units everywhere: **millimetres, newtons, MPa, degrees, kilograms**.
@@ -133,6 +140,7 @@ Units everywhere: **millimetres, newtons, MPa, degrees, kilograms**.
 | `no nodes found for x:max` | No mesh nodes sit exactly on that plane (e.g. a rounded end). Pick a flat face, or add `--tol 0.5`. |
 | Safety factor looks crazy high/low | Check the force direction and units (N), and that `--fix` is a big flat face. A quick check is not a full analysis. |
 | build123d `fillet` error | The radius is too big for that edge. Make it smaller, or fillet before cutting holes. |
+| `fillet` fails where a loft meets a plate | Use `tools/blend.py` (rolling-ball blend solid, fused and volume-checked) instead of sweeping a circle yourself. |
 | STEP opens in Fusion as a mesh | You opened the `.stl`. Open the `.step`. |
 
 ## For AI assistants
