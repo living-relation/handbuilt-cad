@@ -5,7 +5,7 @@ Needs shapely (2-D section regions); demo/compare reference volumes need scipy.
     res = blend(arm, plate, r=6)                  # BlendResult: .pieces (solids to fuse), .expected_mm3, .samples, .notes
     part, rep = fuse_blend(arm + plate, res)      # fused part + checks (valid, 1 solid, added volume vs expected)
 
-    .venv/bin/python tools/blend.py demo --angle 45 --r 6 -o tilt45       # tilted cylinder on a plate, STEP + JSON report
+    .venv/bin/python tools/blend.py demo --angle 45 --r 6 -o runs/tilt45  # tilted cylinder on a plate, STEP + JSON report
     .venv/bin/python tools/blend.py pair A.step B.step --r 6 [--base body.step] -o out
     .venv/bin/python tools/blend.py compare --angle 45 --r 6              # tube / classic approaches side by side (volume checks)
 
@@ -574,7 +574,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="Rolling-ball blend (fillet-equivalent) solid between two solids, fused and checked.")
     sub = ap.add_subparsers(dest="cmd", required=True)
     d = sub.add_parser("demo", help="tilted cylinder on a plate"); d.add_argument("--angle", type=float, default=45); d.add_argument("--r", type=float, default=6)
-    d.add_argument("-o", "--out", default=None, help="output prefix (STEP + JSON)")
+    d.add_argument("-o", "--out", default=None, help="output prefix (STEP + JSON), default runs/tilt<angle>_r<r> (runs/ is git-ignored)")
     d.add_argument("--no-reference", action="store_true", help="skip the voxel rolling-ball reference volume (scipy)")
     c = sub.add_parser("compare", help="tube / classic approaches on the demo (volume checks)"); c.add_argument("--angle", type=float, default=45); c.add_argument("--r", type=float, default=6)
     c.add_argument("--exact", type=float, default=None, help="reference fillet volume mm3 (e.g. from a voxel closing)")
@@ -585,8 +585,9 @@ def main(argv=None):
     p.add_argument("--loops", default=None, help="comma list of crease loop indices (default all)")
     p.add_argument("--path", default=None, help="STEP with the crease curve(s) to blend along instead of the computed section")
     a = ap.parse_args(argv); t0 = time.time(); rep = {}
+    if getattr(a, "out", None) and os.path.dirname(a.out): os.makedirs(os.path.dirname(a.out), exist_ok=True)
     if a.cmd == "demo":
-        out = a.out or "tilt%g_r%g" % (a.angle, a.r)
+        out = a.out or os.path.join("runs", "tilt%g_r%g" % (a.angle, a.r)); os.makedirs(os.path.dirname(out), exist_ok=True)
         A, B = tilt_demo(a.angle); res = blend(A, B, a.r)
         part, rep = fuse_blend(A + B, res, out + ".step")
         if not a.no_reference:
