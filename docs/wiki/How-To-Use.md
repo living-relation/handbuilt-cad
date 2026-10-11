@@ -126,7 +126,7 @@ Rename things, change the shape and sizes, and update `spec.json` with the holes
 | `.venv/bin/python tools/viewer.py part.stl [more.stl] -o view.html` | Interactive 3D viewer in one HTML file |
 | `.venv/bin/python tools/an_fitting.py --size 10\|6 [-o end.step] [--stl] [--no-bore] [--lead MM]` | Male AN / JIC 37° flare fitting end with a real UNF thread; checks it's one valid solid (exit 1 if not) |
 | `.venv/bin/python tools/an_fitting.py --selfcheck [--json rows.json]` | Measures built `-6` and `-10` ends against MS33656 / AS4395 / ISO 8434-2 and UNF-2A; exit 1 on any miss |
-| `.venv/bin/python tools/blend.py pair A.step B.step --r 6 [--base body.step] [-o OUT] [--path crease.step]` | Rolling-ball blend (fillet) between two solids where `fillet()` fails; fuses it and checks valid, one solid, STEP re-import and fillet volume (exit 1 on a miss). `demo --angle 45` and `compare` show it on a tilted cylinder |
+| `.venv/bin/python tools/blend.py pair A.step B.step --r 6 [--base body.step] [-o OUT] [--path crease.step]` | Rolling-ball blend (fillet) between two solids where `fillet()` fails; fuses it and checks valid, one solid, STEP re-import and fillet volume (the gain is measured locally as pieces minus base, never as the difference of two big part volumes; exit 1 on a miss). `demo --angle 45` and `compare` show it on a tilted cylinder |
 | `bash setup.sh --check` | What's installed |
 
 Units everywhere: **millimetres, newtons, MPa, degrees, kilograms**.

@@ -26,10 +26,13 @@ No offsets of the input bodies and no pipe sweeps, so it works on lofted / multi
 MakePipeShell fail.
 
 Checks: fuse_blend() returns valid, solid count, STEP re-import, and the volume check: the fused part must gain the
-expected volume within 10 %, where expected = sum over sections of the true 2-D region (section profile minus A and B,
-cut in each section plane) times the slab between neighbouring sections. A fake / twisted / inside-out solid (the
-~4 % tubes) fails it. For flat faces this equals r^2 (cot(t/2) - (pi - t)/2) per mm for dihedral angle t
-((1 - pi/4) r^2 at 90 deg), reported as planar_formula_mm3.
+expected volume within 10 %. Expected = sum over sections of the true 2-D region (section profile minus A and B, cut
+in each section plane, so it follows a dihedral angle that changes along the crease) times the slab between
+neighbouring sections. The gain is measured locally as vol(pieces - base) with a mesh cross-check (added_volume),
+never as part.volume - base.volume: OCC's volume integral can be ~1 % off on extrusion / B-spline bodies, and the
+difference of two big volumes then swamps the fillet. A fake / twisted / inside-out solid (the ~4 % tubes) fails
+the check. For flat faces expected = r^2 (cot(t/2) - (pi - t)/2) per mm for dihedral angle t ((1 - pi/4) r^2 at
+90 deg), reported as planar_formula_mm3.
 
 Also here: ball_tube() (rolling-ball swept volume along a path, MakePipeShell with CorrectedFrenet / Frenet / fixed
 binormal, or a chain of capsules, checked against pi r^2 L) and blend_classic() (offset(A, r) & offset(B, r) - tube
@@ -461,6 +464,40 @@ def volume_verdict(actual, expected, tol=0.1):
     q = actual / expected
     return "PASS" if abs(q - 1) <= tol else ("FAKE/EMPTY" if q < 0.5 else "MISMATCH")
 
+def mesh_volume(S, tol=0.005):
+    """Volume of a fine triangulation (signed tetrahedra). Independent of OCC's volume integration."""
+    vs, ts = S.tessellate(tol, 0.05); v = 0.0
+    P = [(p.X, p.Y, p.Z) for p in vs]
+    for a, b, c in ts:
+        (ax, ay, az), (bx, by, bz), (cx, cy, cz) = P[a], P[b], P[c]
+        v += ax * (by * cz - bz * cy) - ay * (bx * cz - bz * cx) + az * (bx * cy - by * cx)
+    return v / 6.0
+
+def added_volume(base, pieces, part=None):
+    """Volume the blend pieces add to base, measured locally as vol(pieces - base) (a small solid), with a mesh-volume
+    cross-check. Not part.volume - base.volume: OCC's volume integration (GProp) can be off by 0.5-1 % on big bodies
+    with extrusion / B-spline faces (lf20 tongue: 220101 mm3 by GProp, 218591 by a 0.003 mm mesh), and the error
+    changes when the fuse re-trims those faces, so the difference of two big volumes can be off by more than a whole
+    fillet (lf20 tongue + plate: 1148 vs 870 mm3 -> a false x1.31 MISMATCH). Returns (added, report fields)."""
+    rep = {}
+    if part is not None: rep["added_gprop_diff_mm3"] = round(part.volume - base.volume, 1)   # old metric, for reference
+    try:
+        U = pieces[0] if len(pieces) == 1 else pieces[0].fuse(*pieces[1:]).clean()
+        D = U.cut(base); sols = D.solids() if D is not None else []
+        if not sols: raise RuntimeError("empty")
+        vg = sum(s.volume for s in sols)
+        try: vm = sum(mesh_volume(s) for s in sols)
+        except Exception: vm = None
+        rep.update(added_method="pieces - base", added_local_gprop_mm3=round(vg, 1),
+                   added_local_mesh_mm3=round(vm, 1) if vm is not None else None)
+        added = vg
+        if vm is not None and abs(vm - vg) > 0.02 * max(abs(vm), 1.0):        # GProp unreliable on these faces
+            added = vm; rep["added_method"] = "pieces - base (mesh volume; GProp disagreed by %.1f %%)" % (100 * (vg / vm - 1))
+    except Exception as ex:
+        if part is None: raise
+        added = part.volume - base.volume; rep["added_method"] = "part - base GProp difference (local cut failed: %s)" % str(ex)[:60]
+    return added, rep
+
 def fuse_blend(base, res, step_path=None, tol=0.1, log=print):
     """Fuse the blend pieces into base; checks validity, single solid, STEP re-import and added volume vs expected."""
     part = base
@@ -471,7 +508,7 @@ def fuse_blend(base, res, step_path=None, tol=0.1, log=print):
             if len(q.solids()) == 1 and q.is_valid: part = q; break
         else: raise RuntimeError("fuse of blend piece %d failed" % i)
     rep = check_solid(part, step_path)
-    added = part.volume - base.volume
+    added, vrep = added_volume(base, res.pieces, part); rep.update(vrep)
     rep.update(added_mm3=round(added, 1), expected_mm3=round(res.expected_mm3, 1),
                ratio=round(added / res.expected_mm3, 4) if res.expected_mm3 else None,
                volume_check=volume_verdict(added, res.expected_mm3, tol))
