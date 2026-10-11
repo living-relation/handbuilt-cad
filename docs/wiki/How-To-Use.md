@@ -67,10 +67,12 @@ This is a quick "can it be milled?" screen. It prints, and saves as `bracket_cnc
 For the bracket you should see 3 directions (bottom, top, and the side for the upright hole), no corners and no thin walls, then `Result: nothing flagged`.
 `cnc_spec.json` lists the cutters you have and your minimum wall. Every key is optional; the defaults are:
 ```json
-{"tool_radii_mm": [3.0, 5.0, 6.0], "min_wall_mm": 1.5, "spindle_axis": "z", "wall_samples": 20000,
+{"tool_radii_mm": [3.0, 5.0, 6.0], "lip_max_mm": 0.1, "min_wall_mm": 1.5, "spindle_axis": "z", "wall_samples": 20000,
  "reach_samples": 20000, "reach_min_gain_pct": 0.25, "ray_chunk": 1000, "mesh_tol_mm": 0.02, "max_listed": 25}
 ```
 1.5 mm is an aluminium rule of thumb; use more for parts that carry load. Add `--strict` to make it exit with an error when anything is flagged (handy in scripts), and `--out PREFIX` to put the report somewhere else. Round holes (half a circle or more) count as drilled or bored, so they aren't reported as corners.
+
+**Lips.** A concave edge next to a face narrower than `lip_max_mm` (0.1 mm), where the faces on both sides of that sliver are within 15 deg of tangent, is a **lip**: a tiny step, not a corner (a `tools/blend.py` blend leaves a 0.015 mm step along each edge of the blend, one per lofted strip, which used to add hundreds of "sharp corners"). Lips are counted on their own line under item 2 and listed under `lips` in the JSON; they don't make the check fail. A sliver face inside a real corner (the faces either side turn more than 15 deg, e.g. a failed tiny fillet or a boolean seam) is still reported as a sharp corner, marked "split by a sliver face". Set `"lip_max_mm": 0` to count every concave edge as before.
 
 Two extra options for big or curved parts:
 - `--reach` adds **5. Reach**. It shoots rays from points all over the surface toward the 6 axis directions, the setup directions from item 1 and the main hole axes. It reports the fewest directions that together see everything reachable, how much each one adds, and what % of the surface no direction can see, with locations. Give your own plan instead with `--reach "+Z,-Z,+X,0.97/0/-0.24"` (axis names or x/y/z vectors). It is line of sight only: it doesn't know cutter length, holder or radius. Treat it as "at least this hard", not as a CAM plan.
@@ -120,7 +122,7 @@ Rename things, change the shape and sizes, and update `spec.json` with the holes
 | Command | What it does |
 |---|---|
 | `.venv/bin/python tools/features.py part.step [--spec spec.json]` | Lists round holes/bosses (diameter, axis, position) and checks them against a spec |
-| `.venv/bin/python tools/cnc_check.py part.step [--spec cnc_spec.json] [--strict] [--out PREFIX] [--stl part.stl] [--reach [DIRS]]` | CNC screen: setup directions, sharp or too-small inside corners, vertical corners, thin walls; `--reach` = line-of-sight surface coverage and fewest directions. Writes `_cnc.txt` + `_cnc.json` |
+| `.venv/bin/python tools/cnc_check.py part.step [--spec cnc_spec.json] [--strict] [--out PREFIX] [--stl part.stl] [--reach [DIRS]]` | CNC screen: setup directions, sharp or too-small inside corners (tiny blend run-out steps counted separately as lips), vertical corners, thin walls; `--reach` = line-of-sight surface coverage and fewest directions. Writes `_cnc.txt` + `_cnc.json` |
 | `$SIM_VENV/bin/python tools/quick_fea.py part.step --fix AX:min --load AX:max --force X,Y,Z [--E --nu --yield --size]` | Quick linear strength check. Units: mm, N, MPa |
 | `.venv/bin/python tools/views.py part.stl\|part.step [-o sheet.png] [--six] [--name NAME]` | 6-view + iso picture sheet; `--six` = only the 6 labelled plain-grey views |
 | `.venv/bin/python tools/viewer.py part.stl [more.stl] -o view.html` | Interactive 3D viewer in one HTML file |

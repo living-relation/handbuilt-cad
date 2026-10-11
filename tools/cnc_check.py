@@ -11,6 +11,8 @@ Writes <part>_cnc.txt (plain language) and <part>_cnc.json next to the STEP (or 
 
 Spec JSON (every key optional; defaults shown):
     {"tool_radii_mm": [3.0, 5.0, 6.0],   # end mills you have (radius). Smallest = tightest inside corner you can cut
+     "lip_max_mm": 0.1,                  # a concave edge next to a face narrower than this, with the faces either side of that
+                                         # sliver within 15 deg of tangent, is a lip (tiny step, e.g. a blend run-out), not a corner. 0 = off
      "min_wall_mm": 1.5,                 # thinner walls are flagged (aluminium rule of thumb; use more for parts that carry load)
      "spindle_axis": "z",                # the "Z-down" direction for the vertical-corner check (x, y or z)
      "wall_samples": 20000,              # surface points used for the wall scan
@@ -37,7 +39,7 @@ from OCP.BRepTools import BRepTools
 from OCP.TopAbs import TopAbs_IN
 from OCP.gp import gp_Pnt
 
-DEFAULTS = dict(tool_radii_mm=[3.0, 5.0, 6.0], min_wall_mm=1.5, spindle_axis="z", wall_samples=20000,
+DEFAULTS = dict(tool_radii_mm=[3.0, 5.0, 6.0], lip_max_mm=0.1, min_wall_mm=1.5, spindle_axis="z", wall_samples=20000,
                 reach_samples=20000, reach_min_gain_pct=0.25, ray_chunk=1000, mesh_tol_mm=0.02, max_listed=25)
 AXES = {"x": Vector(1, 0, 0), "y": Vector(0, 1, 0), "z": Vector(0, 0, 1)}
 
@@ -91,10 +93,50 @@ def is_vertical(e, n1, n2, ax):
     tang = [e.tangent_at(t) for t in (0.1, 0.5, 0.9)]
     return all(abs(t.dot(ax)) > 0.98 for t in tang) and abs(n1.dot(ax)) < 0.2 and abs(n2.dot(ax)) < 0.2
 
+def _narrow(face, p, n, t, w, tol=0.01):
+    """True when face is narrower than w at edge point p (n: face normal at p, t: edge tangent): neither point w away
+    from p across the edge, in the face's tangent plane, lies on the face."""
+    from OCP.BRepExtrema import BRepExtrema_DistShapeShape
+    from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeVertex
+    d = n.cross(t)
+    if d.length < 1e-9: return False
+    d = d.normalized()
+    for sg in (1, -1):
+        q = p + d * (sg * w)
+        dd = BRepExtrema_DistShapeShape(BRepBuilderAPI_MakeVertex(gp_Pnt(q.X, q.Y, q.Z)).Vertex(), face.wrapped)
+        if dd.IsDone() and dd.Value() < tol + w * w: return False   # w*w: allows for the face curving away (radius >= w/2)
+    return True
+
+def _sliver_turn(e, fs, fo, w, adj):
+    """fs is a face narrower than w all along concave edge e (checked at 1/4, 1/2, 3/4), fo the other face of e.
+    Returns the angle (deg) between fo and the face on the far side of the sliver, or None if fs is not a sliver."""
+    for u in (0.25, 0.5, 0.75):
+        p = e.position_at(u)
+        if not _narrow(fs, p, fs.normal_at(p), e.tangent_at(u), w): return None
+    p = e.position_at(0.5); best = None
+    for e2 in fs.edges():                                        # the sliver's other long edge = its edge nearest to p
+        if e2.is_same(e): continue
+        try: dist = e2.distance_to(p)
+        except Exception: continue
+        if best is None or dist < best[0]: best = (dist, e2)
+    if best is None or best[0] > 2 * w: return None
+    far = [g for g in adj.get(hash(best[1]), []) if not g.is_same(fs)]
+    if not far: return None
+    try:
+        q = min((best[1].position_at(i / 10) for i in range(11)), key=lambda x: (x - p).length)   # far-edge point near p
+        n1, n2 = fo.normal_at(p), far[0].normal_at(q)
+    except Exception: return None
+    return math.degrees(math.acos(max(-1.0, min(1.0, n1.dot(n2)))))
+
 def find_corners(part, spec):
-    """Concave fillets smaller than the smallest tool, and sharp (r0) concave edges."""
-    rmin = min(spec["tool_radii_mm"]); ax = AXES[spec["spindle_axis"]]
-    small, sharp, holes = [], [], []
+    """Concave fillets smaller than the smallest tool, sharp (r0) concave edges, and lips. A lip is a concave edge
+    next to a sliver face (narrower than spec lip_max_mm all along the edge) where the faces on both sides of the
+    sliver are within 15 deg of tangent: a tiny step such as the 0.015 mm run-out a section-loft blend leaves, which no
+    tool has to cut. If the faces either side of the sliver turn more than that, it is a real corner split by a sliver
+    face (a failed tiny fillet, a boolean seam): it stays a sharp corner, marked sliver_face."""
+    rmin = min(spec["tool_radii_mm"]); ax = AXES[spec["spindle_axis"]]; lipw = spec.get("lip_max_mm", 0) or 0
+    small, sharp, holes, lips = [], [], [], []
+    ef = edge_faces(part.solid); adj = {hash(e): fs for e, fs in ef}
     for f in part.solid.faces():
         try: rf = Part.round_face(f) if f.geom_type in (GeomType.CYLINDER, GeomType.TORUS) else None
         except Exception: rf = None                            # odd / degenerate face: skip, don't crash
@@ -104,7 +146,7 @@ def find_corners(part, spec):
         if r < rmin - 1e-6:
             vert = kind == "cylinder" and abs(d.dot(ax)) > 0.98
             small.append(dict(r=round(r, 2), kind=kind, at=xyz(f.center()), area_mm2=round(f.area, 1), vertical=vert))
-    for e, (f1, f2) in edge_faces(part.solid):
+    for e, (f1, f2) in ef:
         if e.length < 0.2: continue
         p = e.position_at(0.5)
         try: n1, n2 = f1.normal_at(p), f2.normal_at(p)
@@ -113,11 +155,20 @@ def find_corners(part, spec):
         if ang < 15: continue                                  # tangent join (fillet run-out)
         eps = min(0.05, 0.1 * e.length)
         if part.inside(p - n1 * eps + n2 * eps) and part.inside(p - n2 * eps + n1 * eps):
-            sharp.append(dict(at=xyz(p), length=round(e.length, 1), edge=e.geom_type.name.lower(),
-                              face_angle_deg=round(ang), vertical=is_vertical(e, n1, n2, ax),
-                              round_edge=e.geom_type == GeomType.CIRCLE))
-    sharp.sort(key=lambda c: -c["length"]); small.sort(key=lambda c: c["r"])
-    return small, sharp, holes
+            c = dict(at=xyz(p), length=round(e.length, 1), edge=e.geom_type.name.lower(),
+                     face_angle_deg=round(ang), vertical=is_vertical(e, n1, n2, ax), round_edge=e.geom_type == GeomType.CIRCLE)
+            if lipw > 0:
+                turn = None
+                for fs, fo in ((f1, f2), (f2, f1)):
+                    try: turn = _sliver_turn(e, fs, fo, lipw, adj)
+                    except Exception: turn = None
+                    if turn is not None: break
+                if turn is not None and turn < 15:
+                    lips.append(dict(at=c["at"], length=c["length"], face_angle_deg=c["face_angle_deg"], net_turn_deg=round(turn, 1))); continue
+                if turn is not None: c.update(sliver_face=True, net_turn_deg=round(turn))
+            sharp.append(c)
+    sharp.sort(key=lambda c: -c["length"]); small.sort(key=lambda c: c["r"]); lips.sort(key=lambda c: -c["length"])
+    return small, sharp, holes, lips
 
 def find_setups(part, holes):
     """Greedy cover: fewest tool directions so every flat face is reachable and every hole is on-axis.
@@ -318,7 +369,7 @@ def find_reach(m, spec, setups, holes, planned=None):
                 per_direction=[dict(direction=dir_name(d), vector=xyz(d, 3), sees_pct=pct(V[:, j].sum())) for j, d in enumerate(dirs)],
                 unreachable_areas=[dict(around=[int(x) for x in k], mm2=int(round(c * area))) for k, c in worst])
 
-def report_text(name, part, spec, setups, small, sharp, walls, mesh, reach):
+def report_text(name, part, spec, setups, small, sharp, walls, mesh, reach, lips=()):
     L = spec["max_listed"]; rmin = min(spec["tool_radii_mm"]); ax = spec["spindle_axis"].upper()
     vert = [c for c in sharp if c["vertical"]] + [c for c in small if c["vertical"]]
     bb = part.solid.bounding_box().size
@@ -332,8 +383,13 @@ def report_text(name, part, spec, setups, small, sharp, walls, mesh, reach):
     out += [f"   - r{c['r']} {c['kind']} at {c['at']}" for c in small[:L]]
     rnd = sum(c["round_edge"] for c in sharp)
     if sharp: out.append(f"   sharp edges ({rnd} are round edges such as bore shoulders or grooves, usually fine when turned or bored):")
-    out += [f"   - {c['length']} mm {c['edge']} edge at {c['at']}, faces meet at {c['face_angle_deg']} deg" for c in sharp[:L]]
+    out += [f"   - {c['length']} mm {c['edge']} edge at {c['at']}, faces meet at {c['face_angle_deg']} deg"
+            + (f" (split by a sliver face, {c['net_turn_deg']} deg turn across it)" if c.get("sliver_face") else "") for c in sharp[:L]]
     if len(sharp) > L: out.append(f"   ... {len(sharp) - L} more in the JSON")
+    if spec.get("lip_max_mm"):
+        out.append(f"   lips (not counted above): {len(lips)} concave edge(s), {sum(c['length'] for c in lips):.0f} mm in total, next to a face "
+                   f"narrower than {spec['lip_max_mm']} mm with the faces either side within 15 deg of tangent (tiny steps such as "
+                   f"blend run-outs; listed in the JSON, lip_max_mm 0 turns this off)")
     out += ["", f"3. Vertical inside corners a {ax}-down cutter can't make: {len(vert)}"]
     out += [f"   - {'sharp' if 'length' in c else 'r' + str(c['r'])} at {c['at']}" + (f", {c['length']} mm tall" if 'length' in c else "")
             for c in vert[:L]]
@@ -380,19 +436,19 @@ def main():
     except Exception: sys.exit(f"--reach: can't read directions {a.reach!r} (use e.g. '+Z,-X,0.97/0/-0.24'; put --reach after the STEP file)")
     T = {}; t0 = time.perf_counter(); tic = lambda k: T.__setitem__(k, round(time.perf_counter() - t0 - sum(T.values()), 1))
     part = Part(a.step); tic("load_step")
-    small, sharp, holes = find_corners(part, spec); tic("corners")
+    small, sharp, holes, lips = find_corners(part, spec); tic("corners")
     setups = find_setups(part, holes); tic("setups")
     m, mesh = load_mesh(part, a.stl, mesh_tol(part, spec)); tic("mesh")
     walls = find_thin_walls(m, spec) if m is not None else None; tic("walls")
     reach = find_reach(m, spec, setups, holes, planned) if (a.reach and m is not None) else None
     if a.reach: tic("reach")
-    txt, flagged = report_text(os.path.basename(a.step), part, spec, setups, small, sharp, walls, mesh, reach)
+    txt, flagged = report_text(os.path.basename(a.step), part, spec, setups, small, sharp, walls, mesh, reach, lips)
     txt += f"\n(time {sum(T.values()):.1f} s, peak memory {peak_rss_mb():.0f} MB)"
     pre = a.out or os.path.splitext(a.step)[0] + "_cnc"
     open(pre + ".txt", "w").write(txt + "\n")
     setups_js = [{k: v for k, v in s.items() if k != "vec"} for s in setups]
     js = dict(part=a.step, spec=spec, n_solids=part.n_solids, valid=part.valid, setups=setups_js,
-              holes=[dict(h, axis=xyz(h["axis"], 3), area=round(h["area"], 1)) for h in holes], small_fillets=small, sharp_concave_edges=sharp,
+              holes=[dict(h, axis=xyz(h["axis"], 3), area=round(h["area"], 1)) for h in holes], small_fillets=small, sharp_concave_edges=sharp, lips=lips,
               vertical_corners=[c for c in sharp + small if c["vertical"]], mesh=mesh, walls=walls, reach=reach, flagged=flagged,
               timing_s=T, peak_rss_mb=peak_rss_mb())
     json.dump(js, open(pre + ".json", "w"), indent=1, default=lambda o: o.item() if hasattr(o, "item") else str(o))
