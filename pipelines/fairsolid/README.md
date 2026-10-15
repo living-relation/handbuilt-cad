@@ -30,6 +30,27 @@ Always run inside the venv. Put each scan in its own new folder under `runs\`.
 
 Tests: `.venv\Scripts\python.exe -m pytest -q` (about 8 minutes). See `AGENTS.md` for working rules.
 
+### Linux / WSL
+
+Fairsolid also runs on Linux and in WSL (Ubuntu). Clone it onto the Linux file system
+(for example `~/projects/fairsolid`, not `/mnt/c`) and give it its own Python 3.13 venv with
+[uv](https://docs.astral.sh/uv/). It matches the Windows pin, 3.13.12:
+
+    git clone https://github.com/living-relation/fairsolid ~/projects/fairsolid
+    cd ~/projects/fairsolid
+    uv venv --python 3.13.12 .venv
+    uv pip install --python .venv/bin/python -e ".[test]"
+
+Then use the same commands with `.venv/bin/fairsolid` and forward slashes:
+
+    .venv/bin/fairsolid prepare SCAN --run runs/X
+    .venv/bin/fairsolid choose N --run runs/X
+    .venv/bin/fairsolid fit --run runs/X --units metric
+
+Tests: `.venv/bin/python -m pytest -q`. Tools that call Fairsolid from elsewhere (for example the
+handbuilt-models `tools/scan_helper.py`) find it through the `FAIRSOLID_HOME` environment variable,
+which should point at this checkout.
+
 ## Stages
 
 | Stage | Does |

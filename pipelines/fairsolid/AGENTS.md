@@ -4,6 +4,9 @@ Fairsolid is Grok Bot's private helper tool (see README). It is not meant for ma
 
 - Always run the venv: `.venv\Scripts\fairsolid.exe ...` (or `.venv\Scripts\python.exe -m fairsolid.cli ...`).
   Don't install into the system Python, and don't set PYTHONIOENCODING.
+- On Linux / WSL, use the checkout's own venv: `.venv/bin/fairsolid ...` (setup in README,
+  "Linux / WSL"). Keep the clone on the Linux file system, not `/mnt/c`. Use `runs/X` paths.
+  Other tools find this checkout through `FAIRSOLID_HOME`.
 - Put each scan in its own new folder under `runs\`. Never reuse or overwrite an existing run
   folder unless the user asks. `runs\` is not committed.
 - Never rescale a scan. If a size or units check stops a run, report it; don't "fix" it with
