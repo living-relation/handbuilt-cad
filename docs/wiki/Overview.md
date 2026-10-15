@@ -10,7 +10,7 @@ On top of that, some parts get:
 
 - **Strength checks (FEA):** Gmsh meshes the STEP, CalculiX solves load cases from `knuckle_billet/LOADS.md`, ParaView/matplotlib render the results.
 - **Topology optimisation:** density (SIMP) and stress-limited runs to see where material can go, then a rebuild as a machinable solid.
-- **Machining plans:** setups, stock size, tools and tolerances (`knuckle_billet/final/MACHINING.md`).
+- **Machining plans:** setups, stock size, tools and tolerances (`MACHINING.md` in the billet knuckle part folder under `$MODELS_DIR`).
 
 ## The pieces and where they live
 

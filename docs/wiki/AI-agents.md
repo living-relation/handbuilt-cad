@@ -11,4 +11,4 @@ This repo is public so AI tools can read it. Start with [How to use](How-To-Use.
 3. **Change a part:** edit the named dimensions, rerun the script, re-check fit (and FEA for structural parts), update the [Parts index](Parts.md) and add a dated line to `NOTES.md`.
 4. **Don't:** move existing folders, scale scans, commit scans/solver output/secrets, force-push, or edit Fairsolid from here (it is a separate repo: <https://github.com/living-relation/fairsolid>).
 5. **Public repo:** never write API keys, tokens, emails or personal paths into files here.
-6. **Ask the owner** before machining-critical changes to the final knuckle versions in `knuckle_billet/final/`.
+6. **Ask the owner** before machining-critical changes to the final knuckle versions (scripts in `knuckle_billet/`, part files in `$MODELS_DIR/knuckle_billet_<MMDD>/`).

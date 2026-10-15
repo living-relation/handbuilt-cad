@@ -1,5 +1,8 @@
 # Layout — where everything goes
 
+> **Part files moved (2026-10-15):** finished part outputs (STEP, STL, PNG renders, notes) are no longer in this repo. They live in the owner's models folder, `$MODELS_DIR/<job>_<MMDD>/revN/`, each rev with a `SUMMARY.md` and a `src/` copy of its scripts. The folders below keep the generation scripts; rebuild a part from its script, or point `MODELS_DIR` at your own models folder.
+
+
 [← Home](../../README.md)
 
 Existing paths are kept exactly as they were, so scripts keep working. New things follow the same pattern.
