@@ -155,3 +155,24 @@ If you're an AI helping someone with this repo:
 4. Never scale scan data, never commit scans, secrets or big solver output, and never force-push. Keep personal part designs out of the public repo unless the owner says to share them.
 5. Use `.venv/bin/python` for CAD, `$SIM_VENV/bin/python` for meshing/FEA, and run heavy simulations in `~/sim-runs/`, not on `/mnt/c`.
 More detail: [For AI agents](AI-agents.md).
+
+## Helpers: Fairsolid runs and new revs
+
+- `tools/scan_helper.py` runs [Fairsolid](https://github.com/living-relation/fairsolid) on a scan. It finds Fairsolid **only** through `FAIRSOLID_HOME` (a Fairsolid checkout with its own `.venv`), so nothing in this repo hard-codes where it lives:
+
+  ```bash
+  export FAIRSOLID_HOME=~/projects/fairsolid
+  .venv/bin/python tools/scan_helper.py check
+  .venv/bin/python tools/scan_helper.py prepare ~/scans/bracket.stl --run /tmp/bracket_run
+  .venv/bin/python tools/scan_helper.py fit --run /tmp/bracket_run
+  ```
+
+  Keep run folders outside the repo.
+- `tools/rev.py` makes the next revision folder for a finished part in your models folder, `$MODELS_DIR/<job>_<MMDD>/revN/`, with a `SUMMARY.md` template. It never overwrites an existing rev:
+
+  ```bash
+  export MODELS_DIR=~/models
+  .venv/bin/python tools/rev.py bracket --source ~/work/bracket
+  ```
+
+  Part files (STEP/STL/renders) go there, not into this repo.
