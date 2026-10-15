@@ -1,0 +1,12 @@
+{
+  "plate_x": 80.0,
+  "plate_y": 50.0,
+  "plate_z": 12.0,
+  "bore_d": 16.0,
+  "boss_d": 26.0,
+  "boss_h": 10.0,
+  "corner_hole_d": 6.0,
+  "corner_inset": 8.0,
+  "volume": 47528.76110196153,
+  "bbox": 96.87253119041497
+}

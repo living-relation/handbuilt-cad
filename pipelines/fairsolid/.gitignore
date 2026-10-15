@@ -1,0 +1,8 @@
+.venv/
+work/
+runs/
+out/
+__pycache__/
+*.egg-info/
+tests/data/*.stl
+tests/data/*.step

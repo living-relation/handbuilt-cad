@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fairsolid Surface Fit (Mockup)</title>
+<style>
+:root{
+  --bg:#15181d; --bg2:#1b1f26; --panel:#20252d; --card:#262c35; --line:#323a45; --line2:#3d4653;
+  --text:#e6e9ee; --dim:#9aa4b1; --faint:#6c7684; --accent:#3d8bfd; --accent2:#2a6fd6;
+  --ok:#38c172; --warn:#f0ad3c; --bad:#ef5350; --flat:#4a86e8; --round:#36b37e; --free:#f08c2e; --ign:#7b8492;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:13px;overflow:hidden}
+.mono{font-family:"IBM Plex Mono",monospace}
+.app{display:grid;grid-template-rows:34px 1fr 56px;grid-template-columns:232px 1fr 368px;height:100vh;width:100vw}
+/* title bar */
+.title{grid-column:1/4;display:flex;align-items:center;gap:12px;padding:0 14px;background:#0f1216;border-bottom:1px solid var(--line)}
+.title .logo{width:18px;height:18px;border-radius:4px;background:linear-gradient(135deg,#3d8bfd,#f08c2e)}
+.title b{font-weight:600;letter-spacing:.2px}
+.badge{font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid var(--line2);color:var(--dim)}
+.badge.mock{background:#5b2a86;border-color:#7d45b0;color:#fff;font-weight:600;letter-spacing:.6px}
+.title .sp{flex:1}
+.dots span{display:inline-block;width:11px;height:11px;border-radius:50%;margin-left:7px;background:#3a414c}
+/* steps */
+.steps{background:var(--bg2);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column}
+.steps h4{margin:2px 8px 10px;color:var(--faint);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:1px}
+.step{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:var(--dim);text-decoration:none;margin-bottom:3px;position:relative}
+.step .n{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--line2);font-size:12px;font-weight:600;flex:none}
+.step.done .n{background:#1f3b2c;border-color:var(--ok);color:var(--ok)}
+.step.cur{background:#243247;color:#fff}
+.step.cur .n{background:var(--accent);border-color:var(--accent);color:#fff}
+.step .t{line-height:1.2}
+.step .t small{display:block;color:var(--faint);font-size:11px}
+.step.cur .t small{color:#9fb6d6}
+.step + .step::before{content:"";position:absolute;left:21px;top:-6px;height:8px;border-left:1.5px solid var(--line2)}
+.runbox{margin-top:auto;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);font-size:12px;color:var(--dim);line-height:1.5}
+.runbox b{color:var(--text);font-weight:500}
+.savedot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);margin-right:5px}
+/* viewport */
+.view{position:relative;background:radial-gradient(ellipse at 50% 40%,#2a313b 0%,#1a1e24 70%);overflow:hidden}
+.view svg.main{position:absolute;inset:0;width:100%;height:100%}
+.vbar{position:absolute;top:10px;left:12px;right:12px;display:flex;gap:8px;align-items:center;z-index:2}
+.chips{display:flex;background:rgba(20,24,30,.85);border:1px solid var(--line);border-radius:8px;padding:3px}
+.chip{padding:4px 10px;border-radius:6px;color:var(--dim);font-size:12px}
+.chip.on{background:#2f3b4d;color:#fff}
+.vbar .sp{flex:1}
+.vhint{position:absolute;right:12px;bottom:10px;color:var(--faint);font-size:11px;background:rgba(20,24,30,.7);padding:4px 8px;border-radius:6px}
+.legend{position:absolute;left:12px;bottom:10px;background:rgba(20,24,30,.88);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:290px;z-index:2}
+.legend .lt{font-size:11px;color:var(--dim);margin-bottom:5px;display:flex;justify-content:space-between}
+.legend .bar{height:10px;border-radius:3px;background:linear-gradient(90deg,#3b5bdb,#22b8cf 25%,#40c057 50%,#fcc419 75%,#f03e3e)}
+.legend .ticks{display:flex;justify-content:space-between;font-size:10.5px;color:var(--dim);margin-top:3px}
+.legend.off{opacity:.45}
+.vtag{position:absolute;top:52px;left:12px;background:rgba(20,24,30,.85);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12px;color:var(--dim);z-index:2}
+.vtag b{color:var(--text);font-weight:500}
+.inset{position:absolute;right:12px;top:52px;width:250px;background:rgba(20,24,30,.92);border:1px solid var(--line);border-radius:8px;padding:8px 10px;z-index:2}
+.inset .lt{font-size:11px;color:var(--dim);margin-bottom:4px}
+/* panel */
+.panel{background:var(--panel);border-left:1px solid var(--line);padding:14px 14px 10px;overflow:hidden;display:flex;flex-direction:column;gap:10px}
+.panel h2{margin:0;font-size:17px;font-weight:600}
+.panel .help{color:var(--dim);margin:-4px 0 0;line-height:1.45}
+.card{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:10px 11px}
+.card h3{margin:0 0 8px;font-size:11.5px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.7px;display:flex;justify-content:space-between;align-items:center}
+.card h3 .r{text-transform:none;letter-spacing:0;font-weight:500;color:var(--faint)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:3px 0}
+.row .k{color:var(--dim)}
+.row .v{font-weight:500}
+.seg{display:flex;border:1px solid var(--line2);border-radius:7px;overflow:hidden}
+.seg span{flex:1;text-align:center;padding:5px 6px;font-size:12px;color:var(--dim);border-left:1px solid var(--line2);white-space:nowrap}
+.seg span:first-child{border-left:none}
+.seg span.on{background:var(--accent2);color:#fff}
+.sl{margin:4px 0 2px}
+.sl .top{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}
+.sl .top .v{font-weight:600}
+.track{position:relative;height:6px;border-radius:3px;background:#39424f}
+.track .fill{position:absolute;top:0;bottom:0;border-radius:3px;background:var(--accent)}
+.track .th{position:absolute;top:50%;width:15px;height:15px;margin:-7.5px 0 0 -7.5px;border-radius:50%;background:#fff;box-shadow:0 0 0 3px rgba(61,139,253,.35)}
+.track .guess{position:absolute;top:-4px;width:2px;height:14px;background:var(--warn);margin-left:-1px}
+.sl .ends{display:flex;justify-content:space-between;font-size:10.5px;color:var(--faint);margin-top:5px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:6px 11px;border-radius:7px;border:1px solid var(--line2);background:#2c333d;color:var(--text);font-size:12px;white-space:nowrap}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.ok{background:#1f3b2c;border-color:var(--ok);color:#9be3b8}
+.btn.small{padding:3px 8px;font-size:11.5px}
+.btns{display:flex;gap:6px;flex-wrap:wrap}
+.note{font-size:12px;color:#c9d3df;background:#1d2a3b;border:1px solid #2c4566;border-radius:8px;padding:8px 10px;line-height:1.45}
+.note.warn{background:#3a2e17;border-color:#6b5222;color:#f3d9a4}
+.note.ok{background:#173226;border-color:#25573d;color:#b4e8c9}
+.chk{display:flex;align-items:center;gap:8px;padding:4px 0}
+.box{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--line2);flex:none;display:flex;align-items:center;justify-content:center;font-size:11px}
+.box.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.box.lock{background:#3a424e;border-color:#3a424e;color:#cfd6df}
+.list .it{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;font-size:12.5px}
+.list .it.sel{background:#2d3a4e;outline:1px solid #4a6a97}
+.sw{width:11px;height:11px;border-radius:3px;flex:none}
+.list .it .m{margin-left:auto;color:var(--dim);font-size:11.5px}
+.st{width:8px;height:8px;border-radius:50%;flex:none}
+.pill{font-size:10.5px;padding:1px 7px;border-radius:9px;border:1px solid var(--line2);color:var(--dim)}
+.pill.bad{border-color:#8a3434;color:#ff9a98;background:#3a1f22}
+.pill.warn{border-color:#7a5b22;color:#f6c66d;background:#3a2e17}
+.pill.ok{border-color:#2b6b47;color:#8fe0b0;background:#173226}
+.snap{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px dashed #333b46}
+.snap:last-child{border-bottom:none}
+.snap .a{color:var(--dim)}
+.snap .b{font-family:"IBM Plex Mono",monospace;font-size:11.5px}
+.snap .b em{font-style:normal;color:var(--ok)}
+.input{background:#1b2027;border:1px solid var(--line2);border-radius:6px;padding:5px 8px;font-size:12px;color:var(--text)}
+.dd{background:#1b2027;border:1px solid var(--line2);border-radius:6px;padding:5px 8px;font-size:12px;display:flex;justify-content:space-between}
+.dd::after{content:"▾";color:var(--faint);margin-left:8px}
+/* bottom bar */
+.bottom{grid-column:1/4;display:flex;align-items:center;gap:14px;padding:0 14px;background:#11141a;border-top:1px solid var(--line)}
+.bottom .mid{flex:1;color:var(--dim);font-size:12px;text-align:center}
+.bottom .btn{padding:8px 16px;font-size:13px}
+.stepbar{display:flex;gap:4px;align-items:center}
+.stepbar i{display:block;width:26px;height:4px;border-radius:2px;background:#353d48}
+.stepbar i.d{background:var(--ok)} .stepbar i.c{background:var(--accent)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="title">
+    <div class="logo"></div><b>Fairsolid · Surface Fit</b>
+    <span class="badge mock">MOCKUP</span>
+    <span class="badge">Runs on this PC · works offline · localhost:8765</span>
+    <span class="sp"></span>
+    <span style="color:var(--faint);font-size:12px">bracket_scan.stl · Run 03</span>
+    <span class="dots"><span></span><span></span><span></span></span>
+  </div>
+  <nav class="steps" id="steps"></nav>
+  <main class="view" id="view"></main>
+  <aside class="panel" id="panel"></aside>
+  <footer class="bottom" id="bottom"></footer>
+</div>
+<script>
+const S = Math.max(1, Math.min(7, parseInt(new URLSearchParams(location.search).get('s') || (location.hash||'#1').slice(1)) || 1));
+const STEPS = [
+ ['Load scan','Open the scan file'],
+ ['Units & tolerance','How close is close enough'],
+ ['Split check','Flat, round, freeform areas'],
+ ['Slices','Cross sections for curves'],
+ ['Fit','Fit a clean surface to each area'],
+ ['Joints & gaps','Stitch into one solid'],
+ ['Export','STEP, STL, Fusion, report'],
+];
+/* ---------- step bar ---------- */
+document.getElementById('steps').innerHTML = '<h4>Steps</h4>' + STEPS.map((s,i)=>{
+  const n=i+1, cls = n<S?'done':(n===S?'cur':'');
+  return `<a class="step ${cls}" href="?s=${n}"><span class="n">${n<S?'✓':n}</span><span class="t">${s[0]}<small>${s[1]}</small></span></a>`;
+}).join('') + `<div class="runbox"><span class="savedot"></span><b>Auto-saved</b> 8:14 AM<br>Every setting and manual fix is saved with this run.<br><span style="color:var(--faint)">runs\\bracket_scan\\run-03</span></div>`;
+/* ---------- bottom bar ---------- */
+const nextLbl = S<7 ? `Next: ${STEPS[S][0]} →` : 'Export files';
+document.getElementById('bottom').innerHTML = `
+  <span class="btn" style="${S===1?'opacity:.4':''}">← Back</span>
+  <div class="stepbar">${STEPS.map((_,i)=>`<i class="${i+1<S?'d':(i+1===S?'c':'')}"></i>`).join('')}</div>
+  <span style="color:var(--dim);font-size:12px">Step ${S} of 7</span>
+  <div class="mid">You can go back to any step. Later steps re-run from there; your fixes are kept.</div>
+  <span class="btn primary">${nextLbl}</span>`;
+
+/* ---------- geometry (isometric) ---------- */
+const C=0.8660254, SN=0.5;
+const P=(x,y,z)=>[(x-y)*C,(x+y)*SN-z];
+const topZ=y=>70+12*Math.sin(Math.PI*y/80);
+const path=(pts,close=true)=>pts.map((p,i)=>{const q=P(...p);return (i?'L':'M')+q[0].toFixed(2)+' '+q[1].toFixed(2)}).join(' ')+(close?' Z':'');
+const rng=(a,b,n)=>Array.from({length:n+1},(_,i)=>a+(b-a)*i/n);
+const F={
+ baseTop:[[0,0,12],[120,0,12],[120,80,12],[0,80,12]],
+ baseEnd:[[120,0,12],[120,80,12],[120,80,0],[120,0,0]],
+ baseSide:[[0,80,12],[120,80,12],[120,80,0],[0,80,0]],
+ upFront:[[14,0,12],[14,80,12],...rng(80,0,40).map(y=>[14,y,topZ(y)])],
+ upSide:[[0,80,12],[14,80,12],[14,80,70],[0,80,70]],
+ upTop:[...rng(0,80,40).map(y=>[0,y,topZ(y)]),...rng(80,0,40).map(y=>[14,y,topZ(y)])],
+};
+const R=5, arc=(y,rev)=>{const a=rng(0,Math.PI/2,12).map(t=>[14+R-R*Math.cos(t),y,12+R-R*Math.sin(t)]);return rev?a.reverse():a};
+F.fillet=[...arc(0),...arc(80,true)];
+F.filletCap=[[14,80,12],...arc(80)];
+const circXY=(cx,cy,z,r)=>rng(0,2*Math.PI,48).map(t=>[cx+r*Math.cos(t),cy+r*Math.sin(t),z]);
+const circYZ=(x,cy,cz,r)=>rng(0,2*Math.PI,48).map(t=>[x,cy+r*Math.cos(t),cz+r*Math.sin(t)]);
+F.h1=circXY(80,22,12,4); F.h2=circXY(80,58,12,4);
+F.cb=circYZ(14,40,42,13); F.h3=circYZ(14,40,42,9);
+
+function tag(p3,text,dx,dy,col,opts={}){
+  const [x,y]=P(...p3), tx=x+dx, ty=y+dy, w=text.length*2.55+6, h=7.6;
+  const ax = dx<0 ? tx-w : tx;
+  return `<g class="tag"><line x1="${x}" y1="${y}" x2="${tx}" y2="${ty}" stroke="${col}" stroke-width=".45"/><circle cx="${x}" cy="${y}" r="1.1" fill="${col}"/>
+  <rect x="${ax}" y="${ty-h/2}" width="${w}" height="${h}" rx="1.8" fill="${opts.bg||'rgba(18,22,28,.92)'}" stroke="${col}" stroke-width="${opts.sw||.45}"/>
+  <text x="${ax+3}" y="${ty+1.75}" font-size="4.6" fill="${opts.fg||'#e6e9ee'}" font-family="IBM Plex Sans">${text}</text></g>`;
+}
+function face(pts,fill,extra=''){return `<path d="${path(pts)}" fill="${fill}" stroke="rgba(0,0,0,.35)" stroke-width=".35" stroke-linejoin="round" ${extra}/>`}
+function hole(pts,ring){return `<path d="${path(pts)}" fill="url(#holeG)" stroke="${ring||'rgba(0,0,0,.5)'}" stroke-width="${ring?1.1:.4}"/>`}
+const textOnSide = (fill)=>{const [x,y]=P(92,80,3.2);return `<text transform="matrix(${C},${SN},0,1,${x},${y})" font-size="7" font-weight="700" fill="${fill}" font-family="IBM Plex Sans" letter-spacing=".5">A-12</text>`};
+
+function model(col, o={}){
+  // col: face->fill
+  let s='';
+  s+=face(F.baseTop,col.baseTop,o.selTop?'stroke="#fff" stroke-width="1.1" stroke-dasharray="2.5 1.5"':'');
+  s+=face(F.baseEnd,col.baseEnd); s+=face(F.baseSide,col.baseSide);
+  s+=textOnSide(col.text||'rgba(0,0,0,.28)');
+  s+=hole(F.h1,col.h1); s+=hole(F.h2,col.h2);
+  s+=face(F.upFront,col.upFront);
+  s+=`<path d="${path(F.cb)}" fill="${col.cb||'rgba(0,0,0,.25)'}" stroke="rgba(0,0,0,.45)" stroke-width=".4"/>`;
+  s+=hole(F.h3,col.h3);
+  s+=face(F.fillet,col.fillet); s+=face(F.filletCap,col.upSide);
+  s+=face(F.upSide,col.upSide); s+=face(F.upTop,col.upTop);
+  return s;
+}
+const GREY={baseTop:'#c3c9d1',baseEnd:'#949ca7',baseSide:'#7a838f',upFront:'#a9b0ba',upSide:'#7a838f',upTop:'#d3d8de',fillet:'#b6bcc5'};
+const defs=`<defs>
+ <radialGradient id="holeG" cx="45%" cy="40%" r="70%"><stop offset="0" stop-color="#05070a"/><stop offset="1" stop-color="#262b33"/></radialGradient>
+ <pattern id="hatch" width="2.2" height="2.2" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.2" height="2.2" fill="#6b7480"/><line x1="0" y1="0" x2="0" y2="2.2" stroke="#9aa3ae" stroke-width=".8"/></pattern>
+ <filter id="scan" x="-5%" y="-5%" width="110%" height="110%">
+   <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="7" result="n"/>
+   <feDisplacementMap in="SourceGraphic" in2="n" scale="1.1" xChannelSelector="R" yChannelSelector="G" result="d"/>
+   <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.05" result="dark"/>
+   <feComposite in="dark" in2="d" operator="in" result="dk"/>
+   <feMerge><feMergeNode in="d"/><feMergeNode in="dk"/></feMerge>
+ </filter>
+ <linearGradient id="devTop" gradientUnits="userSpaceOnUse" x1="${P(0,0,70)[0]}" y1="${P(0,0,70)[1]}" x2="${P(0,80,70)[0]}" y2="${P(0,80,70)[1]}">
+   <stop offset="0" stop-color="#40c057"/><stop offset=".3" stop-color="#94d82d"/><stop offset=".5" stop-color="#f03e3e"/><stop offset=".62" stop-color="#fcc419"/><stop offset="1" stop-color="#40c057"/></linearGradient>
+ <linearGradient id="devFront" gradientUnits="userSpaceOnUse" x1="${P(14,0,40)[0]}" y1="${P(14,0,40)[1]}" x2="${P(14,80,40)[0]}" y2="${P(14,80,40)[1]}">
+   <stop offset="0" stop-color="#4fc46a"/><stop offset=".45" stop-color="#22b8cf"/><stop offset=".7" stop-color="#4fc46a"/><stop offset="1" stop-color="#5cc85a"/></linearGradient>
+ <linearGradient id="devBase" gradientUnits="userSpaceOnUse" x1="${P(14,0,12)[0]}" y1="${P(14,0,12)[1]}" x2="${P(120,80,12)[0]}" y2="${P(120,80,12)[1]}">
+   <stop offset="0" stop-color="#52c45a"/><stop offset=".5" stop-color="#40c057"/><stop offset="1" stop-color="#66c94a"/></linearGradient>
+ <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#9fb6d6"/></marker>
+</defs>`;
+function dim(a,b,off,label,lx,ly){
+  const A=P(...a),B=P(...b);
+  return `<g stroke="#9fb6d6" stroke-width=".45" fill="none">
+    <line x1="${A[0]+off[0]}" y1="${A[1]+off[1]}" x2="${B[0]+off[0]}" y2="${B[1]+off[1]}" marker-start="url(#arr)" marker-end="url(#arr)"/>
+    <line x1="${A[0]}" y1="${A[1]}" x2="${A[0]+off[0]*1.15}" y2="${A[1]+off[1]*1.15}" stroke-dasharray="1 1"/>
+    <line x1="${B[0]}" y1="${B[1]}" x2="${B[0]+off[0]*1.15}" y2="${B[1]+off[1]*1.15}" stroke-dasharray="1 1"/></g>
+    <text x="${(A[0]+B[0])/2+off[0]+lx}" y="${(A[1]+B[1])/2+off[1]+ly}" font-size="5.2" fill="#dbe6f5" font-family="IBM Plex Mono" text-anchor="middle">${label}</text>`;
+}
+const dims = ()=> dim([0,80,0],[120,80,0],[-7,11],'120.0 mm',-6,6)+dim([120,0,0],[120,80,0],[9,9],'80.0 mm',10,4)+dim([0,80,0],[0,80,82],[-12,0],'82.0 mm',-14,1);
+function legend(on,note){return `<div class="legend ${on?'':'off'}"><div class="lt"><span>Distance from scan (mm)</span><span>${note||'tolerance ±0.20'}</span></div><div class="bar"></div><div class="ticks"><span>−0.20</span><span>−0.10</span><span>0</span><span>+0.10</span><span>+0.20</span></div></div>`}
+function vbar(active){const v=['Areas','Distance map','Raw scan','Slices','Clean model'];return `<div class="vbar"><div class="chips">${v.map(x=>`<span class="chip ${active.includes(x)?'on':''}">${x}</span>`).join('')}</div><span class="sp"></span><div class="chips"><span class="chip on">Iso</span><span class="chip">Front</span><span class="chip">Top</span><span class="chip">Side</span><span class="chip">Fit view</span></div></div>`}
+const VB='-140 -118 300 250';
+function svg(inner){return `<svg class="main" viewBox="${VB}" preserveAspectRatio="xMidYMid meet">${defs}${inner}</svg>`}
+
+/* ---------- screens ---------- */
+const AREA={baseTop:'#4a86e8',baseEnd:'#2f6bd0',baseSide:'#5f95ec',upFront:'#3a76dc',upSide:'#6fa0ef',upTop:'#f08c2e',fillet:'url(#hatch)',cb:'#2fa36f',h1:'#36d68a',h2:'#36d68a',h3:'#5ee3a1',text:'#c8ccd2'};
+const views={}, panels={};
+
+views[1]=()=>vbar(['Raw scan'])+svg(`<g filter="url(#scan)">${model(GREY)}</g>${dims()}`)+
+ `<div class="vtag">🔒 <b>Size locked</b> · read once at true size, never scaled after this</div>`+legend(false,'shows from step 3')+`<div class="vhint">Drag to turn · scroll to zoom</div>`;
+panels[1]=()=>`<h2>1 · Load scan</h2><p class="help">Pick the scan file. The tool reads it once at its real size and locks that size.</p>
+<div class="card"><h3>Scan file</h3>
+ <div class="row"><span class="v mono">bracket_scan.stl</span><span class="btn small">Change file</span></div>
+ <div class="row"><span class="k">Triangles</span><span class="v">412,880</span></div>
+ <div class="row"><span class="k">File size</span><span class="v">38.6 MB</span></div></div>
+<div class="card"><h3>What units is the scan file in?</h3>
+ <div class="seg"><span class="on">mm (scanner default)</span><span>inch</span><span>cm</span></div>
+ <p class="help" style="margin:8px 0 0;font-size:12px">STL files don't store units, so tell it once here. This is the only place size is set.</p></div>
+<div class="card"><h3>Measured size</h3>
+ <div class="row"><span class="k">Size (L × W × H)</span><span class="v mono">120.0 × 80.0 × 82.0 mm</span></div>
+ <div class="row"><span class="k">Looks right?</span><span class="pill ok">Yes, matches a ~120 mm part</span></div></div>
+<div class="card"><h3>Scan check</h3>
+ <div class="row"><span class="k">Holes in the mesh</span><span class="v">3 small · will be patched</span></div>
+ <div class="row"><span class="k">Scan noise</span><span class="v">about 0.05 mm</span></div>
+ <div class="row"><span class="k">Loose bits removed</span><span class="v">2</span></div></div>
+<div class="note ok">🔒 Size is locked. Nothing later (units, snapping, export) can rescale the scan.</div>`;
+
+views[2]=()=>vbar(['Raw scan'])+svg(`<g filter="url(#scan)">${model(GREY)}</g>${dims()}`)+
+ `<div class="vtag">Shown in <b>mm</b> · 120.0 mm = 4.724 in · <b>scan not scaled</b></div>`+legend(false,'shows from step 3')+`<div class="vhint">Drag to turn · scroll to zoom</div>`;
+panels[2]=()=>`<h2>2 · Units & tolerance</h2><p class="help">Pick the units your CAD model uses, and how close the clean model has to stay to the scan.</p>
+<div class="card"><h3>Units <span class="r">Suggested: metric</span></h3>
+ <div class="seg"><span class="on">Metric (mm)</span><span>Inch</span></div>
+ <p class="help" style="margin:8px 0 0;font-size:12px">Why metric: most holes and walls measure close to whole mm.</p>
+ <div class="note" style="margin-top:8px">Units only change which standard sizes it snaps to and how numbers show. <b>They never scale the scan.</b></div></div>
+<div class="card"><h3>Part type <span class="r">Suggested: large part</span></h3>
+ <div class="seg"><span>Small machined part</span><span class="on">Large part</span></div>
+ <div class="row" style="margin-top:6px"><span class="k">Starting range</span><span class="v">0.02–0.10 mm / <b style="color:#fff">0.10–0.20 mm</b></span></div></div>
+<div class="card"><h3>Tolerance range</h3>
+ <div class="sl"><div class="top"><span>Allowed distance from scan</span><span class="v mono">0.10 – 0.20 mm</span></div>
+ <div class="track"><div class="fill" style="left:20%;width:20%"></div><div class="th" style="left:20%"></div><div class="th" style="left:40%"></div></div>
+ <div class="ends"><span>0.02 tight</span><span>0.50 loose</span></div></div>
+ <div class="chk" style="margin-top:6px"><span class="box on">✓</span>Loosen a surface only if it can't fit, and list it in the report</div>
+ <div class="chk"><span class="box on">✓</span>Measure against the averaged scan (not single noisy points)</div></div>
+<div class="note">You can change the range later at any step if a surface won't fit well.</div>`;
+
+views[3]=()=>vbar(['Areas'])+svg(model(AREA,{selTop:true})+
+  tag([60,30,12],'A1 · Flat · Base top (selected)',-40,-58,'#ffffff',{sw:.7})+
+  tag([120,40,6],'A2 · Flat',22,-4,'#4a86e8')+
+  tag([60,80,6],'A3 · Flat',-30,22,'#5f95ec')+
+  tag([14,15,40],'A4 · Flat',-24,-26,'#3a76dc')+
+  tag([7,40,topZ(40)],'F1 · Freeform · Upright top',8,-22,'#f08c2e')+
+  tag([80,22,12],'R1, R2 · Round · Holes',30,-20,'#36d68a')+
+  tag([14,40,55],'R3, R4 · Round · Hole + counterbore',34,-30,'#5ee3a1')+
+  tag([16,70,14],'Fillet · ignored for now',-6,40,'#9aa3ae',{fg:'#c3c9d1'})+
+  tag([100,80,6],'Text · ignored',18,24,'#9aa3ae',{fg:'#c3c9d1'}))+
+ `<div class="vtag">Click an area to pick it · <b>Shift+click</b> to pick more</div>`+legend(true,'rough fit · ±0.20')+`<div class="vhint">Drag to turn · scroll to zoom</div>`;
+panels[3]=()=>`<h2>3 · Split check</h2><p class="help">The tool split the scan into areas automatically. Fix any it got wrong.</p>
+<div class="card"><h3>Found 10 areas</h3>
+ <div class="btns" style="gap:12px"><span><span class="sw" style="display:inline-block;background:var(--flat)"></span> 5 flat</span><span><span class="sw" style="display:inline-block;background:var(--round)"></span> 4 round</span><span><span class="sw" style="display:inline-block;background:var(--free)"></span> 1 freeform</span><span><span class="sw" style="display:inline-block;background:url(#);background:repeating-linear-gradient(45deg,#6b7480 0 2px,#9aa3ae 2px 4px)"></span> 2 ignored</span></div></div>
+<div class="card list" style="padding:6px"><h3 style="margin:4px 5px 6px">Areas</h3>
+ <div class="it sel"><span class="sw" style="background:#4a86e8"></span>A1 Base top<span class="m">Flat · 18,240 pts</span></div>
+ <div class="it"><span class="sw" style="background:#2f6bd0"></span>A2 Base end<span class="m">Flat</span></div>
+ <div class="it"><span class="sw" style="background:#5f95ec"></span>A3 Base side<span class="m">Flat</span></div>
+ <div class="it"><span class="sw" style="background:#3a76dc"></span>A4 Upright front<span class="m">Flat</span></div>
+ <div class="it"><span class="sw" style="background:#6fa0ef"></span>A5 Upright side<span class="m">Flat</span></div>
+ <div class="it"><span class="sw" style="background:#36d68a"></span>R1, R2 Holes<span class="m">Round · Ø 8</span></div>
+ <div class="it"><span class="sw" style="background:#5ee3a1"></span>R3, R4 Hole + counterbore<span class="m">Round</span></div>
+ <div class="it"><span class="sw" style="background:#f08c2e"></span>F1 Upright top<span class="m">Freeform</span></div>
+ <div class="it" style="color:var(--faint)"><span class="sw" style="background:#7b8492"></span>Fillet, text<span class="m">Ignored · add later</span></div></div>
+<div class="card"><h3>Fix the picked area <span class="r">A1 Base top</span></h3>
+ <div class="row"><span class="k">Type</span><div class="seg" style="width:210px"><span class="on">Flat</span><span>Round</span><span>Freeform</span></div></div>
+ <div class="btns" style="margin-top:8px"><span class="btn">Merge with…</span><span class="btn">Split</span><span class="btn">Ignore</span><span class="btn">Undo</span></div></div>`;
+
+const slicesY=[6,13,20,26,32,37,42,47,53,59,66,73];
+function sliceLines(sel){
+  return slicesY.map((c,i)=>{
+    const pts=[[0,c,topZ(c)],[14,c,topZ(c)],[14,c,12],[120,c,12],[120,c,0]];
+    const on=i===sel;
+    return `<path d="${path(pts,false)}" fill="none" stroke="${on?'#ffe066':'#4dd4f0'}" stroke-width="${on?1.2:.6}" ${on?'':'stroke-opacity=".9"'}/>`;
+  }).join('');
+}
+const SOFT={baseTop:'#8e99a8',baseEnd:'#6b7583',baseSide:'#5c6573',upFront:'#7c8796',upSide:'#5c6573',upTop:'#a3adba',fillet:'url(#hatch)',text:'rgba(0,0,0,.25)'};
+views[4]=()=>vbar(['Slices'])+svg(model(SOFT)+sliceLines(6)+tag([14,42,topZ(42)],'Slice 7 (shown at right)',-34,-22,'#ffe066'))+
+ `<div class="vtag">12 slices · closer together where it bends more</div>
+ <div class="inset"><div class="lt">Slice 7 · smoothed curve vs scan points</div>
+ <svg viewBox="0 0 230 120" width="230" height="120">
+  <rect x="0" y="0" width="230" height="120" fill="#161a20" rx="4"/>
+  ${Array.from({length:70},(_,i)=>{const t=i/69;let x,y;if(t<.18){x=15+t/.18*20;y=18}else if(t<.5){x=35;y=18+(t-.18)/.32*80}else{x=35+(t-.5)/.5*180;y=98};x+=Math.sin(i*12.9)*1.6;y+=Math.cos(i*7.3)*1.6;return `<circle cx="${x}" cy="${y}" r="1.1" fill="#8a94a3"/>`}).join('')}
+  <path d="M15 18 L35 18 L35 98 L215 98" fill="none" stroke="#ffe066" stroke-width="1.8"/>
+  <text x="120" y="88" font-size="10" fill="#9aa4b1" font-family="IBM Plex Sans" text-anchor="middle">grey = scan · yellow = clean curve</text>
+ </svg></div>`+legend(true,'rough fit · ±0.20')+`<div class="vhint">Drag a slice to move it · double-click to add one</div>`;
+panels[4]=()=>`<h2>4 · Slices</h2><p class="help">Cross sections through the scan. They guide the curved surfaces and show the overall shape.</p>
+<div class="card"><h3>Direction <span class="r">Best guess: across width</span></h3>
+ <div class="seg"><span>Length (X)</span><span class="on">Width (Y)</span><span>Height (Z)</span><span>Custom</span></div>
+ <div class="sl" style="margin-top:10px"><div class="top"><span>Tilt</span><span class="v mono">0°</span></div>
+ <div class="track"><div class="fill" style="left:50%;width:0"></div><div class="guess" style="left:50%"></div><div class="th" style="left:50%"></div></div>
+ <div class="ends"><span>−45°</span><span>▮ = best guess</span><span>+45°</span></div></div></div>
+<div class="card"><h3>Spacing <span class="r">Best guess: 6 mm</span></h3>
+ <div class="sl"><div class="top"><span>Space between slices</span><span class="v mono">6 mm</span></div>
+ <div class="track"><div class="fill" style="left:0;width:24%"></div><div class="guess" style="left:24%"></div><div class="th" style="left:24%"></div></div>
+ <div class="ends"><span>1 mm</span><span>20 mm</span></div></div>
+ <div class="chk" style="margin-top:6px"><span class="box on">✓</span>Closer together where it bends more</div>
+ <div class="chk"><span class="box"></span>Add a second direction</div>
+ <div class="btns" style="margin-top:4px"><span class="btn">+ Add my own slice</span><span class="btn">Reset to best guess</span></div></div>
+<div class="card"><h3>Keep the slices</h3>
+ <div class="chk"><span class="box on">✓</span>Use them to guide the fit</div>
+ <div class="chk"><span class="box on">✓</span>Save as editable sketches (hidden in Fusion at first)</div></div>
+<div class="btns"><span class="btn ok" style="flex:1;padding:8px">✓ Approve slices</span><span class="btn" style="flex:1;padding:8px">Adjust more</span></div>`;
+
+const DEV={baseTop:'url(#devBase)',baseEnd:'#4cc25a',baseSide:'#3fbf6a',upFront:'url(#devFront)',upSide:'#58c656',upTop:'url(#devTop)',fillet:'url(#hatch)',cb:'#3cbf8a',h1:'#ffffff',h2:'#ffffff',h3:'#ffffff',text:'rgba(0,0,0,.25)'};
+views[5]=()=>vbar(['Distance map'])+svg(model(DEV)+
+  `<path d="${path(F.upTop)}" fill="none" stroke="#fff" stroke-width="1.1" stroke-dasharray="2.5 1.5"/>`+
+  `<circle cx="${P(7,40,topZ(40))[0]}" cy="${P(7,40,topZ(40))[1]}" r="9" fill="none" stroke="#ff6b6b" stroke-width=".9" stroke-dasharray="1.5 1"/>`+
+  tag([7,40,topZ(40)],'⚠ F1 Upright top · 0.27 mm off (limit 0.20)',20,-26,'#ff6b6b',{sw:.7})+
+  tag([80,22,12],'Hole 7.98 → 8 mm',-8,-30,'#40c057')+
+  tag([80,58,12],'Hole 8.03 → 8 mm',30,6,'#40c057')+
+  tag([14,40,42],'Ø 19.94 → 20 mm · same axis as counterbore',40,-40,'#40c057')+
+  tag([14,78,40],'Walls 89.6° → 90°',-20,30,'#40c057'))+
+ `<div class="vtag">1 trouble spot · 9 of 10 surfaces inside tolerance</div>`+legend(true)+`<div class="vhint">Click a surface to edit it</div>`;
+panels[5]=()=>`<h2>5 · Fit</h2><p class="help">Each area gets a clean surface. Red on the map = too far from the scan.</p>
+<div class="card list" style="padding:6px"><h3 style="margin:4px 5px 6px">Surfaces <span class="r">max off</span></h3>
+ <div class="it"><span class="st" style="background:var(--ok)"></span>A1 Base top<span class="m mono">0.03 mm</span></div>
+ <div class="it"><span class="st" style="background:var(--ok)"></span>A4 Upright front<span class="m mono">0.06 mm</span></div>
+ <div class="it"><span class="st" style="background:var(--ok)"></span>R3 Hole Ø20<span class="m mono">0.04 mm</span></div>
+ <div class="it sel"><span class="st" style="background:var(--bad)"></span>F1 Upright top · freeform<span class="m mono" style="color:#ff9a98">0.27 mm</span></div>
+ <div class="it" style="color:var(--faint)">+ 6 more, all inside tolerance</div></div>
+<div class="card"><h3>Edit F1 Upright top</h3>
+ <div class="row"><span class="k">Fit method</span><span class="dd" style="width:200px">Best fit, ignore stray points</span></div>
+ <div class="sl"><div class="top"><span>Points used</span><span class="v mono">6,400 of 9,120</span></div>
+ <div class="track"><div class="fill" style="left:0;width:70%"></div><div class="th" style="left:70%"></div></div>
+ <div class="ends"><span>fewer (noisy spots)</span><span>all points</span></div></div>
+ <div class="sl" style="margin-top:8px"><div class="top"><span>Stiffness</span><span class="v">Medium</span></div>
+ <div class="track"><div class="fill" style="left:0;width:55%"></div><div class="guess" style="left:62%"></div><div class="th" style="left:55%"></div></div>
+ <div class="ends"><span>smoother</span><span>follows scan closer</span></div></div>
+ <div class="row" style="margin-top:4px"><span class="k">Tolerance here</span><span class="v mono">0.10 – 0.20 mm <span class="btn small">Change</span></span></div>
+ <div class="btns" style="margin-top:6px"><span class="btn primary">Refit F1</span><span class="btn">Undo</span></div></div>
+<div class="card"><h3>Snapped to clean values <span class="r">metric</span></h3>
+ <div class="snap"><span class="a">Hole R1</span><span class="b">7.98 → <em>8 mm</em></span></div>
+ <div class="snap"><span class="a">Hole R2</span><span class="b">8.03 → <em>8 mm</em></span></div>
+ <div class="snap"><span class="a">Hole R3</span><span class="b">19.94 → <em>20 mm</em></span></div>
+ <div class="snap"><span class="a">Base top / upright</span><span class="b">89.6° → <em>90°</em></span></div>
+ <div class="snap"><span class="a">R3 + counterbore</span><span class="b"><em>same axis</em></span></div></div>`;
+
+const FIT={baseTop:'#b9c3cf',baseEnd:'#8c97a5',baseSide:'#76818f',upFront:'#a2adba',upSide:'#76818f',upTop:'#cbd3dc',fillet:'url(#hatch)',text:'rgba(0,0,0,.25)'};
+function edge(pts,col,w,dash){return `<path d="${path(pts,false)}" fill="none" stroke="${col}" stroke-width="${w}" ${dash?`stroke-dasharray="${dash}"`:''} stroke-linecap="round"/>`}
+views[6]=()=>vbar(['Clean model'])+svg(model(FIT)+
+  edge([[120,0,12],[120,80,12]],'#40c057',.9)+edge([[14,80,12],[120,80,12]],'#40c057',.9)+edge([[120,80,12],[120,80,0]],'#40c057',.9)+
+  edge([[0,80,70],[14,80,70]],'#40c057',.9)+edge([[0,0,70],...rng(0,80,40).map(y=>[0,y,topZ(y)])],'#40c057',.9)+
+  edge(rng(0,80,40).map(y=>[14,y,topZ(y)]),'#ef5350',2.2)+
+  edge([[14,80,17],[14,80,70]],'#f0ad3c',1.6)+
+  `<path d="${path(F.h1)}" fill="none" stroke="#40c057" stroke-width=".8"/><path d="${path(F.h2)}" fill="none" stroke="#40c057" stroke-width=".8"/><path d="${path(F.h3)}" fill="none" stroke="#40c057" stroke-width=".8"/>`+
+  `<circle cx="${P(17,80,13)[0]}" cy="${P(17,80,13)[1]}" r="4" fill="rgba(239,83,80,.25)" stroke="#ef5350" stroke-width=".9"/>`+
+  tag([14,40,topZ(40)],'J4 · gap 0.31 mm · selected',-30,-20,'#ef5350',{sw:.8})+
+  tag([14,80,45],'J6 · gap 0.24 mm',-20,16,'#f0ad3c')+
+  tag([17,80,13],'G4 · gap 0.6 mm · auto fill failed',10,44,'#ef5350')+
+  tag([120,40,12],'J1 ✓',16,-12,'#40c057')+tag([70,80,12],'J2 ✓',55,34,'#40c057'))+
+ `<div class="vtag"><span style="color:#ef5350">━</span> flagged (gap bigger than 0.20 mm) · <span style="color:#40c057">━</span> OK · click any joint to change it</div>`+legend(true)+`<div class="vhint">Click a joint or gap to edit it</div>`;
+panels[6]=()=>`<h2>6 · Joints & gaps</h2><p class="help">Surfaces are trimmed and stitched into one solid. Check the spots it flagged.</p>
+<div class="card"><h3>Summary</h3>
+ <div class="row"><span class="k">Joints</span><span class="v">24 · <span class="pill bad">2 flagged</span></span></div>
+ <div class="row"><span class="k">Gaps</span><span class="v">3 filled automatically · <span class="pill bad">1 needs you</span></span></div></div>
+<div class="card list" style="padding:6px"><h3 style="margin:4px 5px 6px">Flagged joints <span class="r">type</span></h3>
+ <div class="it sel" style="flex-wrap:wrap"><span class="st" style="background:var(--bad)"></span>J4 Upright top ↔ front<span class="m mono" style="color:#ff9a98">0.31 mm</span>
+  <div class="seg" style="width:100%;margin-top:6px"><span class="on">Tangent (no crease)</span><span>Curvature (no visible line)</span></div></div>
+ <div class="it" style="flex-wrap:wrap"><span class="st" style="background:var(--warn)"></span>J6 Upright front ↔ side<span class="m mono">0.24 mm</span>
+  <div class="seg" style="width:100%;margin-top:6px"><span class="on">Tangent</span><span>Curvature</span><span>Sharp edge</span></div></div>
+ <div class="chk" style="padding:6px 6px 2px"><span class="box"></span>Show all 24 joints (any joint can be switched)</div></div>
+<div class="card"><h3>Gap G4 <span class="r">0.6 mm, near fillet</span></h3>
+ <div class="note warn" style="margin-bottom:8px">Auto fill couldn't close this one. Pick how to fill it:</div>
+ <div class="list">
+  <div class="it sel"><span class="box on" style="border-radius:50%">•</span>Extend the neighbor surfaces</div>
+  <div class="it"><span class="box" style="border-radius:50%"></span>Patch surface across the gap</div>
+  <div class="it"><span class="box" style="border-radius:50%"></span>Rough fill now, fix later in Fusion</div>
+  <div class="it"><span class="box" style="border-radius:50%"></span>Leave open (export open surface body)</div></div>
+ <div class="btns" style="margin-top:6px"><span class="btn primary">Try fill</span><span class="btn">Undo</span></div></div>`;
+
+views[7]=()=>vbar(['Clean model'])+svg(model({...FIT,fillet:'#b9c3cf',text:'none'}))+
+ `<div class="vtag">✓ <b>One closed solid</b> · smooth, no scan texture · max 0.18 mm from scan</div>`+legend(true,'all inside ±0.20')+`<div class="vhint">Fillet and text: add later in CAD</div>`;
+panels[7]=()=>`<h2>7 · Export</h2><p class="help">Save the clean model. Your settings, snaps and fixes go in the report.</p>
+<div class="card"><h3>Final check</h3>
+ <div class="row"><span class="k">Solid closed</span><span class="pill ok">Yes</span></div>
+ <div class="row"><span class="k">Size matches scan</span><span class="pill ok">120.0 × 80.0 × 82.0 mm</span></div>
+ <div class="row"><span class="k">Farthest from scan</span><span class="v mono">0.18 mm</span></div>
+ <div class="row"><span class="k">Snaps made</span><span class="v">5</span></div></div>
+<div class="card"><h3>Files</h3>
+ <div class="chk"><span class="box lock">🔒</span><b>STEP</b> solid · always saved</div>
+ <div class="chk"><span class="box on">✓</span><b>STL</b> of the smooth model (for printing)</div>
+ <div class="row" style="padding-left:23px"><span class="k">STL detail</span><div class="seg" style="width:170px"><span>Low</span><span class="on">Medium</span><span>High</span></div></div>
+ <div class="chk"><span class="box on">✓</span><b>Report</b> · settings, snaps, flagged joints, distances</div></div>
+<div class="card"><h3>Fusion</h3>
+ <div class="chk"><span class="box on">✓</span>Send to Fusion as editable bodies</div>
+ <div class="chk" style="padding-left:23px"><span class="box on">✓</span>Include slice sketches (hidden at first)</div>
+ <div class="row"><span class="k">Fusion</span><span class="pill ok">Connected</span></div></div>
+<div class="card"><h3>Save to</h3><div class="input mono">…\\fairsolid\\out\\bracket_scan\\</div></div>
+<span class="btn primary" style="padding:10px;font-size:14px">Export files</span>`;
+
+document.getElementById('view').innerHTML = views[S]();
+document.getElementById('panel').innerHTML = panels[S]();
+document.title = `Fairsolid Surface Fit (Mockup) · ${S}. ${STEPS[S-1][0]}`;
+</script>
+</body>
+</html>
