@@ -1,4 +1,7 @@
 """Density result -> iso-surface STL (rho=0.5) + region read-out vs it11.  usage: topo_post.py <stem>"""
+import os
+MODELS_DIR = os.environ.get('MODELS_DIR', os.path.expanduser('~/models'))
+KB = os.path.join(MODELS_DIR, 'knuckle_billet_1009')  # moved part files: baseline/, iter-opt/
 import numpy as np, json, sys, trimesh
 from skimage.measure import marching_cubes
 from scipy.ndimage import gaussian_filter
@@ -10,7 +13,7 @@ m = trimesh.Trimesh(v, f); trimesh.smoothing.filter_taubin(m, iterations=10); m.
 mass_thr = (rho > 0.5).sum() * h**3 * 2.81e-6
 # region read-out: it11 voxels vs topo material
 C = lo + (np.stack(np.unravel_index(ea, tuple(n)), 1) + 0.5) * h
-vv = trimesh.load('iter/it11.stl').voxelized(pitch=h / 2).fill().points
+vv = trimesh.load(os.path.join(KB, 'iter-opt', 'it11.stl')).voxelized(pitch=h / 2).fill().points
 g = np.floor((vv - lo) / h).astype(int); ok = np.all((g >= 0) & (g < n), 1); g = g[ok]
 occ = np.zeros(tuple(n), bool); occ[g[:, 0], g[:, 1], g[:, 2]] = True; in11 = occ.reshape(-1)[ea]
 solid = rho > 0.5; x, y, z = C.T; r = np.hypot(x, y)

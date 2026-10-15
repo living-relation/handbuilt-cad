@@ -1,8 +1,9 @@
 import os
 MODELS_DIR = os.environ.get('MODELS_DIR', os.path.expanduser('~/models'))
 KNUCKLE_V4B = os.path.join(MODELS_DIR, 'knuckle_1009', 'rev4b')
+KB = os.path.join(MODELS_DIR, 'knuckle_billet_1009')  # moved part files: baseline/, iter-opt/
 import gmsh, trimesh, numpy as np
-m=trimesh.load('baseline/v4b_fixed.stl'); lo,hi=m.bounds
+m=trimesh.load(os.path.join(KB, 'baseline', 'v4b_fixed.stl')); lo,hi=m.bounds
 rng=np.random.default_rng(1); P=rng.uniform(lo,hi,(60000,3))
 inF=m.contains(P)
 gmsh.initialize(); gmsh.option.setNumber("General.Terminal",0)

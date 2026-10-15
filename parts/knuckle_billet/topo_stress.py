@@ -1,3 +1,6 @@
+import os
+MODELS_DIR = os.environ.get('MODELS_DIR', os.path.expanduser('~/models'))
+KB = os.path.join(MODELS_DIR, 'knuckle_billet_1009')  # moved part files: baseline/, iter-opt/
 """Stress-constrained voxel SIMP for the billet knuckle.
 min  volume(design)   s.t.  PN_k(sigma_vM) / (c_k * S_ALLOW) <= 1  for all 5 load cases
 qp-relaxed von Mises (sigma_e = xbar^q * sigma0_e, element-centre stress), p-norm aggregation per case with adaptive
@@ -60,7 +63,7 @@ def vm0(U, k, want_db=False):
             m = v_ > bv; bs[m] = s_[m]; bv[m] = v_[m]; bi[m] = j_
     return (bs, bv, bi) if want_db else (bs, bv)
 if MODE == 'validate':
-    vv = trimesh.load('iter/it11.stl').voxelized(pitch=h / 2).fill().points
+    vv = trimesh.load(os.path.join(KB, 'iter-opt', 'it11.stl')).voxelized(pitch=h / 2).fill().points
     g = np.floor((vv - lo) / h).astype(int); ok = np.all((g >= 0) & (g < n), 1); g = g[ok]
     occ = np.zeros(tuple(n), bool); occ[g[:, 0], g[:, 1], g[:, 2]] = True; in11 = occ.reshape(-1)[ea] | isnd
     xp = np.where(in11, 1.0, 0.0); Kf, U, Ee = solve(xp)

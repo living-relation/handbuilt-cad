@@ -2,7 +2,13 @@
 REPO="${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"; export REPO
 B=$REPO
 D=$B/sim-tools/smoke/gmsh; mkdir -p $D && cd $D
-cp $B/pcv_adapter/pcv_adapter.step .
+MODELS_DIR="${MODELS_DIR:-$HOME/models}"
+STEP="$MODELS_DIR/pcv_adapter_1009/rev1/pcv_adapter.step"
+if [ ! -f "$STEP" ]; then
+  echo "ERROR: $STEP not found. Set MODELS_DIR to your models folder (part files are not in this repo)." >&2
+  exit 1
+fi
+cp "$STEP" .
 gmsh pcv_adapter.step -3 -format msh4 -clmax 1.5 -o pcv_adapter.msh > gmsh.log 2>&1; echo "gmsh exit $?"
 $HOME/simvenv/bin/python - <<'EOF' | tee RESULT.txt
 import meshio

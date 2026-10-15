@@ -1,3 +1,6 @@
+import os
+MODELS_DIR = os.environ.get('MODELS_DIR', os.path.expanduser('~/models'))
+KB = os.path.join(MODELS_DIR, 'knuckle_billet_1009')  # moved part files: baseline/, iter-opt/
 """Voxel SIMP topology optimisation of the billet knuckle (multi-load compliance, volume constraint).
 Hex8 voxels, density filter, OC update, pypardiso solves. Supports/loads mirror fea_v4b.py (CalculiX deck).
 usage: python topo_simp.py <target_mass_kg> <h_mm> <iters> <outstem>"""
@@ -19,7 +22,7 @@ def vox_in(stl):
     m = trimesh.load(stl); v = m.voxelized(pitch=h / 2).fill(); P = v.points
     g = np.floor((P - lo) / h).astype(int); ok = np.all((g >= 0) & (g < n), 1); g = g[ok]
     occ = np.zeros(tuple(n), bool); occ[g[:, 0], g[:, 1], g[:, 2]] = True; return occ.reshape(-1)
-inside = vox_in('iter/it11.stl') | vox_in('baseline/v4b_fixed.stl')
+inside = vox_in(os.path.join(KB, 'iter-opt', 'it11.stl')) | vox_in(os.path.join(KB, 'baseline', 'v4b_fixed.stl'))
 from scipy.ndimage import binary_dilation, binary_closing
 env = binary_dilation(binary_closing(inside.reshape(tuple(n)), iterations=2), iterations=1).reshape(-1)
 x, y, z = C.T; r = np.hypot(x, y)
