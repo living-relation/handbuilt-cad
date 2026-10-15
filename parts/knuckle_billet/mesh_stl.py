@@ -1,7 +1,10 @@
 # Fallback: v4b STL (repaired) -> classify -> reparametrised surfaces -> 2nd-order tets
+import os
+MODELS_DIR = os.environ.get('MODELS_DIR', os.path.expanduser('~/models'))
+KNUCKLE_V4B = os.path.join(MODELS_DIR, 'knuckle_1009', 'rev4b')
 import gmsh, numpy as np, trimesh, pymeshfix, math, sys, json, time
 t=time.time()
-m=trimesh.load('/workspace/handbuilt/knuckle/v4b/knuckle.stl', process=True); m.merge_vertices(digits_vertex=4)
+m=trimesh.load(os.path.join(KNUCKLE_V4B, 'knuckle.stl'), process=True); m.merge_vertices(digits_vertex=4)
 v,f=pymeshfix.clean_from_arrays(np.ascontiguousarray(m.vertices,dtype=np.float64), np.ascontiguousarray(m.faces,dtype=np.int32))
 mm=trimesh.Trimesh(v,f); mm.export('baseline/v4b_fixed.stl'); print('fixed vol', mm.volume, 'watertight', mm.is_watertight, flush=True)
 gmsh.initialize(); gmsh.option.setNumber("General.Terminal",1); gmsh.option.setNumber("General.Verbosity",2)

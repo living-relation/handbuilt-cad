@@ -1,9 +1,12 @@
+import os
+MODELS_DIR = os.environ.get('MODELS_DIR', os.path.expanduser('~/models'))
+KNUCKLE_V4B = os.path.join(MODELS_DIR, 'knuckle_1009', 'rev4b')
 import gmsh, trimesh, numpy as np
 m=trimesh.load('baseline/v4b_fixed.stl'); lo,hi=m.bounds
 rng=np.random.default_rng(1); P=rng.uniform(lo,hi,(60000,3))
 inF=m.contains(P)
 gmsh.initialize(); gmsh.option.setNumber("General.Terminal",0)
-gmsh.model.occ.importShapes('/workspace/handbuilt/knuckle/v4b/knuckle.step'); gmsh.model.occ.synchronize()
+gmsh.model.occ.importShapes(os.path.join(KNUCKLE_V4B, 'knuckle.step')); gmsh.model.occ.synchronize()
 Q=P[inF]; inS=np.array(gmsh.model.isInside(3,1,Q.ravel().tolist(),parametric=False) if False else [gmsh.model.isInside(3,1,list(q)) for q in Q])>0
 extra=Q[~inS]; boxvol=np.prod(hi-lo)
 print('fixed-only pts', len(extra), 'of', inF.sum(), 'est extra vol', len(extra)/len(P)*boxvol)
