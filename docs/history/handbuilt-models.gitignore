@@ -118,3 +118,10 @@ parts/
 /catch_can_refscan/**/*.stl
 /catch_can_refscan/**/*.png
 /catch_can_refscan/**/*.3mf
+
+# --- 2026-10-15: remaining knuckle_billet part models moved to $MODELS_DIR/knuckle_billet_1009/{iter-opt,topo,baseline} ---
+/knuckle_billet/iter/*.step
+/knuckle_billet/iter/*.stl
+/knuckle_billet/topo/*.stl
+/knuckle_billet/baseline/*.stl
+/sim-tools/smoke/gmsh/*.step
