@@ -1,6 +1,6 @@
 # Layout — where everything goes
 
-> **Part files moved (2026-10-15):** finished part outputs (STEP, STL, PNG renders, notes) are no longer in this repo. They live in the owner's models folder, `$MODELS_DIR/<job>_<MMDD>/revN/`, each rev with a `SUMMARY.md` and a `src/` copy of its scripts. The folders below keep the generation scripts; rebuild a part from its script, or point `MODELS_DIR` at your own models folder.
+> **Part files moved (2026-10-15):** finished part outputs (STEP, STL, PNG renders, notes) are no longer in this repo. They live in the owner's models folder, `$MODELS_DIR/<job>_<MMDD>/rev<LETTER>/` (older jobs keep their numeric `revN` folders as they are), each rev with a `SUMMARY.md` and a `src/` copy of its scripts. The folders below keep the generation scripts; rebuild a part from its script, or point `MODELS_DIR` at your own models folder.
 
 
 [← Home](../../README.md)
@@ -34,7 +34,7 @@ handbuilt-cad/
 
 ## Where new work goes
 
-- **New part:** a new folder `parts/<part>/` (`snake_case`) with `<part>.py` and a short `NOTES.md`. The generated STEP / STL / renders go to `$MODELS_DIR/<job>_<MMDD>/revN/` (skill `publish-to-models`), never into git. If it has versions, use `v1/`, `v2/`... like `parts/knuckle/`.
+- **New part:** a new folder `parts/<part>/` (`snake_case`) with `<part>.py` and a short `NOTES.md`. The generated STEP / renders (STL only for print jobs) go to `$MODELS_DIR/<job>_<MMDD>/rev<LETTER>/` (skill `publish-to-models`), never into git. If it has versions, use `v1/`, `v2/`... like `parts/knuckle/`.
 - **Simulation runs:** run in the Linux home (`~/sim-runs/<part>/…`) or a git-ignored folder, then copy only summaries (JSON/CSV/PNG) into the part folder.
 - **Docs:** update the [Parts index](Parts.md) and add a dated line to `NOTES.md`.
 
