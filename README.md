@@ -26,8 +26,8 @@ Then use the venv: `.venv/bin/python tools/cnc_check.py --help` (or set `CAD_PY`
 ## What's where
 | Folder | What |
 |---|---|
-| `tools/` | shared toolkit (cnc_check, blend, rev, scan_helper, features, quick_fea, views, viewer, an_fitting) |
-| `drawing/` | rev-letter helper and drawing templates (drawing engine to follow) |
+| `tools/` | shared toolkit (cnc_check, blend, rev, scan_helper, features, quick_fea, views, viewer, an_fitting), `checks/`, `render/` |
+| `drawing/` | drawing engine, rev letters (`revs.py`), drawing rules and templates |
 | `sim/` | meshing/FEA helper scripts, smoke tests, FreeCAD launcher wrappers |
 | `parts/` | build scripts and specs, one folder per part (no model files) |
 | `pipelines/fairsolid/` | scan mesh -> parametric STEP pipeline (own venv, see its README) |

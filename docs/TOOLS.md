@@ -17,7 +17,9 @@
 | FreeCAD | FreeCAD release | existing | 1.1.4 | headless FEM / edge breaks; its bundled Python is never imported by this repo |
 | FreeCAD launcher wrappers | `sim/` (`*.bat`) | modified (our wrappers) | - | run ccx/gmsh in WSL from FreeCAD |
 | tools/* | `tools/` | made | - | toolkit |
-| drawing/revletter.py + templates | `drawing/` | made | - | rev letters, rev log, revision register |
+| drawing engine (part/asm/dwg/feat/hw) + revs.py + templates | `drawing/` | made | - | 2D drawings from B-rep (no hidden lines, rev log), rev letters, revision register |
+| model checks | `tools/checks/` | made | - | mesh, walls, round-trip, interference, edge breaks, hole fixes |
+| renders | `tools/render/` | made | - | smooth-shaded renders, section plots |
 | fairsolid | `pipelines/fairsolid/` | made | - | scan -> parametric STEP |
 | sim scripts | `sim/` | made | - | meshing/FEA helpers and smoke tests |
 | Fusion 360, Fusion MCP add-in, harness-design MCP, Blender MCP add-on | outside dependencies | existing | listed in the workstation pin file | not part of this repo |

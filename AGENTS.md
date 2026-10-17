@@ -14,6 +14,8 @@ This file is the single agent guide for this repo. `CLAUDE.md` and `.cursor/rule
 - Secrets, `.env` files, tokens, personal paths or personal data.
 
 ## CAD and drawing rules
+The drawing engine's full rule list (and which ones it enforces) is `drawing/DRAWING-RULES.md`; rev letters come from `drawing/revs.py`.
+
 1. **Model drives the rev letter.** The model generates the drawing; model and drawing rev letters always match. Letters start at A, skip I, L, O and Q, then continue AA, AB, ... after Z. Rev A is only for new models; an existing model's letter comes from counting its past releases.
 2. **Clerical vs model revs.** Drawing-only edits that don't affect fit, form or function add a decimal (C -> C.01, C.02 ...). A model change bumps the letter for model and drawing (C.0x -> D) and resets the decimal.
 3. **Redline workflow.** Mark up the drawing first, update the model to match, then regenerate the drawing from the model. Never fix a design issue on the drawing alone.

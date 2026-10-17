@@ -80,7 +80,7 @@ def test_find_revlog(tmp_path):
     assert R.find_revlog(str(a / "foot.step")) is None             # shared folder: plain REVLOG.md is ambiguous
     (a / "foot.REVLOG.md").write_text("| A | Initial | SC | 01/10/26 |\n")
     assert R.find_revlog(str(a / "foot.step")).endswith("foot.REVLOG.md")
-    (a / "ST185-FH-103.REVLOG.md").write_text("| A | Initial | SC | 01/10/26 |\n")
-    assert R.find_revlog(str(a / "strut.step"), pn="ST185-FH-103").endswith("ST185-FH-103.REVLOG.md")
+    (a / "PN-103.REVLOG.md").write_text("| A | Initial | SC | 01/10/26 |\n")
+    assert R.find_revlog(str(a / "strut.step"), pn="PN-103").endswith("PN-103.REVLOG.md")
     b = tmp_path / "single"; b.mkdir(); (b / "base.step").write_text("x"); (b / "REVLOG.md").write_text("")
     assert R.find_revlog(str(b / "base.step")).endswith("REVLOG.md")

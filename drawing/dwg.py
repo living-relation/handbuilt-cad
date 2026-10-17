@@ -256,7 +256,7 @@ def project(shape,view,hidden=False,defl=0.02,soft_deg=SOFT_EDGE_DEG):
                 keep.append(p)
             vis=keep
     LAST_PROJECT_STATS.update(view=view,visible=len(vis),soft_3d=nsoft,planar_facets=nfacet,dropped=dropped)
-    # RULE (Daniel 2026-10-17): never show hidden lines; 'hidden' arg ignored.
+    # RULE: never show hidden lines; 'hidden' arg ignored.
     hid=[]
     return vis,hid,(c,r,u)
 
@@ -461,7 +461,7 @@ def frame(sh,info,sheet_no,n_sheets,proj=True):
         sh.txt(a+1,d-1,label,h=1.8,ha='left',va='top')
         sh.txt((a+c)/2,(b+d)/2-1.2,val,h=vh,bold=bold)
     # rows
-    box(x0,y1-10,x1,y1,'COMPANY / PROJECT',info.get('project','ST185 CELICA GT-FOUR  -  LINK ECU CONVERSION'),3.2,True)
+    box(x0,y1-10,x1,y1,'COMPANY / PROJECT',info.get('project','PROJECT'),3.2,True)
     box(x0,y1-24,x1,y1-10,'TITLE',info['title'],4.6 if len(info['title'])<38 else 3.6,True)
     box(x0,y1-34,x0+90,y1-24,'PART / DWG NO.',info['pn'],3.2,True)
     box(x0+90,y1-34,x0+110,y1-24,'REV',info.get('rev','1'),3.6,True)

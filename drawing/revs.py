@@ -1,6 +1,6 @@
 """Rev letters, clerical decimals and the per-model rev log (REVLOG.md).
 
-Daniel's rules (2026-10-17), see DRAWING-RULES.md:
+Rules, see DRAWING-RULES.md:
 - Letters run A..Z skipping I, L, O, Q, then AA, AB ... (same skips), like spreadsheet columns.
 - A model change bumps the letter and resets the decimal (C.02 -> D).
 - A drawing-only change that doesn't affect fit, form or function is a clerical rev: C -> C.01 -> C.02.

@@ -1,6 +1,6 @@
 # Drawing rules (SteveCAD drawing engine)
 
-Daniel's rules for every drawing this engine makes. The engine enforces the ones marked **(engine)**.
+Rules for every drawing this engine makes. The engine enforces the ones marked **(engine)**.
 
 ## Revisions
 1. **The model drives the letter and the drawing matches.** The model generates the drawing; model and drawing letters are always the same. **(engine)** the title-block letter must equal the newest rev log entry, or the run fails.
@@ -9,7 +9,7 @@ Daniel's rules for every drawing this engine makes. The engine enforces the ones
 4. **Model change** (fit, form or function): bump the letter, reset the decimal (C.02 -> D).
 5. **Clerical rev** (drawing-only change to an already-released drawing that doesn't affect fit, form or function): add a decimal, C -> C.01 -> C.02. **(engine)** `bump_clerical`.
 6. **Workflow:** redline the drawing first, then fix the model, then regenerate the drawing. Never hand-edit a drawing to differ from the model.
-7. **No rev letters in st185 file names.** Revs live only in title blocks, rev logs and registers. (Renaming outside st185 is fine.)
+7. **File names:** whether file names carry rev letters is each project's own rule; by default revs live only in title blocks, rev logs and registers.
 
 ## Rev log
 8. Every drawing has a rev log: a small table in the **top-right corner of sheet 1** with columns **Rev | Description | By | Date** (Date dd/mm/yy; By = agent or person). **(engine)**
@@ -27,7 +27,7 @@ Daniel's rules for every drawing this engine makes. The engine enforces the ones
 18. Name the tool that made the model in parentheses (e.g. "(Fusion)", "(build123d)").
 
 ## Edges and walls
-19. **Edge breaks are optional.** If the CAD can't model them cleanly, leave them off and add a drawing note (R138), e.g. "BREAK SHARP EDGES 0.2-0.4".
+19. **Edge breaks are optional.** If the CAD can't model them cleanly, leave them off and add a drawing note, e.g. "BREAK SHARP EDGES 0.2-0.4".
 20. Fillets go last; any that fail are skipped and listed.
 21. Minimum wall thickness applies to critical or structural features only; anything questionable or unclear is flagged for change or approval.
 
