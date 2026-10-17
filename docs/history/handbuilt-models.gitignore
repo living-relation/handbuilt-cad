@@ -1,0 +1,127 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+# Simulation tool installs, downloads and run folders
+sim-tools/FreeCAD/
+sim-tools/downloads/
+sim-tools/logs/
+sim-tools/smoke/**/processor*/
+sim-tools/smoke/**/[0-9]*.[0-9]*/
+sim-tools/rollback/etc-apt-before/
+runs/
+sim-runs/
+**/sim_runs/
+# Scan point clouds
+*.ply
+# STEP/STL/archives over 50 MB (kept on disk, not in git)
+knuckle/v3/knuckle.step
+knuckle/v4/knuckle.step
+sim-tools/downloads/FreeCAD_1.1.4-Windows-x86_64-py311.7z
+knuckle/v4b/knuckle.step
+knuckle_billet/baseline/*.frd
+knuckle_billet/baseline/*.vtu
+knuckle_billet/baseline/*.npz
+
+# --- added 2026-10-10 for the public repo ---
+# Solver / mesh output from iteration and topology runs (summaries in JSON/CSV/PNG are kept)
+knuckle_billet/iter/*.frd
+knuckle_billet/iter/*.vtu
+knuckle_billet/iter/*.12d
+knuckle_billet/iter/*.cvg
+knuckle_billet/iter/*.sta
+knuckle_billet/iter/*.dat
+knuckle_billet/iter/*.inp
+knuckle_billet/iter/*_mesh.npz
+knuckle_billet/final/**/*.frd
+knuckle_billet/final/**/*.vtu
+# Raw scans and scanner project data
+*.obscan
+*.obproj
+*.obp
+*.obmc
+# Secrets and local agent files (never commit)
+.env
+.env.*
+*.pem
+*.key
+mcp.json
+CLAUDE.local.md
+.claude/
+
+# --- toolkit (2026-10-10): personal part models stay local ---
+knuckle_billet/baseline_al/
+parts/
+
+# --- personal part work kept on the PC only (realign 2026-10-10) ---
+/knuckle_billet/edge_break.py
+/knuckle_billet/fab/
+/knuckle_billet/final/middle-flow/
+/knuckle_billet/final/middle-smooth/
+/knuckle_billet/iter/opt_P3.step
+/knuckle_billet/iter/opt_P3_mesh.log
+/knuckle_billet/iter/opt_P4.step
+/knuckle_billet/iter/opt_P4_ccx.log
+/knuckle_billet/iter/opt_P4_deck.log
+/knuckle_billet/iter/opt_P4_mesh.log
+/knuckle_billet/iter/padA.step
+/knuckle_billet/iter/padA_ccx.log
+/knuckle_billet/iter/padA_deck.log
+/knuckle_billet/iter/padA_deck_info.json
+/knuckle_billet/iter/padA_mesh.log
+/knuckle_billet/iter/padA_post.log
+/knuckle_billet/iter/padA_results.json
+/knuckle_billet/iter/spooles.out
+/knuckle_billet/loads17/
+/knuckle_billet/loads17_results.md
+/knuckle_billet/reference/
+/knuckle_billet/render_closeup.py
+/knuckle_billet/sum17.py
+/knuckle_billet/topo/sc3_h4.json
+/knuckle_billet/topo/sc4_h4_kt.json
+/knuckle_billet/topo/sc4_h4_kt.log
+/knuckle_billet/topo/sc4_h4_kt.npz
+
+# --- 2026-10-15: finished part outputs live in $MODELS_DIR (<job>_<MMDD>/revN), not in git ---
+/pcv_an10/**/*.step
+/pcv_an10/**/*.stp
+/pcv_an10/**/*.stl
+/pcv_an10/**/*.png
+/pcv_an10/**/*.3mf
+/pcv_adapter/**/*.step
+/pcv_adapter/**/*.stp
+/pcv_adapter/**/*.stl
+/pcv_adapter/**/*.png
+/pcv_adapter/**/*.3mf
+/knuckle/**/*.step
+/knuckle/**/*.stp
+/knuckle/**/*.stl
+/knuckle/**/*.png
+/knuckle/**/*.3mf
+/knuckle_billet/final/**/*.step
+/knuckle_billet/final/**/*.stp
+/knuckle_billet/final/**/*.stl
+/knuckle_billet/final/**/*.png
+/knuckle_billet/final/**/*.3mf
+/bezel/**/*.step
+/bezel/**/*.stp
+/bezel/**/*.stl
+/bezel/**/*.png
+/bezel/**/*.3mf
+/pedal_adapter/**/*.step
+/pedal_adapter/**/*.stp
+/pedal_adapter/**/*.stl
+/pedal_adapter/**/*.png
+/pedal_adapter/**/*.3mf
+/catch_can_refscan/**/*.step
+/catch_can_refscan/**/*.stp
+/catch_can_refscan/**/*.stl
+/catch_can_refscan/**/*.png
+/catch_can_refscan/**/*.3mf
+
+# --- 2026-10-15: remaining knuckle_billet part models moved to $MODELS_DIR/knuckle_billet_1009/{iter-opt,topo,baseline} ---
+/knuckle_billet/iter/*.step
+/knuckle_billet/iter/*.stl
+/knuckle_billet/topo/*.stl
+/knuckle_billet/baseline/*.stl
+/sim-tools/smoke/gmsh/*.step

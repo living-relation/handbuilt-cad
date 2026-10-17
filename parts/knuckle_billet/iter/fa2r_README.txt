@@ -1,0 +1,1 @@
+fa2r = iter/fa2.inp (full-arm deck) with '*NODE PRINT, NSET=STRUTO, TOTALS=ONLY / RF' and the same for STRUTI added after each step's NALL print, and the NODE FILE/EL FILE output removed. Reactions are in fa2r.dat.

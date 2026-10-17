@@ -1,0 +1,74 @@
+{
+ "stem": "topo/sc_h4",
+ "mass_rho_gt_0p5_kg": 2.016,
+ "iso_volume_kg": null,
+ "grey_frac": 0.562,
+ "regions": {
+  "tongue root / below clamp (y -67..-40)": {
+   "topo_kg": 0.126,
+   "it11_kg": 0.281,
+   "it11_kept_frac": 0.28,
+   "topo_outside_it11_kg": 0.047
+  },
+  "flange ring, tongue side (y<-12)": {
+   "topo_kg": 0.059,
+   "it11_kg": 0.143,
+   "it11_kept_frac": 0.36,
+   "topo_outside_it11_kg": 0.008
+  },
+  "flange plate, arm side (y>-12)": {
+   "topo_kg": 0.11,
+   "it11_kg": 0.35,
+   "it11_kept_frac": 0.3,
+   "topo_outside_it11_kg": 0.005
+  },
+  "hub tube outer z<60": {
+   "topo_kg": 0.159,
+   "it11_kg": 0.15,
+   "it11_kept_frac": 0.82,
+   "topo_outside_it11_kg": 0.036
+  },
+  "ear-1 lug zone": {
+   "topo_kg": 0.062,
+   "it11_kg": 0.153,
+   "it11_kept_frac": 0.28,
+   "topo_outside_it11_kg": 0.02
+  },
+  "ear-2 lug zone": {
+   "topo_kg": 0.049,
+   "it11_kg": 0.132,
+   "it11_kept_frac": 0.23,
+   "topo_outside_it11_kg": 0.019
+  },
+  "left-eye arm zone": {
+   "topo_kg": 0.066,
+   "it11_kg": 0.191,
+   "it11_kept_frac": 0.31,
+   "topo_outside_it11_kg": 0.006
+  },
+  "right-eye arm zone": {
+   "topo_kg": 0.033,
+   "it11_kg": 0.16,
+   "it11_kept_frac": 0.21,
+   "topo_outside_it11_kg": 0.0
+  },
+  "top-eye arm zone": {
+   "topo_kg": 0.112,
+   "it11_kg": 0.279,
+   "it11_kept_frac": 0.2,
+   "topo_outside_it11_kg": 0.056
+  },
+  "rib tongue->right eye (x>15, y -60..20, z>84)": {
+   "topo_kg": 0.004,
+   "it11_kg": 0.158,
+   "it11_kept_frac": 0.02,
+   "topo_outside_it11_kg": 0.0
+  },
+  "rib tongue->left eye (x<-15, y -60..20, z>84)": {
+   "topo_kg": 0.004,
+   "it11_kg": 0.063,
+   "it11_kept_frac": 0.03,
+   "topo_outside_it11_kg": 0.002
+  }
+ }
+}

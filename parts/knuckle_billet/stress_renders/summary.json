@@ -1,0 +1,50 @@
+{
+ "best_corner": {
+  "file": "/workspace/knuckle_billet/stress_renders/best_corner_iso.png",
+  "peak_local": 709.0,
+  "robust": 251.3,
+  "SF": 2.0
+ },
+ "best_brake": {
+  "file": "/workspace/knuckle_billet/stress_renders/best_brake_iso.png",
+  "peak_local": 324.0,
+  "robust": 248.0,
+  "SF": 2.03
+ },
+ "middle_corner": {
+  "file": "/workspace/knuckle_billet/stress_renders/middle_corner_iso.png",
+  "peak_local": 327.9,
+  "robust": 215.6,
+  "SF": 2.33
+ },
+ "middle_brake": {
+  "file": "/workspace/knuckle_billet/stress_renders/middle_brake_iso.png",
+  "peak_local": 282.9,
+  "robust": 184.0,
+  "SF": 2.73
+ },
+ "full-arm_corner": {
+  "file": "/workspace/knuckle_billet/stress_renders/full-arm_corner_iso.png",
+  "peak_local": 306.0,
+  "robust": 206.8,
+  "SF": 2.43
+ },
+ "full-arm_brake": {
+  "file": "/workspace/knuckle_billet/stress_renders/full-arm_brake_iso.png",
+  "peak_local": 223.1,
+  "robust": 180.5,
+  "SF": 2.79
+ },
+ "easy_corner": {
+  "file": "/workspace/knuckle_billet/stress_renders/easy_corner_iso.png",
+  "peak_local": 317.3,
+  "robust": 225.2,
+  "SF": 2.23
+ },
+ "easy_brake": {
+  "file": "/workspace/knuckle_billet/stress_renders/easy_brake_iso.png",
+  "peak_local": 291.8,
+  "robust": 185.1,
+  "SF": 2.72
+ }
+}
