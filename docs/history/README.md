@@ -7,4 +7,5 @@ import: part/model files, archives, solver outputs and logs removed from all his
 
 | Source | Source commit | Imported into | Method |
 |---|---|---|---|
-@HISTORY_ROWS@
+| handbuilt-models (main) | `57729e3094a6ec1c9a53368a6e3b88899860a1e1` | `tools/`, `sim/`, `parts/`, `examples/`, `docs/`, `scans/`, `requirements-sim.txt`; old README/setup/NOTES/ignore files under `docs/history/` | filter-repo (history kept) |
+| fairsolid (main) | `d9e17517da580bca3c1df93b73418bfa4741c30e` | `pipelines/fairsolid/` | filter-repo (history kept) |
