@@ -10,16 +10,23 @@ def to_mesh(path, tol=0.02, ang=0.2):
         m = pv.read(path)
     else:
         from build123d import import_step
-        vs, fs = import_step(path).tessellate(tol, ang)
-        v = np.array([[p.X, p.Y, p.Z] for p in vs]); f = np.hstack([[3, *t] for t in fs])
-        m = pv.PolyData(v, f)
+        parts = []
+        for so in import_step(path).solids():
+            vs, fs = so.tessellate(tol, ang)
+            if not fs: continue
+            v = np.array([[p.X, p.Y, p.Z] for p in vs]); f = np.hstack([[3, *t] for t in fs])
+            parts.append(pv.PolyData(v, f))
+        if not parts: raise ValueError('no solids tessellated in ' + path)
+        m = parts[0].merge(parts[1:]) if len(parts) > 1 else parts[0]
     return m.compute_normals(split_vertices=True, feature_angle=35)
 
 def render(path, out, view='iso', edges=False, color='#9aa3ad', size=(1600, 1200)):
     m = to_mesh(path)
     p = pv.Plotter(off_screen=True, window_size=size); p.set_background('white')
     p.add_mesh(m, color=color, smooth_shading=True, show_edges=False, specular=0.3)
-    if edges: p.add_mesh(m.extract_feature_edges(35, boundary_edges=False, non_manifold_edges=False, manifold_edges=False), color='black', line_width=1.2)
+    if edges:
+        fe = m.extract_feature_edges(35, boundary_edges=False, non_manifold_edges=False, manifold_edges=False)
+        if fe.n_points: p.add_mesh(fe, color='black', line_width=1.2)
     {'iso': p.view_isometric, 'top': p.view_xy, 'front': p.view_xz, 'right': p.view_yz}.get(view, p.view_isometric)()
     if view == 'iso_below': p.view_isometric(); p.camera.elevation = -35
     p.enable_parallel_projection(); p.reset_camera(); p.screenshot(out); p.close(); return out

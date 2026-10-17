@@ -14,7 +14,8 @@ for f in _FONTS:
     if not os.path.exists(f): continue  # missing fonts fall back to matplotlib's bundled DejaVu
     try: font_manager.fontManager.addfont(f)
     except Exception: pass
-plt.rcParams['font.family']=['DejaVu Sans','DejaVu Sans Mono','OpenSymbol']
+_have={f.name for f in font_manager.fontManager.ttflist}
+plt.rcParams['font.family']=[n for n in ('DejaVu Sans','DejaVu Sans Mono','OpenSymbol') if n in _have] or ['DejaVu Sans']
 plt.rcParams['lines.scale_dashes']=False
 plt.rcParams['hatch.linewidth']=0.35
 plt.rcParams['pdf.fonttype']=42

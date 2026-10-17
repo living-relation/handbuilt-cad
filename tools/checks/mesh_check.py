@@ -11,7 +11,7 @@ def check(path):
     if not path.lower().endswith('.stl'):
         from build123d import import_step
         s = import_step(path); sol = s.solids()
-        r['solids'] = len(sol); r['valid'] = all(x.is_valid() for x in sol)
+        r['solids'] = len(sol); r['valid'] = all((x.is_valid() if callable(x.is_valid) else x.is_valid) for x in sol)
         r['volumes'] = [round(x.volume, 3) for x in sol]
         r['tiny_faces'] = sum(1 for x in sol for f in x.faces() if f.area < 0.01)
     m = to_mesh(path).clean()
