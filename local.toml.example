@@ -6,6 +6,7 @@ models_dir = ""        # MODELS_DIR; empty = <Desktop>/models (OneDrive Desktop 
 cad_staging = ""       # CAD_STAGING; scratch output for renders/reports (outside the repo)
 freecad_dir = ""       # FREECAD_DIR; folder that holds bin/freecadcmd(.exe)
 fairsolid_runs = ""    # FAIRSOLID_RUNS; where pipeline run folders go (outside the repo)
+scratch_dir = ""       # SCRATCH_DIR; disposable clones and handoff packs for toolkit patches (outside every live checkout)
 
 [python]
 cad_py = ""            # CAD_PY; empty = <repo>/.venv/bin/python

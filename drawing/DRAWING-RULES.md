@@ -22,7 +22,7 @@ Rules for every drawing this engine makes. The engine enforces the ones marked *
 ## Lines and views
 14. **Never show hidden lines.** **(engine)** hidden edges are never drawn; spec `hidden` is ignored.
 15. Center marks and center lines for holes and radii are OK. **(engine)** marks every visible hole (full circle) and arc of 150 deg or more whose axis is along the view, from exact B-rep circles, in any part orientation (spec `center_marks: False` to turn off, `arc_mark_min_sweep` to tune).
-16. **Never show mesh triangles or polygons.** Views come from exact B-rep hidden-line removal (OCCT HLR), never from a tessellated mesh. **(engine)** seam, tangent and facet edges (faces meeting within 8 deg) are dropped unless they are a silhouette. A model with many flat facets (polygonised curves) prints a WARNING: rebuild those curves as true arcs.
+16. **Never show mesh triangles or polygons.** Views come from exact B-rep hidden-line removal (OCCT HLR), never from a tessellated mesh. **(engine)** seam, tangent and facet edges (faces meeting within 8 deg) are dropped unless they are a silhouette.
 17. Renders are smooth-shaded like machined bodies, no mesh lines or triangles (`render/smooth_render.py`).
 18. Name the tool that made the model in parentheses (e.g. "(Fusion)", "(build123d)").
 
