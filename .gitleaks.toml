@@ -1,0 +1,3 @@
+# gitleaks config: default rules plus the repo's own allowlist.
+[extend]
+useDefault = true

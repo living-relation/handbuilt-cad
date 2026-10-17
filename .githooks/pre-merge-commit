@@ -1,0 +1,5 @@
+#!/bin/sh
+# Installed by setup (git config core.hooksPath .githooks). Never bypass with --no-verify.
+ROOT=$(git rev-parse --show-toplevel)
+sh "$ROOT/scripts/guard-staged.sh" || exit 1
+sh "$ROOT/scripts/run-gitleaks.sh" || exit 1
