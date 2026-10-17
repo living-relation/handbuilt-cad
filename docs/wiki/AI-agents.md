@@ -8,7 +8,7 @@ This repo is public so AI tools can read it. Start with [How to use](How-To-Use.
 
 1. **Read first:** this wiki, then the part's own `NOTES.md` / `PLAN.md` / `MEASURED.md`, then the top of the part script.
 2. **Where to run:** in WSL Ubuntu at `~/projects/handbuilt-cad`, with `.venv/bin/python` for models and `source sim/wsl-env.sh` for simulation. Don't run solvers on `/mnt/c` paths (slow); use `~/sim-runs/`.
-3. **Change a part:** edit the named dimensions, rerun the script, re-check fit (and FEA for structural parts), update the [Parts index](Parts.md) and add a dated line to `NOTES.md`.
-4. **Don't:** move existing folders, scale scans, commit scans/solver output/secrets, force-push, or edit Fairsolid from here (it is a separate repo: <https://github.com/living-relation/fairsolid>).
+3. **Change a part:** edit the named dimensions, rerun the script, re-check fit and run the CNC check (FEA for structural parts only after the owner approves the geometry), update the [Parts index](Parts.md) and add a dated line to `NOTES.md`.
+4. **Don't:** move existing folders, scale scans, commit scans/solver output/secrets, force-push, or edit Fairsolid here without reading [`docs/FAIRSOLID.md`](../FAIRSOLID.md) first (the live fairsolid repo <https://github.com/living-relation/fairsolid> is the current source of truth; `pipelines/fairsolid/` is a vendored copy).
 5. **Public repo:** never write API keys, tokens, emails or personal paths into files here.
 6. **Ask the owner** before machining-critical changes to the final knuckle versions (scripts in `knuckle_billet/`, part files in `$MODELS_DIR/knuckle_billet_<MMDD>/`).

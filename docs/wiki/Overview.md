@@ -22,7 +22,7 @@ On top of that, some parts get:
 | Simulation tools | WSL (CalculiX, Gmsh, Elmer, OpenFOAM, ParaView, `~/simvenv`) | Install script in `sim/scripts/` |
 | FreeCAD | Windows `C:\projects\_tools\FreeCAD` | Optional front end |
 | Older trials | `C:\projects\_scratch\scan2param-trials`, `%USERPROFILE%\agent-tools\` | Historical; not needed to use this repo |
-| Backups | `C:\projects\_archive\` | Zip snapshots before big changes |
+| Backups | git history | Repo work is backed up by git; `C:\projects\_archive\` holds obsolete work only (owner's OK first) |
 | Agent box | A Linux machine the AI agent works on | Some heavy runs happen there and results get copied back here |
 
 ## Current highlights

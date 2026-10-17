@@ -27,10 +27,10 @@ source sim/env.sh
 | 1. Scan | Scan the part (any 3D scanner), export a mesh (`.ply`/`.stl`/`.obj`). Keep scans **outside** the repo. | your scanner app |
 | 2. Measure | Load the mesh in Python and measure holes, faces and distances. Round to real sizes (6.6 mm not 6.58). Keep the scan's true scale: only move/rotate, never stretch. Optional helper: [Fairsolid](https://github.com/living-relation/fairsolid) cleans scans and finds a coordinate frame. | `.venv/bin/python` + trimesh |
 | 3. Hand-build | Copy `examples/bracket/bracket.py` into a new folder and change it. All sizes are named numbers at the top. | build123d |
-| 4. Export | The script writes `part.step` (for Fusion/CAM) and `part.stl` (for pictures/printing). | build123d |
+| 4. Export | The script writes `part.step` (the deliverable, for Fusion/CAM). STL only if a print job needs one. | build123d |
 | 5. Fitment check | Write where the holes must be in `spec.json`, then check. | `tools/features.py` |
 | 6. CNC check | Can it be milled? Setups, inside corners tighter than your cutters, vertical corners, thin walls. | `tools/cnc_check.py` |
-| 7. Strength check | Hold one side, push another, read the safety factor. | `tools/quick_fea.py` (Gmsh + CalculiX) |
+| 7. Strength check | Hold one side, push another, read the safety factor. Only after the owner approves the geometry (unless they ask for early tests). | `tools/quick_fea.py` (Gmsh + CalculiX) |
 | 8. Pictures | 6-view sheet (PNG) and a spin-around viewer (HTML for any browser). | `tools/views.py` (`--six` for the plain 6-view sheet), `tools/viewer.py` |
 | 9. Machining notes | Write stock size, setups, tools, tolerances in `MACHINING.md` next to the part. | a text file |
 
@@ -48,7 +48,7 @@ Or step by step, so you see what each piece does:
 cd examples/bracket
 ../../.venv/bin/python bracket.py
 ```
-You should see: `bracket: volume 2x.xx cm3, mass ~6x g (aluminium); wrote bracket.step, bracket.stl`
+You should see: `bracket: volume 2x.xx cm3, mass ~6x g (aluminium); wrote bracket.step`
 
 ```bash
 ../../.venv/bin/python ../../tools/features.py bracket.step --spec spec.json
@@ -62,15 +62,15 @@ This is a quick "can it be milled?" screen. It prints, and saves as `bracket_cnc
 1. **Setups**: which directions the cutter has to come from (every flat face reachable, every hole on-axis). It's a lower bound, because it doesn't know when one part of the model blocks another.
 2. **Inside corners** with no radius (sharp) or a radius smaller than your smallest cutter, with their x, y, z.
 3. **Vertical inside corners** a cutter coming straight down can't make (they come out at the tool radius).
-4. **Thin walls** under the minimum wall, with locations.
+4. **Thin walls** under the minimum wall you gave, with locations. There is no default: with no `--min-wall`, spec `min_wall_mm` or `--walls-config`, item 4 says `Walls: not checked`.
 
 For the bracket you should see 3 directions (bottom, top, and the side for the upright hole), no corners and no thin walls, then `Result: nothing flagged`.
 `cnc_spec.json` lists the cutters you have and your minimum wall. Every key is optional; the defaults are:
 ```json
-{"tool_radii_mm": [3.0, 5.0, 6.0], "lip_max_mm": 0.1, "min_wall_mm": 1.5, "spindle_axis": "z", "wall_samples": 20000,
+{"tool_radii_mm": [3.0, 5.0, 6.0], "lip_max_mm": 0.1, "min_wall_mm": null, "spindle_axis": "z", "wall_samples": 20000,
  "reach_samples": 20000, "reach_min_gain_pct": 0.25, "ray_chunk": 1000, "mesh_tol_mm": 0.02, "max_listed": 25}
 ```
-1.5 mm is an aluminium rule of thumb; use more for parts that carry load. Add `--strict` to make it exit with an error when anything is flagged (handy in scripts), and `--out PREFIX` to put the report somewhere else. Round holes (half a circle or more) count as drilled or bored, so they aren't reported as corners.
+The bracket's `cnc_spec.json` sets `min_wall_mm` to 1.5 as its owner's choice; never assume one for your part (ask the owner once and save it). The minimum applies to structural / critical features only, so thin spots are candidates to classify (`tools/checks/check_printed_walls.py` with a walls config), not automatic failures. Add `--strict` to make it exit with an error when anything is flagged (handy in scripts), and `--out PREFIX` to put the report somewhere else. Round holes (half a circle or more) count as drilled or bored, so they aren't reported as corners.
 
 **Lips.** A concave edge next to a face narrower than `lip_max_mm` (0.1 mm), where the faces on both sides of that sliver are within 15 deg of tangent, is a **lip**: a tiny step, not a corner (a `tools/blend.py` blend leaves a 0.015 mm step along each edge of the blend, one per lofted strip, which used to add hundreds of "sharp corners"). Lips are counted on their own line under item 2 and listed under `lips` in the JSON; they don't make the check fail. A sliver face inside a real corner (the faces either side turn more than 15 deg, e.g. a failed tiny fillet or a boolean seam) is still reported as a sharp corner, marked "split by a sliver face". Set `"lip_max_mm": 0` to count every concave edge as before.
 
@@ -84,11 +84,11 @@ The report ends with the run time and peak memory. On a large part (330 mm knuck
 $SIM_VENV/bin/python ../../tools/quick_fea.py bracket.step --fix z:min --load z:max --force 500,0,0 --yield 276
 ```
 This holds the bottom of the base still (`z:min`), pushes the top of the upright sideways with 500 N (`z:max`, force X=500), and uses 6061-T6 aluminium (yield 276 MPa). You should see something like
-`peak stress ~60 MPa -> safety factor ~4 vs yield 276 MPa`. Results are in `bracket_fea/` (`summary.json`, and `result.vtu` to open in ParaView).
+`peak stress ~60 MPa -> safety factor ~4 vs yield 276 MPa`. Results are in `bracket_fea/` (`summary.json`, and `result.vtu` to open in ParaView). In a real job, run this only after the owner approves the geometry.
 
 ```bash
-../../.venv/bin/python ../../tools/views.py bracket.stl --six --name "Sample bracket"
-../../.venv/bin/python ../../tools/viewer.py bracket.stl -o bracket_viewer.html
+../../.venv/bin/python ../../tools/views.py bracket.step --six --name "Sample bracket"
+../../.venv/bin/python ../../tools/viewer.py bracket.step -o bracket_viewer.html
 ```
 You get `bracket_views.png` and `bracket_viewer.html` (open it in a browser to spin it). With `--six` the sheet is just the six labelled views (FRONT, BACK, LEFT, RIGHT, TOP, BOTTOM, each saying which side it looks from) in plain grey, plus the size and volume in the title. `--name` sets the part name on the labels. Leave `--six` off to get the older sheet with a 7th iso (3D) panel.
 
@@ -124,10 +124,11 @@ Rename things, change the shape and sizes, and update `spec.json` with the holes
 | Command | What it does |
 |---|---|
 | `.venv/bin/python tools/features.py part.step [--spec spec.json]` | Lists round holes/bosses (diameter, axis, position) and checks them against a spec |
-| `.venv/bin/python tools/cnc_check.py part.step [--spec cnc_spec.json] [--strict] [--out PREFIX] [--stl part.stl] [--reach [DIRS]]` | CNC screen: setup directions, sharp or too-small inside corners (tiny blend run-out steps counted separately as lips), vertical corners, thin walls; `--reach` = line-of-sight surface coverage and fewest directions. Writes `_cnc.txt` + `_cnc.json` |
+| `.venv/bin/python tools/cnc_check.py part.step [--min-wall MM \| --walls-config TOML] [--spec cnc_spec.json] [--strict] [--out PREFIX] [--stl part.stl] [--reach [DIRS]]` | CNC screen: setup directions, sharp or too-small inside corners (tiny blend run-out steps counted separately as lips), vertical corners, thin walls (only with a minimum wall given; never assumed); `--reach` = line-of-sight surface coverage and fewest directions. Writes `_cnc.txt` + `_cnc.json` |
 | `$SIM_VENV/bin/python tools/quick_fea.py part.step --fix AX:min --load AX:max --force X,Y,Z [--E --nu --yield --size]` | Quick linear strength check. Units: mm, N, MPa |
-| `.venv/bin/python tools/views.py part.stl\|part.step [-o sheet.png] [--six] [--name NAME]` | 6-view + iso picture sheet; `--six` = only the 6 labelled plain-grey views |
-| `.venv/bin/python tools/viewer.py part.stl [more.stl] -o view.html` | Interactive 3D viewer in one HTML file |
+| `.venv/bin/python tools/views.py part.step\|part.stl [-o sheet.png] [--six] [--name NAME]` | 6-view + iso picture sheet; `--six` = only the 6 labelled plain-grey views |
+| `.venv/bin/python tools/viewer.py part.step [more.step] -o view.html` | Interactive 3D viewer in one HTML file (STEP or STL) |
+| `.venv/bin/python tools/render/smooth_render.py part.step out.png [--section ox,oy,oz/nx,ny,nz]` | Smooth-shaded render; `--section` = capped section (cut faces filled, never an open hollow-shell cut) |
 | `.venv/bin/python tools/an_fitting.py --size 10\|6 [-o end.step] [--stl] [--no-bore] [--lead MM]` | Male AN / JIC 37° flare fitting end with a real UNF thread; checks it's one valid solid (exit 1 if not) |
 | `.venv/bin/python tools/an_fitting.py --selfcheck [--json rows.json]` | Measures built `-6` and `-10` ends against MS33656 / AS4395 / ISO 8434-2 and UNF-2A; exit 1 on any miss |
 | `.venv/bin/python tools/blend.py pair A.step B.step --r 6 [--base body.step] [-o OUT] [--path crease.step]` | Rolling-ball blend (fillet) between two solids where `fillet()` fails; fuses it and checks valid, one solid, STEP re-import and fillet volume (the gain is measured locally as pieces minus base, never as the difference of two big part volumes; exit 1 on a miss). `demo --angle 45` and `compare` show it on a tilted cylinder |
@@ -155,7 +156,7 @@ If you're an AI helping someone with this repo:
 
 1. Read `README.md`, this page, and [Conventions](Conventions.md). Run `bash setup.sh --check` before anything else.
 2. New parts go in a new folder (for example `parts/<name>/`), copied from `examples/bracket/`. Keep every size as a named number at the top.
-3. After every change: rebuild, run `tools/features.py --spec` and `tools/cnc_check.py`, then `tools/quick_fea.py` for anything that carries load. Report the numbers (mass, PASS/FAIL, safety factor), not just "done".
+3. After every change: rebuild, run `tools/features.py --spec` and `tools/cnc_check.py` (with the minimum wall the owner gave). Run `tools/quick_fea.py` only after the owner approves the geometry, unless they ask for early tests. Report the numbers (mass, PASS/FAIL, safety factor once run), not just "done".
 4. Never scale scan data, never commit scans, secrets or big solver output, and never force-push. Keep personal part designs out of the public repo unless the owner says to share them.
 5. Use `.venv/bin/python` for CAD, `$SIM_VENV/bin/python` for meshing/FEA, and run heavy simulations in `~/sim-runs/`, not on `/mnt/c`.
 More detail: [For AI agents](AI-agents.md).
@@ -172,11 +173,11 @@ More detail: [For AI agents](AI-agents.md).
   ```
 
   Keep run folders outside the repo.
-- `tools/rev.py` makes the next revision folder for a finished part in your models folder, `$MODELS_DIR/<job>_<MMDD>/revN/`, with a `SUMMARY.md` template. It never overwrites an existing rev:
+- `tools/rev.py` makes the next revision folder for a finished part in your models folder, `$MODELS_DIR/<job>_<MMDD>/rev<LETTER>/` (A-Z skipping I, L, O, Q, then AA ...; `--clerical` makes `rev<LETTER>.<NN>` for a drawing-only change), with a `SUMMARY.md` template. It never overwrites an existing rev and never converts old numeric `revN` folders (for those, give `--releases N` or `--letter X`):
 
   ```bash
   export MODELS_DIR=~/models
   .venv/bin/python tools/rev.py bracket --source ~/work/bracket
   ```
 
-  Part files (STEP/STL/renders) go there, not into this repo.
+  Part files (STEP, drawings, renders; STL only for print jobs) go there, not into this repo. The full filing steps are the `publish-to-models` skill.
