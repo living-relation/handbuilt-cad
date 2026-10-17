@@ -1,0 +1,21 @@
+# Fallback: v4b STL (repaired) -> classify -> reparametrised surfaces -> 2nd-order tets
+import os
+MODELS_DIR = os.environ.get('MODELS_DIR', os.path.expanduser('~/models'))
+KNUCKLE_V4B = os.path.join(MODELS_DIR, 'knuckle_1009', 'rev4b')
+import gmsh, numpy as np, trimesh, pymeshfix, math, sys, json, time
+t=time.time()
+m=trimesh.load(os.path.join(KNUCKLE_V4B, 'knuckle.stl'), process=True); m.merge_vertices(digits_vertex=4)
+v,f=pymeshfix.clean_from_arrays(np.ascontiguousarray(m.vertices,dtype=np.float64), np.ascontiguousarray(m.faces,dtype=np.int32))
+mm=trimesh.Trimesh(v,f); mm.export('baseline/v4b_fixed.stl'); print('fixed vol', mm.volume, 'watertight', mm.is_watertight, flush=True)
+gmsh.initialize(); gmsh.option.setNumber("General.Terminal",1); gmsh.option.setNumber("General.Verbosity",2)
+gmsh.merge('baseline/v4b_fixed.stl')
+gmsh.model.mesh.classifySurfaces(40*math.pi/180, True, True, 180*math.pi/180)
+gmsh.model.mesh.createGeometry()
+s=gmsh.model.getEntities(2); l=gmsh.model.geo.addSurfaceLoop([e[1] for e in s]); gmsh.model.geo.addVolume([l]); gmsh.model.geo.synchronize()
+gmsh.option.setNumber("Mesh.MeshSizeMax", 4.0); gmsh.option.setNumber("Mesh.MeshSizeMin", 0.8)
+gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 24); gmsh.option.setNumber("Mesh.Algorithm", 6); gmsh.option.setNumber("Mesh.Algorithm3D", 10)
+gmsh.option.setNumber("Mesh.ElementOrder", 2); gmsh.option.setNumber("General.NumThreads", 8); gmsh.option.setNumber("Mesh.Optimize",1)
+gmsh.model.mesh.generate(3)
+nt,xyz,_=gmsh.model.mesh.getNodes(); xyz=xyz.reshape(-1,3)
+et,etags,enodes=gmsh.model.mesh.getElements(3); i=list(et).index(11); conn=np.array(enodes[i],dtype=np.int64).reshape(-1,10)
+np.savez_compressed('baseline/mesh_stl.npz', tags=nt, xyz=xyz, conn=conn); print(json.dumps(dict(nodes=len(nt),tets=len(conn),seconds=round(time.time()-t))))

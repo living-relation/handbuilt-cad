@@ -1,0 +1,2 @@
+
+gmsh meshed PCV adapter STEP: 4114 nodes; {'vertex': 1, 'line': 1, 'triangle': 134, 'tetra': 13295}

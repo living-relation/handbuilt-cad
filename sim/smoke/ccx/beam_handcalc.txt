@@ -1,0 +1,2 @@
+Euler-Bernoulli tip deflection PL^3/3EI = 0.19048 mm
+with Timoshenko shear term = 0.19196 mm

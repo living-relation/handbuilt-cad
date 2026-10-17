@@ -1,0 +1,17 @@
+ca-certificates
+calculix-ccx
+cmake
+g++
+gfortran
+git
+gmsh
+libblas-dev
+liblapack-dev
+make
+openfoam14
+paraview
+python3-gmsh
+python3-paraview
+python3-pip
+python3-venv
+xvfb

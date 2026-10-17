@@ -1,0 +1,45 @@
+{
+ "P": {
+  "hub_od": 92.0,
+  "flange_r": 71.0,
+  "flange_z": [
+   62.0,
+   82.0
+  ],
+  "tongue_y": [
+   -166.0,
+   -40.0
+  ],
+  "tongue_z": [
+   72.0,
+   116.0
+  ],
+  "tongue_pocket_depth": 14.0,
+  "arm_w": 34.0,
+  "arm_h": 42.0,
+  "wall": 6.0,
+  "web": 6.0,
+  "edge_r": 4.0,
+  "pocket_r": 6.0,
+  "ear_boss_d": 26.0,
+  "side_boss_d": 32.0,
+  "keepout_r": 45.0,
+  "flange_pockets": true,
+  "flange_pocket_angles": [
+   95,
+   189
+  ],
+  "junction_r": 6.0,
+  "ear_lug_to_flange_top": true,
+  "left_arm_h": 48.0
+ },
+ "report": {
+  "n_solids": 1,
+  "valid": true,
+  "volume_mm3": 842737.9113165801,
+  "mass_7075_kg": 2.3680935307995905,
+  "mass_6061_kg": 2.2753923605547666,
+  "bbox": "bbox: -114.5000001 <= x <= 84.0025472371563, -166.0000001 <= y <= 164.1000001, -1e-07 <= z <= 152.70265916260138",
+  "seconds": 8
+ }
+}

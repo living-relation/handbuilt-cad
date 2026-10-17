@@ -1,0 +1,42 @@
+# Python / tooling
+.venv/
+.venv-*/
+__pycache__/
+*.pyc
+.pytest_cache/
+.tools/
+# Local settings
+local.toml
+.env
+.env.*
+!.env.example
+.vscode/
+mcp.json
+CLAUDE.local.md
+.claude/settings.local.json
+# Part / model files and solver output (models live in $MODELS_DIR)
+*.step
+*.stp
+*.stl
+*.brep
+*.3mf
+*.f3d
+*.fcstd
+*.FCStd
+*.ply
+*.obj
+*.iges
+*.igs
+*.glb
+*.npz
+*.npy
+*.frd
+*.vtu
+*.zip
+*.7z
+# Run outputs
+runs/
+out/
+sim-runs/
+**/sim_runs/
+*.log

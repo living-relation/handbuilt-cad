@@ -1,0 +1,98 @@
+{
+ "total": {
+  "total_kg": 2.33,
+  "kept_interface_kg": 1.423,
+  "low_kg": 0.42,
+  "frac": 0.15
+ },
+ "regions": {
+  "ear lugs": {
+   "mass_kg": 0.147,
+   "low_kg": 0.036,
+   "low_frac": 0.24,
+   "p50_MPa": 29.4,
+   "low_centroid": [
+    -44.8,
+    -54.4,
+    51.3
+   ]
+  },
+  "flange/hybrid plate": {
+   "mass_kg": 0.482,
+   "low_kg": 0.088,
+   "low_frac": 0.18,
+   "p50_MPa": 44.0,
+   "low_centroid": [
+    -2.1,
+    2.6,
+    71.6
+   ]
+  },
+  "hub/web": {
+   "mass_kg": 0.434,
+   "low_kg": 0.013,
+   "low_frac": 0.03,
+   "p50_MPa": 30.3,
+   "low_centroid": [
+    20.0,
+    -21.5,
+    101.1
+   ]
+  },
+  "left arm": {
+   "mass_kg": 0.177,
+   "low_kg": 0.062,
+   "low_frac": 0.35,
+   "p50_MPa": 36.3,
+   "low_centroid": [
+    -58.9,
+    47.5,
+    77.5
+   ]
+  },
+  "ribs/other": {
+   "mass_kg": 0.3,
+   "low_kg": 0.121,
+   "low_frac": 0.4,
+   "p50_MPa": 30.0,
+   "low_centroid": [
+    11.8,
+    -2.3,
+    86.8
+   ]
+  },
+  "right arm": {
+   "mass_kg": 0.171,
+   "low_kg": 0.034,
+   "low_frac": 0.2,
+   "p50_MPa": 27.6,
+   "low_centroid": [
+    61.6,
+    44.1,
+    96.4
+   ]
+  },
+  "tongue": {
+   "mass_kg": 0.414,
+   "low_kg": 0.039,
+   "low_frac": 0.09,
+   "p50_MPa": 9.0,
+   "low_centroid": [
+    2.3,
+    -52.3,
+    100.0
+   ]
+  },
+  "top arm": {
+   "mass_kg": 0.204,
+   "low_kg": 0.027,
+   "low_frac": 0.13,
+   "p50_MPa": 53.8,
+   "low_centroid": [
+    -6.6,
+    82.4,
+    87.4
+   ]
+  }
+ }
+}

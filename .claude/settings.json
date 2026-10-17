@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)", "Bash(git branch:*)",
+      "Bash(git switch:*)", "Bash(git add:*)", "Bash(git commit:*)",
+      "Bash(uv sync:*)", "Bash(uv run:*)", "Bash(uv lock:*)",
+      "Bash(.venv/bin/python:*)", "Bash(python:*)", "Bash(pytest:*)"
+    ],
+    "deny": [
+      "Bash(git push --force:*)", "Bash(git push -f:*)", "Bash(git commit --no-verify:*)",
+      "Read(./.env)", "Read(./.env.*)"
+    ]
+  }
+}

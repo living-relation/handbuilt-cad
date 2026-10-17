@@ -1,0 +1,53 @@
+---
+name: cnc-part-check
+description: >-
+  Use when finishing or handing off any 3D CAD model (part or assembly) of a
+  CNC-made part, before calling it done, asking for approval, or running FEA:
+  valid bodies, STEP round-trip, size/weight/fit vs saved limits, machinability
+  sanity check, saved review views. Runs on Daniel's PC.
+---
+Use for 3D CAD models (single parts or assemblies) of CNC-made parts, before calling a model done, ready for review, or ready for FEA. This skill checks the model only; drawings (11x17 PDF for every part, DXF for machined parts) are a separate step. The model always shows the finished part.
+
+## Where it runs
+All checks and CAD work run on DansPC, never on the bot's own computer. If DansPC is offline, stop and tell Daniel; don't fall back.
+- Python checks: WSL, `/home/daniel/projects/handbuilt-models/.venv` (build123d, pyvista). Use the project's check scripts if present, else `handbuilt-models/tools/cnc_check.py`. After the handbuilt-cad consolidation lands, use the interpreter in `CAD_PY` instead; st185 work keeps the old `handbuilt-models/.venv` path unchanged.
+- pyvista renders in WSL need offscreen mode (`PYVISTA_OFF_SCREEN=true` plus xvfb or osmesa), or they hang.
+- Write review renders and reports under `/mnt/c/Users/danie/_staging/<job>/views` so the bot can read them. Always write from WSL out to `/mnt/c`; never write through `\\wsl.localhost` paths from Windows.
+- Headless FreeCAD: `C:\projects\_tools\FreeCAD\bin\freecadcmd.exe` (Grok Bot's folder; read-only for other bots, never install or upgrade there).
+- Tip: write a .sh file and run it with `wsl -e bash -c "tr -d '\r' < file | bash"` to avoid PowerShell quoting problems.
+
+## First time on a model: fill gaps, then save
+Use what Daniel already gave (brief, BOM, existing SUMMARY.md). Ask only for what's missing; skip asking if nothing is. Save answers in SUMMARY.md and reuse them unless Daniel changes them. On a check-only run, don't save; report what's missing so it's saved at the next publish.
+- Limits: overall size or stock, critical bores and holes, minimum wall for critical or structural features, edge-break skip wall (see Fillets and edge breaks), material. If SUMMARY.md has no minimum-wall value, ask once here; never assume one (not 2 mm, not any default).
+- Review views: if none are saved yet, render a sensible default set, send it to whoever assigned the job (Daniel, or Grok Bot) to confirm, then save.
+- Fit targets: what it bolts to or sits next to.
+- Never ask Daniel about cutters; he isn't the machinist. Assume standard shop end mills and state the radius used.
+
+## Which files to check
+Check the primary file(s) named in SUMMARY.md/MANIFEST.sha256 (assemblies: the assembly STEP plus each machined part). If none are named, ask; on a check-only run, check the obvious files by name and flag it as a guess. Other files people add (drawings, PDFs, photos) are expected; ignore them, never move or delete them.
+
+## Assemblies: check each body by type
+- Machined bodies: all steps.
+- 3D-printed bodies: valid body, minimum wall on critical or structural features (step 3 rules; flag the rest), and hole sizes vs saved limits. Skip weight, machinability and setups.
+- Purchased or customer-supplied parts (screws, fuse boxes, ECU boards): valid body and no overlap only.
+
+## Steps
+1. Valid bodies. A part is one valid solid; in an assembly every body is valid on its own.
+2. STEP round-trip. Export, reopen, confirm the same bodies and volume within 0.1%. The STEP is what the shop gets, and export can silently break geometry.
+3. Size vs saved limits (machined bodies). Size, bores, minimum wall (the saved value; if none is saved, ask once per First time, never assume); flag anything out of range. The minimum wall applies to critical or structural features only: load-bearing walls, outer skins behind pockets, mounting / clip / retention features, walls that separate circuits or fluids, and anything that seals. A thin spot on any of those fails. A thin spot elsewhere is not a failure, but list it for Daniel to change or approve. If you can't tell whether a spot is structural, call it questionable and flag it; never pass it silently. Thin spots Daniel already approved are listed under "Approved thin spots" in SUMMARY.md (location, thickness, date), or in the project's own record if it has one (st185: wall_classes.py FEATURES / spec.WALL_EXEMPT); don't re-flag them unless the geometry there changed (different thickness or surrounding faces). Fix thin structural walls in geometry before adding fillets or edge breaks.
+4. Weight (machined bodies). Compute mass; record material and density. Compare to the last approved rev's mass from its SUMMARY.md, or write "no baseline". A sudden drop with the same material usually means a chunk fell out when shapes were joined.
+5. Fit. Check against saved fit targets; report passes vs total. Assemblies also check overlaps and mates. Intentional O-ring or gasket squeeze is not a failure: report the squeeze % and flag it if outside the normal range (static O-rings about 15–30%).
+6. Machinability, no toolpaths (machined bodies). Report the setup count (flips and re-clamps, as a minimum), the smallest inside corner radius vs the assumed cutter radius, and unreachable or knife-edge spots.
+7. Review views. Render the saved views as smooth solid bodies, with mesh triangulation and polygon edges hidden, look at them yourself, then send.
+8. Report numbers and views, then walk Daniel through the open problems and the flag list (thin spots that are non-structural or unclear, skipped fillets) one at a time: each finding gets an image of the spot and clickable choices (e.g. Change it / Approve as is / Not sure, discuss). Save his approvals where step 3 lists them (on a check-only run, report them so they're saved at the next publish). No strength or FEA until geometry is approved, unless Daniel asks for early tests to check the overall design or find risks.
+
+## Fillets and edge breaks
+- Both come last, after all cuts (pockets, holes, slots) are done.
+- Fillets: apply in small batches; if a batch fails, split it to find the bad edge; if that edge still fails on its own, skip it and add it to the flag list and the drawing notes. Never stall the model on one fillet.
+- Edge breaks are optional. Model them as small chamfers when the CAD handles them cleanly; otherwise skip them in the model and cover them with a BREAK SHARP EDGES drawing note.
+- Select only convex outside edges, never inside corners. Skip edges next to walls thinner than the saved edge-break skip wall in SUMMARY.md (chamfers there leave slivers), and never chamfer an edge if it would take a structural wall below the saved minimum wall. If no skip wall is saved, suggest 3 mm (the old default) and ask once with the other limits.
+- Apply in small batches with headless FreeCAD; log which edges each batch did so a retry never chamfers or fillets an edge twice; if a batch fails, split it to find the bad edge; save progress between batches.
+- Afterward, re-run the size/minimum-wall (including bolt-hole walls) and fit checks on the final solid. A new thin spot on a structural feature is a failure; any other new thin spot goes on the flag list.
+
+## Notes
+- New revs follow publish-to-models: in the models home, new rev-letter folders (`rev<LETTER>`, clerical `rev<LETTER>.<NN>`); in a project repo with its own register (e.g. st185 DRAWING-REVS.md), its rules win. Never overwrite an old rev.

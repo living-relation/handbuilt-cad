@@ -1,0 +1,6 @@
+# Optional sim tools for WSL/Ubuntu (install by hand: sudo apt install $(grep -v '^#' apt-sim.txt))
+# Versions are the ones in use on the reference workstation; apt may offer newer.
+calculix-ccx=2.21-1build1
+gmsh=4.14.0+ds1-1build4
+paraview=6.0.1+dfsg1-7
+occt-misc=7.9.2+dfsg-4

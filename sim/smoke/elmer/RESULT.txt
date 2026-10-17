@@ -1,0 +1,1 @@
+Elmer Tmax=38.734 C, Tmin=20.000 C; exact Tmax=38.713 C; error +0.05%
