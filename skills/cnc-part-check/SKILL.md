@@ -30,6 +30,11 @@ Use what the user already gave (brief, BOM, existing SUMMARY.md). Ask only for w
 - Fit targets: what it bolts to or sits next to.
 - Never ask the user about cutters unless they are the machinist. Assume standard shop end mills and state the radius used.
 
+## Asking the user
+- Look it up first. For bought parts, mating parts and standards, find the maker's drawings, datasheets and specs yourself (primary sources) and cite them. Ask only what those can't answer, and mark a value TBD only if no source settles it (primary-source-spec-check).
+- Inside st185, its rules win: R119 (open questions go in its OPEN-ITEMS "Needs Dan" list, no pickers) and R40 (look up maker drawings and specs yourself before asking).
+- Everywhere else: one decision at a time, each with an image and clickable choices (the user's preference).
+
 ## Which files to check
 Check the primary file(s) named in SUMMARY.md/MANIFEST.sha256 (assemblies: the assembly STEP plus each machined part). If none are named, ask; on a check-only run, check the obvious files by name and flag it as a guess. Other files people add (drawings, PDFs, photos) are expected; ignore them, never move or delete them.
 
@@ -46,8 +51,8 @@ Check the primary file(s) named in SUMMARY.md/MANIFEST.sha256 (assemblies: the a
 4. Weight (machined bodies). Compute mass; record material and density. Compare to the last approved rev's mass from its SUMMARY.md, or write "no baseline". A sudden drop with the same material usually means a chunk fell out when shapes were joined.
 5. Fit. Check against saved fit targets; report passes vs total. Assemblies also check overlaps and mates. Intentional O-ring or gasket squeeze is not a failure: report the squeeze % and flag it if outside the normal range (static O-rings about 15–30%).
 6. Machinability, no toolpaths (machined bodies). Report the setup count (flips and re-clamps, as a minimum), the smallest inside corner radius vs the assumed cutter radius, and unreachable or knife-edge spots.
-7. Review views. Render the saved views with the model shown as smooth solid bodies, mesh triangulation and polygon edges hidden; look at them yourself, then send.
-8. Report numbers and views, then walk the user through the open problems and the flag list (thin spots that are non-structural or unclear, skipped fillets) one decision at a time: each finding gets an image of the spot and clickable choices (e.g. Change it / Approve as is / Not sure, discuss). Save the approvals where step 3 lists them (on a check-only run, report them so they're saved at the next publish). No strength or FEA until geometry is approved, unless the user asks for early tests to check the overall design or find risks.
+7. Review views. Render the saved views with the model shown as smooth solid bodies, mesh triangulation and polygon edges hidden; look at them yourself, then send. Section views are capped (closed-surface clipping, solid cut faces), never open cut faces, which render as hollow shells. (`tools/render/smooth_render.py --section`).
+8. Report numbers and views, then (following Asking the user) walk the user through the open problems and the flag list (thin spots that are non-structural or unclear, skipped fillets) one decision at a time: each finding gets an image of the spot and clickable choices (e.g. Change it / Approve as is / Not sure, discuss). Save the approvals where step 3 lists them (on a check-only run, report them so they're saved at the next publish). No strength or FEA until geometry is approved, unless the user asks for early tests to check the overall design or find risks.
 
 ## Fillets and edge breaks
 - Both come last, after all cuts (pockets, holes, slots) are done.
