@@ -142,10 +142,13 @@ def make_assembly(spec,out_pdf,png_prefix=None):
     bb=comp.bounding_box()
     sheets=[]
     nsheets=1+len(spec.get('stage_sheets',[]))
-    info=dict(title=spec['title'],pn=spec['pn'],material='SEE BOM',source=spec.get('source',''),rev=spec.get('rev','1'),revs=spec.get('revs'))
+    info=dict(title=spec['title'],pn=spec['pn'],material='SEE BOM',source=spec.get('source',''))
     # ---- sheet 1
+    revrows,rev,_=resolve_revlog(spec,spec.get('file'))
+    info.update(rev=rev or '-',revlog=revrows)
     sh=Sheet(); occ=Occ(); occ.rects=sh.rects
-    ybot=bom_table(sh,items,PW-10,PH-10,colw=spec.get('bom_cols',(9,9,44,80,40)),h=spec.get('bom_h',2.0))
+    rlr=revlog_rect(len(revrows))      # rev log top right; BOM starts below it
+    ybot=bom_table(sh,items,PW-10,rlr[1]-3,colw=spec.get('bom_cols',(9,9,44,80,40)),h=spec.get('bom_h',2.0))
     bom_x0=PW-10-sum(spec.get('bom_cols',(9,9,44,80,40)))
     # views region
     bx0=bom_x0-6

@@ -129,22 +129,194 @@ def edge_pts(e,defl=0.02):
     except Exception: pass
     return np.array([[v.X,v.Y] for v in (e.position_at(t) for t in np.linspace(0,1,12))])
 
-def project(shape,view,hidden=False,defl=0.02):
+SOFT_EDGE_DEG=8.0   # edges whose two faces meet within this angle are tangent/facet edges, not drawn (unless silhouette)
+LAST_PROJECT_STATS={}
+
+def _ocp(mod,*names):
+    """first attribute that exists (OCP renamed static methods from X_s to X across versions)."""
+    for n in names:
+        if hasattr(mod,n): return getattr(mod,n)
+    raise AttributeError(names)
+
+def _face_normal_on_edge(edge,face):
+    """outward normal of face at the middle of edge (via the edge's pcurve on that face)."""
+    from OCP.BRep import BRep_Tool
+    from OCP.BRepAdaptor import BRepAdaptor_Surface
+    from OCP.BRepLProp import BRepLProp_SLProps
+    from OCP.TopAbs import TopAbs_REVERSED
+    from OCP.GeomAbs import GeomAbs_Plane
+    sa=BRepAdaptor_Surface(face)
+    if sa.GetType()==GeomAbs_Plane:
+        d=sa.Plane().Axis().Direction(); n=np.array([d.X(),d.Y(),d.Z()])
+    else:
+        n=None
+        try:
+            r=_ocp(BRep_Tool,'CurveOnSurface_s','CurveOnSurface')(edge,face,0.0,0.0)
+            c2d,f,l=(r if isinstance(r,tuple) else (r,None,None))
+            if c2d is not None:
+                if f is None: f,l=c2d.FirstParameter(),c2d.LastParameter()
+                uv=c2d.Value((f+l)/2)
+                pr=BRepLProp_SLProps(sa,uv.X(),uv.Y(),1,1e-6)
+                if pr.IsNormalDefined(): q=pr.Normal(); n=np.array([q.X(),q.Y(),q.Z()])
+        except Exception: n=None
+        if n is None:   # fallback: project the edge midpoint onto the face
+            try:
+                from build123d import Face as _F, Edge as _E
+                p=_E(edge).position_at(0.5); q=_F(face).normal_at(p)
+                return np.array([q.X,q.Y,q.Z])        # build123d already applies face orientation
+            except Exception: return None
+    if face.Orientation()==TopAbs_REVERSED: n=-n
+    return n
+
+def _edge_face_map(shape):
+    from OCP.TopExp import TopExp
+    from OCP.TopAbs import TopAbs_EDGE,TopAbs_FACE
+    try:
+        from OCP.TopTools import TopTools_IndexedDataMapOfShapeListOfShape as _M
+    except ImportError:
+        from OCP.collections import IndexedDataMap_TopoDS_Shape_List_TopoDS_Shape_TopTools_ShapeMapHasher as _M
+    m=_M(); _ocp(TopExp,'MapShapesAndAncestors_s','MapShapesAndAncestors')(shape.wrapped,TopAbs_EDGE,TopAbs_FACE,m)
+    from OCP.TopoDS import TopoDS
+    E=_ocp(TopoDS,'Edge_s','Edge'); F=_ocp(TopoDS,'Face_s','Face')
+    n=m.Extent() if hasattr(m,'Extent') else m.Size()
+    for i in range(1,n+1):
+        lst=m.FindFromIndex(i); fl=[]
+        try: fl=[F(x) for x in lst]
+        except TypeError:
+            if lst.Size()>=1: fl=[F(lst.First())]
+            if lst.Size()>=2: fl.append(F(lst.Last()))
+        yield E(m.FindKey(i)),fl
+
+def soft_edges(shape,cam,deg=SOFT_EDGE_DEG):
+    """3D edges that must not appear as lines in a view looking along -cam:
+    seam edges and edges where the two faces meet within `deg` (tangent blends and the facets of a
+    polygonised/faceted model), except silhouettes (one face toward the viewer, one away).
+    Returns (list of edges, n_planar_facets)."""
+    from OCP.BRep import BRep_Tool
+    from OCP.BRepAdaptor import BRepAdaptor_Surface
+    from OCP.GeomAbs import GeomAbs_Plane
+    isclosed=_ocp(BRep_Tool,'IsClosed_s','IsClosed')
+    c=np.asarray(cam,float); c=c/np.linalg.norm(c); cosd=math.cos(math.radians(deg))
+    out=[]; nfacet=0
+    for e,fl in _edge_face_map(shape):
+        seam=(len(fl)==1 and isclosed(e,fl[0])) or (len(fl)==2 and fl[0].IsSame(fl[1]))
+        if seam:   # seam line of a closed surface: never drawn, unless it lies on the silhouette (HLR's outline sits on it)
+            n=_face_normal_on_edge(e,fl[0])
+            if n is not None and abs(n@c)>1e-3: out.append(e)
+            continue
+        if len(fl)!=2: continue
+        n1=_face_normal_on_edge(e,fl[0]); n2=_face_normal_on_edge(e,fl[1])
+        if n1 is None or n2 is None or n1@n2<cosd: continue
+        d1,d2=n1@c,n2@c
+        if d1*d2<0 or abs(d1)<1e-6 or abs(d2)<1e-6: continue   # silhouette / edge-on: keep
+        if BRepAdaptor_Surface(fl[0]).GetType()==GeomAbs_Plane and BRepAdaptor_Surface(fl[1]).GetType()==GeomAbs_Plane: nfacet+=1
+        out.append(e)
+    return out,nfacet
+
+def _edge_pts3d(e,defl=0.02):
+    from OCP.GCPnts import GCPnts_QuasiUniformDeflection
+    try:
+        g=GCPnts_QuasiUniformDeflection(BRepAdaptor_Curve(e),defl)
+        if g.IsDone() and g.NbPoints()>1:
+            return np.array([[g.Value(i).X(),g.Value(i).Y(),g.Value(i).Z()] for i in range(1,g.NbPoints()+1)])
+    except Exception: pass
+    return None
+
+def project(shape,view,hidden=False,defl=0.02,soft_deg=SOFT_EDGE_DEG):
+    """Exact B-rep hidden-line removal (OCCT HLR) - never a mesh. Visible edges only (hidden lines are never drawn).
+    Seam, tangent and facet edges (see soft_edges) are filtered out unless they are silhouettes."""
     cam,up=VIEWDIR[view] if isinstance(view,str) else view
     c,r,u=basis(cam,up)
     v,h=shape.project_to_viewport(tuple(c*5000),tuple(u),(0,0,0))
     vis=[edge_pts(e,defl) for e in v]
-    hid=[edge_pts(e,defl) for e in h] if hidden else []
+    nsoft=nfacet=0; dropped=0
+    if soft_deg and vis:
+        from shapely.geometry import LineString as _L
+        from shapely.strtree import STRtree
+        se,nfacet=soft_edges(shape,c,soft_deg); nsoft=len(se)
+        from OCP.GeomAbs import GeomAbs_Line
+        buf=[]
+        for e in se:
+            p=_edge_pts3d(e,defl)
+            if p is None or len(p)<2: continue
+            q=np.c_[p@r,p@u]
+            if np.ptp(q,axis=0).max()<1e-6: continue
+            # straight edges project exactly: tiny tolerance so a real silhouette 0.002 mm from a facet line survives;
+            # curved soft edges are matched against our own polyline, so allow the sampling deflection
+            tol=1e-4 if BRepAdaptor_Curve(e).GetType()==GeomAbs_Line else 1.5*defl
+            buf.append(_L(q).buffer(tol))
+        if buf:
+            tree=STRtree(buf); keep=[]
+            for p in vis:
+                if len(p)<2: keep.append(p); continue
+                ln=_L(p); cand=[buf[k] for k in tree.query(ln)]
+                if cand:
+                    from shapely.ops import unary_union
+                    if unary_union(cand).covers(ln): dropped+=1; continue
+                keep.append(p)
+            vis=keep
+    LAST_PROJECT_STATS.update(view=view,visible=len(vis),soft_3d=nsoft,planar_facets=nfacet,dropped=dropped)
+    # RULE (Daniel 2026-10-17): never show hidden lines; 'hidden' arg ignored.
+    hid=[]
     return vis,hid,(c,r,u)
+
+def on_visible(view_obj,pg,tol=0.4):
+    """True if page point pg lies on a visible line of the view (so a leader there points at something drawn)."""
+    from shapely.geometry import LineString as _L, Point as _P
+    P_=_P(pg)
+    for p in view_obj.vis:
+        if len(p)<2: continue
+        q=np.array([view_obj.uv2pg(x) for x in p])
+        if (q[:,0].min()-tol>pg[0] or q[:,0].max()+tol<pg[0] or q[:,1].min()-tol>pg[1] or q[:,1].max()+tol<pg[1]): continue
+        if _L(q).distance(P_)<tol: return True
+    return False
+
+def circle_marks(shape,view_obj,min_sweep_deg=150.0,min_r=0.5):
+    """Center marks for holes (full circles) and arcs (sweep >= min_sweep_deg) whose axis is along the
+    view direction and which actually show as visible lines in that view. Exact B-rep circles only.
+    Returns [(page_xy, page_radius, 'hole'|'arc')], concentric circles merged (largest kept)."""
+    from OCP.GeomAbs import GeomAbs_Circle
+    v=view_obj; c=v.c; found={}
+    vis_lines=[np.array([v.uv2pg(q) for q in p]) for p in v.vis if len(p)>1]
+    if not vis_lines: return []
+    from shapely.geometry import LineString as _L, Point as _P
+    from shapely.strtree import STRtree
+    VL=[_L(p) for p in vis_lines]; tree=STRtree(VL)
+    for e in shape.edges():
+        a=BRepAdaptor_Curve(e.wrapped)
+        if a.GetType()!=GeomAbs_Circle: continue
+        ci=a.Circle(); ax=ci.Axis().Direction(); ax=np.array([ax.X(),ax.Y(),ax.Z()])
+        if abs(abs(ax@c)-1)>1e-4: continue
+        R_=ci.Radius()
+        if R_<min_r: continue
+        sweep=math.degrees(abs(a.LastParameter()-a.FirstParameter()))
+        full=sweep>359.0
+        if not full and sweep<min_sweep_deg: continue
+        loc=ci.Location(); ctr=np.array([loc.X(),loc.Y(),loc.Z()])
+        pc=v.P(ctr); rp=R_*v.scale
+        # visible? most of the projected curve must lie on visible HLR lines
+        ts=np.linspace(a.FirstParameter(),a.LastParameter(),13)
+        pts=[v.P(np.array([a.Value(t).X(),a.Value(t).Y(),a.Value(t).Z()])) for t in ts]
+        on=0
+        for q in pts:
+            P_=_P(q); 
+            if any(VL[k].distance(P_)<0.05 for k in tree.query(P_.buffer(0.05))): on+=1
+        if on<0.6*len(pts): continue
+        key=(round(pc[0],1),round(pc[1],1))
+        kind='hole' if full else 'arc'
+        old=found.get(key)
+        if old is None or rp>old[1] or (kind=='hole' and old[2]=='arc'): found[key]=(pc,rp if old is None else max(rp,old[1]),kind if old is None or old[2]=='arc' else old[2])
+    return list(found.values())
 
 class View:
     """A placed view. world->uv via basis; uv->page via center & scale."""
-    def __init__(s,shape,view,scale,hidden=False,name='',defl=None,section=None,polys=None):
+    def __init__(s,shape,view,scale,hidden=False,name='',defl=None,section=None,polys=None,soft_deg=None):
         s.view=view; s.scale=scale; s.name=name; s.hatches=[]
         if polys is not None:  # precomputed
             s.vis,s.hid,(s.c,s.r,s.u)=polys
         else:
-            s.vis,s.hid,(s.c,s.r,s.u)=project(shape,view,hidden,defl or 0.01/max(scale,0.2))
+            s.vis,s.hid,(s.c,s.r,s.u)=project(shape,view,hidden,defl or 0.01/max(scale,0.2),SOFT_EDGE_DEG if soft_deg is None else soft_deg)
+            s.stats=dict(LAST_PROJECT_STATS)
         allp=np.vstack(s.vis) if s.vis else np.zeros((1,2))
         s.umin,s.vmin=allp.min(0); s.umax,s.vmax=allp.max(0)
         s.w=(s.umax-s.umin)*scale; s.h=(s.vmax-s.vmin)*scale
@@ -156,7 +328,7 @@ class View:
     def uv2pg(s,q): return np.array([s.cx+(q[0]-(s.umin+s.umax)/2)*s.scale, s.cy+(q[1]-(s.vmin+s.vmax)/2)*s.scale])
     def bbox(s): return (s.cx-s.w/2,s.cy-s.h/2,s.cx+s.w/2,s.cy+s.h/2)
     def draw(s,sh,label=None,label_scale=True):
-        for p in s.hid: sh.pl([s.uv2pg(q) for q in p],'hid')
+        # hidden lines are never drawn (rule 2026-10-17)
         for loops in s.hatches: sh.hatch([[s.uv2pg(q) for q in l] for l in loops])
         for p in s.vis: sh.pl([s.uv2pg(q) for q in p],'vis')
         if label:
@@ -244,9 +416,9 @@ def leader(sh,tip,txtpos,text,h=TH,dot=False,arrow=True):
     nl=text.count('\n')
     sh.txt(tp[0]+(1 if right else -1),tp[1],text,h=h,ha='left' if right else 'right',va='center')
 
-def centermark(sh,c,r,ext=2.0):
+def centermark(sh,c,r,ext=2.0,arc=False):
     c=np.asarray(c,float); L=r+ext
-    if r<1.2: L=2.5
+    if r<1.2 or arc: L=min(r+ext,2.5) if arc else 2.5
     sh.line(c-[L,0],c+[L,0],'ctr'); sh.line(c-[0,L],c+[0,L],'ctr')
 
 def ordinate(sh,pts,axis,base_pg,at,vals,h=2.8):
@@ -315,18 +487,71 @@ def frame(sh,info,sheet_no,n_sheets,proj=True):
     sh.txt(tx0+2,y0+38,"UNLESS OTHERWISE SPECIFIED:",h=2.2,ha='left',va='top',bold=True)
     tol=info.get('tol',"DIMENSIONS ARE IN MILLIMETERS\nTOLERANCES:\n  X     ±0.5      X.X  ±0.2\n  X.XX  ±0.05    ANGLES ±0.5°\nBREAK SHARP EDGES 0.2-0.4\nSURFACE FINISH Ra 3.2 µm\nINTERPRET PER ASME Y14.5-2018")
     sh.txt(tx0+2,y0+33.5,tol,h=2.2,ha='left',va='top')
-    revs=info.get('revs')
-    if revs:
-        rh=4.0; ry1=y0+40+rh*(len(revs)+1); cols=[tx0,tx0+7,tx0+59,tx0+77,tx1]
-        sh.pl([(tx0,y0+40),(tx1,y0+40),(tx1,ry1),(tx0,ry1)],'tb',closed=True)
-        rows=[('REV','DESCRIPTION','DATE','BY')]+list(revs)
-        for k,row in enumerate(rows):
-            yt=ry1-k*rh
-            if k: sh.line((tx0,yt),(tx1,yt),'thin')
-            for c,(a,b) in enumerate(zip(cols[:-1],cols[1:])):
-                if k==0 or c!=1: sh.txt((a+b)/2,yt-rh/2,row[c],h=1.8 if k==0 else 1.5,bold=(k==0))
-                else: sh.txt(a+1,yt-rh/2,row[c],h=1.7,ha='left')
-        for a in cols[1:-1]: sh.line((a,y0+40),(a,ry1),'thin')
+    if sheet_no==1 and info.get('revlog') is not None:
+        revlog_table(sh,info['revlog'])
+
+# ---------------- rev log (top right, sheet 1) ----------------
+REVLOG_COLS=(9,66,18,15)     # Rev | Description | By | Date  (108 mm wide)
+REVLOG_RH=4.2
+def revlog_rect(nrows,x1=PW-10,y1=PH-10):
+    """page rect (x0,y0,x1,y1) the rev log table will occupy: title + header + nrows (min 1)."""
+    return (x1-sum(REVLOG_COLS),y1-REVLOG_RH*(max(nrows,1)+2),x1,y1)
+
+def _fit(t,w,h,hmin=1.3):
+    """shrink text to fit width w (mm); truncate with ... at hmin."""
+    while _tw(t,h)>w-1.5 and h>hmin: h=round(h-0.1,2)
+    if _tw(t,h)>w-1.5:
+        n=max(3,int((w-1.5)/(h*0.82))-3); t=t[:n].rstrip()+'...'
+    return t,h
+
+def revlog_table(sh,rows,x1=PW-10,y1=PH-10):
+    """Rev | Description | By | Date table in the top-right corner of sheet 1. rows: revs.RevEntry list
+    (already filtered/capped by revs.table_rows). Returns its rect and reserves it in sh.rects."""
+    x0,y0,_,_=revlog_rect(len(rows),x1,y1); rh=REVLOG_RH
+    xs=np.cumsum([x0]+list(REVLOG_COLS))
+    sh.pl([(x0,y0),(x1,y0),(x1,y1),(x0,y1)],'tb',closed=True)
+    sh.line((x0,y1-rh),(x1,y1-rh),'thin')
+    sh.items.append(('tx',(x0+x1)/2,y1-rh/2,'REVISIONS',2.2,'center','center',0,True,False,'TEXT'))
+    yt=y1-rh
+    for k,hd in enumerate(('REV','DESCRIPTION','BY','DATE')):
+        sh.items.append(('tx',(xs[k]+xs[k+1])/2,yt-rh/2,hd,1.8,'center','center',0,True,False,'TEXT'))
+    yt-=rh; sh.line((x0,yt),(x1,yt),'thin')
+    for e in (rows or [None]):
+        cells=('-','(NO REV LOG)','','') if e is None else (e.rev,e.desc,e.by,e.date)
+        for k,t in enumerate(cells):
+            t,h=_fit(str(t),REVLOG_COLS[k],1.7 if k!=1 else 1.8)
+            if k==1: sh.items.append(('tx',xs[k]+1,yt-rh/2,t,h,'left','center',0,False,False,'TEXT'))
+            else: sh.items.append(('tx',(xs[k]+xs[k+1])/2,yt-rh/2,t,h,'center','center',0,k==0,False,'TEXT'))
+        yt-=rh
+        if yt>y0+1e-6: sh.line((x0,yt),(x1,yt),'thin')
+    for a in xs[1:-1]: sh.line((a,y0),(a,y1-rh),'thin')
+    sh.rects.append((x0,y0,x1,y1))
+    return (x0,y0,x1,y1)
+
+def resolve_revlog(spec,step_path=None):
+    """Rev log rows for a spec: spec['revlog'] path, else REVLOG.md beside the STEP file, else legacy
+    spec['revs'] tuples. Clerical revs dropped, capped at revs.REVLOG_MAX_ROWS, newest last.
+    Title-block rev is taken from the newest row if the spec has none, and must match it otherwise."""
+    import revs as _R
+    p=_R.find_revlog(step_path or spec.get('file'),spec.get('revlog'),spec.get('pn'))
+    if p: ent=_R.read_revlog(p); src=p
+    elif spec.get('revs'): ent=_R.from_spec_revs(spec['revs']); src='spec revs'
+    else: ent=[]; src=None
+    rows=_R.table_rows(ent,spec.get('revlog_max_rows',_R.REVLOG_MAX_ROWS))
+    rev=spec.get('rev')
+    if rev in (None,'','1') and rows: rev=rows[-1].rev
+    _R.check_letter_matches(rev,rows)
+    if not rows: print(f"WARNING: no rev log for {spec.get('pn')} (add <model>.{_R.REVLOG_NAME} or {_R.REVLOG_NAME} beside the model)")
+    return rows,rev,src
+
+def overlap_warnings(sh,rect,styles=('vis','dim'),pad=0.5):
+    """polylines of the given styles that enter rect (e.g. views running into the rev log)."""
+    x0,y0,x1,y1=rect; bad=0
+    for it in sh.items:
+        if it[0]=='pl' and it[2] in styles:
+            p=it[1]
+            if ((p[:,0]>x0-pad)&(p[:,0]<x1+pad)&(p[:,1]>y0-pad)&(p[:,1]<y1+pad)).any(): bad+=1
+    return bad
 
 def notes_block(sh,x,y,notes,h=2.6,title='NOTES:',width=136):
     import textwrap

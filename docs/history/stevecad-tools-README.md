@@ -11,7 +11,8 @@ Fonts: uses DejaVu (system or matplotlib's bundled copy). Extra fonts: `STEVECAD
 ## Tools
 | Path | What it does |
 |---|---|
-| `drawing/dwg.py` | Drawing engine: build123d/OCCT hidden-line views -> 11x17 (ANSI B) sheets -> PDF + DXF (layers VISIBLE/HIDDEN/CENTER/...), title block, rev block. |
+| `drawing/dwg.py` | Drawing engine: exact B-rep (OCCT HLR) visible-line views -> 11x17 (ANSI B) sheets -> PDF + DXF, title block, rev log table (top right, sheet 1), auto center marks. No hidden lines, no facet/seam lines. |
+| `drawing/revs.py` | Rev letters (A-Z skipping I/L/O/Q, then AA...), clerical decimals, `REVLOG.md` read/write. Tests: `tests/test_revs.py`. |
 | `drawing/part.py` | `make_part(spec, pdf, dxf, preview_prefix)`: part drawing with auto hole callouts, dims, sections, details. |
 | `drawing/asm.py` | `make_assembly(spec, pdf, preview_prefix)`: assembly sheets, balloons, BOM. `load_children()` reads STEP assembly tree. |
 | `drawing/feat.py` | Hole/feature recognition (cylinders, cones, counterbores, radii). |
@@ -33,4 +34,5 @@ python render/smooth_render.py part.step out.png --view iso --edges
 python checks/mesh_check.py base.step
 ST185_WORK=~/work/st185 python examples/st185/run_one.py csb3_body
 ```
-Rules: STEP is the deliverable (no STL unless a print job needs it). Drawings don't auto-update. Run heavy CAD on DansPC, not the box.
+Drawing rules: see [DRAWING-RULES.md](DRAWING-RULES.md). Each model folder gets a `REVLOG.md` (one row per release) that feeds the drawing's rev log.
+Rules: STEP is the deliverable (no STL unless a print job needs it). The model drives the drawing: regenerate after every model change. Run heavy CAD on DansPC, not the box.

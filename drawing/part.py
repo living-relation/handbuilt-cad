@@ -134,6 +134,29 @@ def lin_val(view,p1,p2,orient):
     q1=view.uv(p1); q2=view.uv(p2)
     return abs(q1[0]-q2[0]) if orient=='h' else abs(q1[1]-q2[1])
 
+def auto_align_angle(solid,min_share=0.25):
+    """Z rotation (deg, in (-45,45]) that squares the part's dominant vertical flat faces to the X/Y views.
+    0 when already square (existing axis-aligned parts are untouched). A part modelled in a rotated frame
+    (e.g. the fuel hanger strut plane) otherwise gets oblique views: no true circles, no hole callouts, no center marks."""
+    from collections import defaultdict
+    w=defaultdict(float); tot=0.0
+    for f in solid.faces():
+        if f.geom_type!=GeomType.PLANE: continue
+        n=f.normal_at(); 
+        if abs(n.Z)>1e-3: continue
+        a=f.area; tot+=a
+        th=math.degrees(math.atan2(n.Y,n.X))%90.0
+        w[round(th,2)%90.0]+=a
+    if not w or tot<=0: return 0.0
+    th,best=max(w.items(),key=lambda kv:kv[1])
+    if best<min_share*tot: return 0.0
+    rot=-th if th<=45 else 90-th
+    if abs(rot)<0.02: return 0.0
+    # keep the longer plan size along X after squaring
+    t=solid.rotate(Axis.Z,rot); bb=t.bounding_box()
+    if bb.size.Y>bb.size.X*1.05: rot+=90 if rot<=0 else -90
+    return round(rot,3)
+
 def make_part(spec,out_pdf,out_dxf=None,png_prefix=None):
     shp=import_step(spec['file'])
     sols=shp.solids()
@@ -143,12 +166,21 @@ def make_part(spec,out_pdf,out_dxf=None,png_prefix=None):
         if 'offset' in spec: off=Vector(*spec['offset'])
         solid=solid.moved(Location(off))
     spec['_off']=off
+    if 'rotate' not in spec and spec.get('auto_align',True):
+        ang=auto_align_angle(solid)
+        if ang:
+            solid=solid.rotate(Axis.Z,ang); bb=solid.bounding_box()
+            solid=solid.moved(Location(Vector(-(bb.min.X+bb.max.X)/2,-(bb.min.Y+bb.max.Y)/2,-bb.min.Z)))
+            print(f"auto-align: {spec.get('pn')} rotated {ang:+.3f} deg about Z so its main faces and holes square to the views")
+        spec['_auto_align']=ang
     if 'rotate' in spec:
         for ax,ang in spec['rotate']:
             solid=solid.rotate({'X':Axis.X,'Y':Axis.Y,'Z':Axis.Z}[ax],ang)
         bb=solid.bounding_box(); solid=solid.moved(Location(Vector(-(bb.min.X+bb.max.X)/2,-(bb.min.Y+bb.max.Y)/2,-bb.min.Z)))
     proc=spec['process']
-    hidden=spec.get('hidden',proc=='machined')
+    revrows,rev,revsrc=resolve_revlog(spec,spec['file'])   # model drives the letter; drawing must match
+    rlr=revlog_rect(len(revrows))
+    hidden=False  # RULE 2026-10-17: never show hidden lines; spec 'hidden' ignored
     bb=solid.bounding_box()
     W,D,H=bb.size.X,bb.size.Y,bb.size.Z
     names=spec.get('views',['front','top','right'])
@@ -164,7 +196,7 @@ def make_part(spec,out_pdf,out_dxf=None,png_prefix=None):
     slot_right='right'
     Wf=V['front'].w; Hf=V['front'].h; Ht=V['top'].h; Wr=V[slot_right].w
     gx=spec.get('gx',42); gy=spec.get('gy',36)
-    areaW=285; areaH=spec.get('areaH',178)
+    areaW=spec.get('areaW',280); areaH=spec.get('areaH',178)   # 280: keeps views left of the rev log
     smax=min((areaW-gx-30)/(Wf+Wr),(areaH-gy-22)/(Hf+Ht))
     s=spec.get('scale') or pick_scale(smax)
     for v in V.values(): v.scale=s; v.w=(v.umax-v.umin)*s; v.h=(v.vmax-v.vmin)*s
@@ -176,12 +208,13 @@ def make_part(spec,out_pdf,out_dxf=None,png_prefix=None):
     V['top'].place(fx,y0+Hf*s+gy+Ht*s/2)
     V[slot_right].place(x0+Wf*s+gx+Wr*s/2,fy)
     # iso in top-right box
-    iso=V['iso']; isb=(318,150,418,262)
+    iso=V['iso']; isb=(318,150,418,min(262,rlr[1]-6))   # below the rev log
     isc=min(s*2,(isb[2]-isb[0])/(iso.umax-iso.umin),(isb[3]-isb[1]-10)/(iso.vmax-iso.vmin))
     isc=max([q for q in [3,2,1.5,1.25,1,0.8,0.75,0.6,0.5,0.4,0.3,0.25,0.2,0.15,0.1] if q<=isc+1e-9] or [0.1]); iso.scale=isc; iso.w=(iso.umax-iso.umin)*isc; iso.h=(iso.vmax-iso.vmin)*isc
     iso.place((isb[0]+isb[2])/2,(isb[1]+isb[3])/2+4)
     sh=Sheet(); occ=Occ(); occ.rects=sh.rects
     for k,v in V.items(): occ.add(v.bbox())
+    occ.add(rlr)
     labels={'front':'FRONT','top':'TOP','right':'RIGHT'}
     if sec: labels[sec['slot']]=f"SECTION {sec['label']}"
     secslot=sec['slot'] if sec else None
@@ -236,7 +269,7 @@ def make_part(spec,out_pdf,out_dxf=None,png_prefix=None):
             _,x,y,text=d[:4]; sh.txt(x,y,text,h=d[4] if len(d)>4 else TH,ha='left',va='top')
     # holes
     groups,rgroups=hole_callouts(solid,proc,spec)
-    ordpts=defaultdict(list); pending=[]
+    ordpts=defaultdict(list); pending=[]; marked=defaultdict(list)
     callout_n=0
     gl=sorted(groups.items(),key=lambda kv:(kv[0][0],-kv[1][0]['r']))
     if proc!='machined':
@@ -248,7 +281,7 @@ def make_part(spec,out_pdf,out_dxf=None,png_prefix=None):
         if vn not in V: continue
         v=V[vn]
         for i in inst:
-            centermark(sh,v.P(i['c']),i['rmax']*v.scale)
+            centermark(sh,v.P(i['c']),i['rmax']*v.scale); marked[vn].append(v.P(i['c']))
             ordpts[vn].append(i['c'])
         # choose instance farthest from view center toward right/up
         cpg=np.array([v.cx,v.cy])
@@ -268,6 +301,13 @@ def make_part(spec,out_pdf,out_dxf=None,png_prefix=None):
         if proc!='machined': t=t
         right = dirv[0]>=0
         pending.append((v,tip,t,right,dirv))
+    # center marks for every visible hole / arc the feature finder missed (exact B-rep circles, any part orientation)
+    if spec.get('center_marks',True):
+        for vn,v in V.items():
+            if vn=='iso' or vn==secslot: continue
+            for pc,rp,kind in circle_marks(solid,v,spec.get('arc_mark_min_sweep',150.0)):
+                if any(np.linalg.norm(pc-q)<0.5 for q in marked[vn]): continue
+                centermark(sh,pc,rp,arc=(kind=='arc')); marked[vn].append(pc)
     # ordinate hole locations
     if spec.get('ordinates',proc=='machined'):
         for vn,pts in ordpts.items():
@@ -316,7 +356,19 @@ def make_part(spec,out_pdf,out_dxf=None,png_prefix=None):
             pc=v.P(b); dd=pc-cpg; dd=dd/ (np.linalg.norm(dd)+1e-9)
             return pc+dd*rr*v.scale, pc
         pick=max(inst,key=lambda i:(arcpt(i)[0]-cpg)@np.array([-1,1.0]))
-        tip,pc=arcpt(pick)
+        def vis_tip(i):
+            """leader tip on a visible part of the arc, or None if the arc isn't drawn in this view."""
+            t0,pc0=arcpt(i)
+            if on_visible(v,t0): return t0
+            dd=t0-pc0; a0=math.atan2(dd[1],dd[0])
+            for k in sorted(range(36),key=lambda k:min(k,36-k)):
+                a=a0+k*math.pi/18; q=pc0+rr*v.scale*np.array([math.cos(a),math.sin(a)])
+                if on_visible(v,q): return q
+            return None
+        cand=[(i,vis_tip(i)) for i in inst]; cand=[(i,t) for i,t in cand if t is not None]
+        if not cand: continue              # radius not visible in this view: no leader to a hidden feature
+        pick,tip=max(cand,key=lambda it:(it[1]-cpg)@np.array([-1,1.0]))
+        pc=arcpt(pick)[1]
         ovt=spec.get('radius_text',{}).get(rr)
         if ovt=='skip': continue
         n=len(inst); t=(ovt or f"R{fmt(rr,2)}")+(f" ({n}X)" if n>1 else '')
@@ -332,8 +384,16 @@ def make_part(spec,out_pdf,out_dxf=None,png_prefix=None):
         lbl=labels.get(k,k.upper())
         if k==secslot or spec.get('label_views'):
             sh.txt(v.cx,side_pos(v,'below',tiers[(id(v),'below')]+1)+2,lbl,h=3.5,bold=True,va='top')
-    info=dict(title=spec['title'],pn=spec['pn'],material=spec['material'],scale=scale_str(s),source=spec.get('source',''),rev=spec.get('rev','1'),revs=spec.get('revs'))
+    info=dict(title=spec['title'],pn=spec['pn'],material=spec['material'],scale=scale_str(s),source=spec.get('source',''),rev=rev or '-',revlog=revrows)
     frame(sh,info,1,1)
+    nb=overlap_warnings(sh,rlr)
+    if nb: print(f"WARNING: {nb} view/dim lines run into the rev log table on {spec['pn']}")
+    for k,v in V.items():
+        st=getattr(v,'stats',{})
+        if st.get('planar_facets',0)>=50:
+            print(f"WARNING: {spec['pn']} {k} view: {st['planar_facets']} facet edges between near-coplanar flat faces - "
+                  "the model is polygonised (faceted outline); rebuild those curves as true arcs. Facet lines were filtered from the view.")
+    spec['_revlog_src']=revsrc; spec['_view_stats']={k:getattr(v,'stats',{}) for k,v in V.items()}
     notes=list(spec.get('notes',[]))
     notes_block(sh,14,72,notes,h=2.3,width=128)
     for dt in spec.get('details',[]):
