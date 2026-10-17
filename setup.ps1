@@ -40,11 +40,34 @@ if (-not $NoVenv) {
 # 3. local settings
 if (-not (Test-Path "$Root\local.toml")) { Copy-Item "$Root\local.toml.example" "$Root\local.toml" }
 
-# 4. models folder from the Desktop known folder (OneDrive Desktops work)
-$models = if ($env:MODELS_DIR) { $env:MODELS_DIR } else { Join-Path ([Environment]::GetFolderPath('Desktop')) 'models' }
+# 4. models folder. Order: $env:MODELS_DIR, then [paths] models_dir in local.toml, then <Desktop>\models.
+#    <Desktop> is the OneDrive Desktop when OneDrive keeps one (even if the Windows Desktop known folder
+#    was not redirected to it), else [Environment]::GetFolderPath('Desktop'). An existing folder is never touched.
+function Get-RealDesktop {
+  $d = [Environment]::GetFolderPath('Desktop')
+  foreach ($o in @($env:OneDriveConsumer, $env:OneDrive, $env:OneDriveCommercial)) {
+    if ($o -and -not $d.StartsWith($o, [StringComparison]::OrdinalIgnoreCase)) {
+      $od = Join-Path $o 'Desktop'
+      if (Test-Path -LiteralPath $od -PathType Container) { return $od }
+    }
+  }
+  return $d
+}
+function Get-LocalModelsDir {
+  $f = Join-Path $Root 'local.toml'
+  if (-not (Test-Path -LiteralPath $f)) { return '' }
+  foreach ($line in Get-Content -LiteralPath $f) {
+    if ($line -match "^\s*models_dir\s*=\s*'([^']*)'") { return $Matches[1] }
+    if ($line -match '^\s*models_dir\s*=\s*"((?:[^"\\]|\\.)*)"') { return ($Matches[1] -replace '\\\\', '\') }
+  }
+  return ''
+}
+$models = if ($env:MODELS_DIR) { $env:MODELS_DIR }
+          elseif ($lm = Get-LocalModelsDir) { $lm }
+          else { Join-Path (Get-RealDesktop) 'models' }
 if ($NoModels) { Write-Host "models folder: $models (not created: -NoModels)" }
-elseif (Test-Path $models) { Write-Host "models folder: $models (exists, left as is)" }
-else { New-Item -ItemType Directory $models | Out-Null; Write-Host "models folder: created $models" }
+elseif (Test-Path -LiteralPath $models) { Write-Host "models folder: $models (exists, left as is)" }
+else { New-Item -ItemType Directory -Path $models | Out-Null; Write-Host "models folder: created $models" }
 
 # 5. FreeCAD launcher wrappers (only into an existing FreeCAD folder you name; never overwrites)
 if ($FreeCADDir) {
