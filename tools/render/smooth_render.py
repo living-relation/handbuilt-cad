@@ -1,5 +1,8 @@
 """Smooth-shaded STEP/STL render (pyvista offscreen). No triangle lines; optional feature edges.
-Usage: python smooth_render.py part.step out.png [--view iso|top|front|right|iso_below] [--edges] [--color #9aa3ad] [--size 1600x1200]"""
+Usage: python smooth_render.py part.step out.png [--view iso|top|front|right|iso_below] [--edges] [--color #9aa3ad] [--size 1600x1200]
+       python smooth_render.py part.step out.png --section ox,oy,oz/nx,ny,nz [--keep below|above]
+--section renders a CAPPED section (closed-surface clipping, cut faces filled; see section.py). Open cut faces, which look
+like hollow shells, are never rendered."""
 import os, sys, argparse
 os.environ.setdefault('PYVISTA_OFF_SCREEN', 'true')
 import numpy as np, pyvista as pv
@@ -34,4 +37,13 @@ def render(path, out, view='iso', edges=False, color='#9aa3ad', size=(1600, 1200
 if __name__ == '__main__':
     a = argparse.ArgumentParser(); a.add_argument('src'); a.add_argument('out'); a.add_argument('--view', default='iso')
     a.add_argument('--edges', action='store_true'); a.add_argument('--color', default='#9aa3ad'); a.add_argument('--size', default='1600x1200')
-    g = a.parse_args(); print(render(g.src, g.out, g.view, g.edges, g.color, tuple(int(x) for x in g.size.split('x'))))
+    a.add_argument('--section', help="capped section: 'ox,oy,oz/nx,ny,nz' (point on the plane / normal)")
+    a.add_argument('--keep', default='below', choices=['below', 'above'], help='side of the section plane to keep')
+    g = a.parse_args(); size = tuple(int(x) for x in g.size.split('x'))
+    if g.section:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import section as SEC
+        o, n = SEC.parse_section(g.section)
+        print(SEC.render_section(g.src, g.out, o, n, g.keep, g.view, body_color=g.color, size=size))
+    else:
+        print(render(g.src, g.out, g.view, g.edges, g.color, size))

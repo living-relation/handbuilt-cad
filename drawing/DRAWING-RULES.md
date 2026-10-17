@@ -33,3 +33,6 @@ Rules for every drawing this engine makes. The engine enforces the ones marked *
 
 ## Files
 22. STEP is the deliverable (no STL unless a print job needs it).
+
+## Sections
+23. **Section views are capped.** A section is cut with closed-surface clipping: the kept part is a closed solid whose cut faces are filled (and hatched on drawings). Never show open cut faces (a clipped outer skin reads as a hollow shell). **(engine)** `section_view` refuses a cut that is not a closed solid or that has no cut face on the plane; renders use `tools/render/section.py` / `smooth_render.py --section`, which refuse open meshes.

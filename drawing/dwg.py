@@ -346,11 +346,22 @@ def pick_scale(maxs):
         if s<=maxs+1e-9: return s
     return STD_SCALES[-1]
 
+def _require_capped(half):
+    """Raise unless every solid of a section cut is closed and valid (a capped section)."""
+    from OCP.BRep import BRep_Tool
+    sols=half.solids() if half is not None else []
+    if not sols:
+        raise RuntimeError("section view: nothing left after the cut (or the part is not a solid)")
+    for s_ in sols:
+        if not s_.is_valid or not all(BRep_Tool.IsClosed_s(sh.wrapped) for sh in s_.shells()):
+            raise RuntimeError("section view: cut result is not a closed solid; sections must be capped, never open")
+
 def section_view(solid,view,origin,scale,name):
     """cut solid with plane through origin normal to view cam dir; keep far side; hatch cut faces."""
     cam,up=VIEWDIR[view]; c,r,u=basis(cam,up)
     pl=Plane(origin=tuple(origin),z_dir=tuple(c))
     half=solid.split(pl,keep=Keep.BOTTOM)
+    _require_capped(half)   # rule: section views are capped solids, never open cut faces (hollow-shell look)
     v=View(half,view,scale,name=name)
     o=np.asarray(origin,float); loops_all=[]
     for f in half.faces():
@@ -370,6 +381,9 @@ def section_view(solid,view,origin,scale,name):
                 loops_all.append([np.array(g.exterior.coords)]+[np.array(i.coords) for i in g.interiors])
             continue
             loops_all.append(loops)
+    if not loops_all:
+        raise RuntimeError(f"section view {name!r}: no cut face on the section plane (the plane misses the part, or the cut is open); "
+                           "sections must be capped")
     v.hatches=loops_all
     return v
 

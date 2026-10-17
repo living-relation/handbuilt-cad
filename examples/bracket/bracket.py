@@ -1,5 +1,5 @@
 """Sample part: a simple L-bracket, to show the toolkit workflow.
-Every size is a named number. Change one, run again, get a new STEP/STL.
+Every size is a named number. Change one, run again, get a new STEP.
 
     ../../.venv/bin/python bracket.py
 """
@@ -32,6 +32,5 @@ with BuildPart() as p:
 
 part = p.part
 export_step(part, "bracket.step")
-export_stl(part, "bracket.stl", tolerance=0.02)
 mass = part.volume * 2.70e-6   # aluminium 2.70 g/cm3 -> kg
-print(f"bracket: volume {part.volume/1000:.2f} cm3, mass {mass*1000:.0f} g (aluminium); wrote bracket.step, bracket.stl")
+print(f"bracket: volume {part.volume/1000:.2f} cm3, mass {mass*1000:.0f} g (aluminium); wrote bracket.step")
