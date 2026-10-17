@@ -1,7 +1,7 @@
 """Build the self-contained Fairsolid handoff zip for Grok Bot.
 
   python pipelines/fairsolid/scripts/make_handoff.py --date 2026-10-15 [--job fuel_hanger_billet_1014]
-         [--runs DIR] [--root <handbuilt-cad>/pipelines/fairsolid] [--st185 C:\\projects\\active\\st185-link-ecu-config]
+         [--runs DIR] [--root <handbuilt-cad>/pipelines/fairsolid] [--st185 <st185 checkout> (or ST185_REPO)]
          [--out DIR] [--copy-to DIR]
 
 Ported on 2026-10-17 from the old fairsolid checkout (handoff/tool/, outside git) into handbuilt-cad.
@@ -256,11 +256,14 @@ def main():
     ap.add_argument("--root", type=Path, default=None, help="fairsolid folder (default: <main checkout>/pipelines/fairsolid)")
     ap.add_argument("--runs", type=Path, default=os.environ.get("FAIRSOLID_RUNS") or None,
                     help="folder holding the run folders (default: FAIRSOLID_RUNS, else <root>/runs)")
-    ap.add_argument("--st185", type=Path, default=Path(r"C:\projects\active\st185-link-ecu-config"))
+    ap.add_argument("--st185", type=Path, default=os.environ.get("ST185_REPO") or None,
+                    help="st185-link-ecu-config checkout (default: ST185_REPO); its rules go in the zip")
     ap.add_argument("--out", type=Path, default=None, help="output folder (default: <root>/handoff)")
     ap.add_argument("--copy-to", type=Path, default=None)
     a = ap.parse_args()
 
+    if a.st185 is None:
+        raise SystemExit("set --st185 or ST185_REPO to an st185-link-ecu-config checkout (no machine path is assumed)")
     root = (a.root or main_checkout(HERE)).resolve()
     out = (a.out or root / "handoff").resolve()
     out.mkdir(parents=True, exist_ok=True)
