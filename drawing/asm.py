@@ -142,7 +142,7 @@ def make_assembly(spec,out_pdf,png_prefix=None):
     bb=comp.bounding_box()
     sheets=[]
     nsheets=1+len(spec.get('stage_sheets',[]))
-    info=dict(title=spec['title'],pn=spec['pn'],material='SEE BOM',source=spec.get('source',''))
+    info=dict(title=spec['title'],pn=spec['pn'],material='SEE BOM',source=spec.get('source',''),project=spec.get('project'),drawn=spec.get('drawn'))
     # ---- sheet 1
     revrows,rev,_=resolve_revlog(spec,spec.get('file'))
     info.update(rev=rev or '-',revlog=revrows)
