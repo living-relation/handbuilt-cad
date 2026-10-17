@@ -1,6 +1,6 @@
 #!/bin/bash
 REPO="${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"; export REPO
-RB=$REPO/sim-tools/rollback
+RB=$REPO/sim/rollback
 cp $RB/wsl-packages-before.txt $RB/wsl-packages-before.BROKEN.txt
 grep -h ' install ' /var/log/dpkg.log | awk '$1=="2026-10-09" && $2>="16:19:00" {print $4}' | sed 's/:.*//' | sort -u > /tmp/added_today.txt
 echo "installed today since 16:19: $(wc -l < /tmp/added_today.txt)"

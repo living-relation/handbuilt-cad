@@ -5,43 +5,36 @@
 
 [← Home](../../README.md)
 
-Existing paths are kept exactly as they were, so scripts keep working. New things follow the same pattern.
+This is the single CAD repo (tools, drawings, sim, part scripts). It replaced handbuilt-models (2026-10-17); the old repo's front files are in `docs/history/`.
 
 ```
-handbuilt-models/
-├── README.md              front page of the wiki
-├── NOTES.md               running session notes (dated, newest at the bottom)
-├── requirements.txt       build venv (.venv) packages, pinned
-├── requirements-sim.txt   simulation venv (~/simvenv) packages, pinned
-├── docs/wiki/             this wiki
-├── scans/INDEX.md         list of raw scans (location, size, triangles, hash) — scans themselves are not in git
-├── knuckle/               cast rear knuckle, hand-built from the scan
-│   ├── MEASURED.md        measured holes, bores, eyes
-│   ├── frame_hb.json      scan → part coordinate frame (rigid, no scale)
-│   ├── v2 … v5/           successive builds (knuckle.py + STEP/STL); v4 is the approved one
-│   ├── renders*/          model-vs-scan pictures
-│   └── feature_check/     the 24 location features every derived design must keep
-├── knuckle_billet/        billet (7075) redesign of the knuckle + FEA/topology tooling
-│   ├── LOADS.md, loads.py, loads.json   load cases (fast road, slicks, coilovers, solid bushings)
-│   ├── PLAN.md, NOTES.md, MACHINING.md
-│   ├── knuckle_billet.py  parametric billet builder (params.json drives it)
-│   ├── fea_*.py, mesh_*.py, post_*.py, run_iter.sh, run_wsl.sh   FEA pipeline
-│   ├── topo_*.py, beso_map.py, topo/                             topology optimisation
-│   ├── iter/              iteration outputs (solver files are git-ignored)
-│   ├── baseline/          FEA of the original v4 shape
-│   ├── stress_renders/    stress plots of the saved versions
-│   └── final/             best / middle / full-arm / easy / two-piece — STEP, STL, params, FEA summaries
-├── bezel/                 dash bezel (v1–v3)
-├── pedal_adapter/         pedal adapter
-├── pcv_adapter/           stock PCV pipe (Audi EA888 06H103223A)
-├── pcv_an10/              PCV pipe with angled −10 AN male end (35° and 45°)
-├── catch_can_refscan/     reference surfaces of the catch-can area (from Fairsolid refscan)
-└── sim-tools/             simulation tool docs, wrappers, install/smoke/rollback scripts
+handbuilt-cad/
+├── README.md, AGENTS.md, CONTRIBUTING.md   front page, agent rules, PR rules
+├── setup.sh / setup.ps1   one-step setup (builds .venv from uv.lock; --full adds the sim tools)
+├── pyproject.toml, uv.lock, requirements-sim.txt, apt-sim.txt   pinned packages
+├── local.toml.example     per-PC paths (models_dir, freecad_dir, ...); copy to local.toml (git-ignored)
+├── docs/                  TOOLS.md (tools index), wiki/ (this wiki), history/ (files kept from the old repos)
+├── tools/                 the toolkit: features, cnc_check, quick_fea, views, viewer, an_fitting, blend,
+│   │                      sketch_blend, chamfer_batch, rev, scan_helper
+│   ├── checks/            model checks: mesh, printed walls, round-trip, interference, edge breaks, hole fixes
+│   └── render/            smooth-shaded renders, section plots
+├── drawing/               2D drawing engine (part / assembly sheets, rev letters, rev log, templates)
+├── pipelines/fairsolid/   scan -> parametric STEP pipeline
+├── sim/                   simulation: env.sh, SIM_TOOLS.md, install / smoke / rollback scripts, FreeCAD wrappers (freecad/)
+├── skills/                agent skills (publish-to-models, cnc-part-check, scan-to-parametric, ...)
+├── examples/bracket/      worked example (run_all.sh)
+├── parts/                 generation scripts of the hand-built parts (outputs live in $MODELS_DIR)
+│   ├── knuckle/           cast rear knuckle, hand-built from the scan (v2 ... v5; v4 approved)
+│   ├── knuckle_billet/    billet redesign of the knuckle + FEA / topology tooling
+│   ├── bezel/  pedal_adapter/  pcv_adapter/  pcv_an10/  catch_can_refscan/
+├── scans/INDEX.md         list of raw scans (scans themselves are not in git)
+├── scripts/               repo hooks: guard-staged, gitleaks
+└── tests/                 pytest suite (.venv/bin/python -m pytest -q)
 ```
 
 ## Where new work goes
 
-- **New part:** a new top-level folder named after the part (`snake_case`). Inside: `<part>.py`, the generated `<part>.step` / `<part>.stl`, a short `NOTES.md`, and renders in `renders/`. If it has versions, use `v1/`, `v2/`… like `knuckle/`.
+- **New part:** a new folder `parts/<part>/` (`snake_case`) with `<part>.py` and a short `NOTES.md`. The generated STEP / STL / renders go to `$MODELS_DIR/<job>_<MMDD>/revN/` (skill `publish-to-models`), never into git. If it has versions, use `v1/`, `v2/`... like `parts/knuckle/`.
 - **Simulation runs:** run in the Linux home (`~/sim-runs/<part>/…`) or a git-ignored folder, then copy only summaries (JSON/CSV/PNG) into the part folder.
 - **Docs:** update the [Parts index](Parts.md) and add a dated line to `NOTES.md`.
 

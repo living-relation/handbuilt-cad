@@ -6,18 +6,18 @@
 
 **What to tell your agent** (copy, then change the details):
 
-> Use the handbuilt-models repo in `~/handbuilt-models` (start with `README.md` and `docs/wiki/AI-agents.md`). Here's a scan of my bracket: `~/scans/bracket.stl`. Make a clean STEP I can machine from 6061, keep the holes where they are on the scan, run the fit, CNC and strength checks, and show me the 6-view sheet before you call it done.
+> Use the handbuilt-cad repo in `~/handbuilt-cad` (start with `README.md` and `docs/wiki/AI-agents.md`). Here's a scan of my bracket: `~/scans/bracket.stl`. Make a clean STEP I can machine from 6061, keep the holes where they are on the scan, run the fit, CNC and strength checks, and show me the 6-view sheet before you call it done.
 
 Or start from an idea instead of a scan:
 
-> Using handbuilt-models, design a 90° -10 AN adapter pipe, no longer than 53 mm, with a smooth bore. Show me the 6-view sheet and the checks.
+> Using handbuilt-cad, design a 90° -10 AN adapter pipe, no longer than 53 mm, with a smooth bore. Show me the 6-view sheet and the checks.
 
 The idea: **measure the real thing → write down the sizes as numbers → a short script draws the part → check it → send the STEP to CAM.** Change a number, run again, and you get a new part.
 
 Before anything, in the repo folder:
 
 ```bash
-source sim-tools/env.sh
+source sim/env.sh
 ```
 
 ## The everyday steps
@@ -131,6 +131,8 @@ Rename things, change the shape and sizes, and update `spec.json` with the holes
 | `.venv/bin/python tools/an_fitting.py --size 10\|6 [-o end.step] [--stl] [--no-bore] [--lead MM]` | Male AN / JIC 37° flare fitting end with a real UNF thread; checks it's one valid solid (exit 1 if not) |
 | `.venv/bin/python tools/an_fitting.py --selfcheck [--json rows.json]` | Measures built `-6` and `-10` ends against MS33656 / AS4395 / ISO 8434-2 and UNF-2A; exit 1 on any miss |
 | `.venv/bin/python tools/blend.py pair A.step B.step --r 6 [--base body.step] [-o OUT] [--path crease.step]` | Rolling-ball blend (fillet) between two solids where `fillet()` fails; fuses it and checks valid, one solid, STEP re-import and fillet volume (the gain is measured locally as pieces minus base, never as the difference of two big part volumes; exit 1 on a miss). `demo --angle 45` and `compare` show it on a tilted cylinder |
+| `.venv/bin/python tools/chamfer_batch.py in.step out.step [--size 0.8] [--min-angle 25] [--time 600]` | Edge-break chamfer on every sharp convex edge where fillets fail: all at once, then halves, then one by one; an edge that will not chamfer is skipped and listed (`WARNING` lines, `out.step.chamfer.json`) |
+| `from sketch_blend import capsule, round_outline, plan_union, poly_face, prism, skirt, strict_fuse, strict_cut, round_edges` | Helpers for clean CNC sketch bodies: true line + arc outlines, rounded plan outlines, concave blend skirts, and joins / cuts / edge rounds that fail loudly instead of silently skipping (tests: `tests/test_sketch_tools.py`) |
 | `bash setup.sh --check` | What's installed |
 
 Units everywhere: **millimetres, newtons, MPa, degrees, kilograms**.
@@ -140,7 +142,7 @@ Units everywhere: **millimetres, newtons, MPa, degrees, kilograms**.
 | You see | Do this |
 |---|---|
 | `ModuleNotFoundError: build123d` | Use `.venv/bin/python`, not plain `python`. |
-| `ModuleNotFoundError: gmsh` | Use `$SIM_VENV/bin/python` for `quick_fea.py` (run `source sim-tools/env.sh` first). |
+| `ModuleNotFoundError: gmsh` | Use `$SIM_VENV/bin/python` for `quick_fea.py` (run `source sim/env.sh` first). |
 | `no nodes found for x:max` | No mesh nodes sit exactly on that plane (e.g. a rounded end). Pick a flat face, or add `--tol 0.5`. |
 | Safety factor looks crazy high/low | Check the force direction and units (N), and that `--fix` is a big flat face. A quick check is not a full analysis. |
 | build123d `fillet` error | The radius is too big for that edge. Make it smaller, or fillet before cutting holes. |

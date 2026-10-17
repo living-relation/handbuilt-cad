@@ -15,7 +15,7 @@ Think of it as three toolboxes. `setup.sh` checks each one and only adds what's 
 Extras:
 
 - **OpenFOAM** (air/fluid flow) and **Elmer** (heat, multiphysics): only with `bash setup.sh --full`. Elmer is built from source and takes about 15 minutes.
-- **FreeCAD** (Windows, optional): a free CAD program with a clickable FEA front end. Download the portable version from freecad.org, unzip it anywhere, and run `FreeCAD.bat` / `bin\freecad.exe`. To make it use the Linux CalculiX, set Edit → Preferences → FEM → CalculiX → binary to the wrapper `sim-tools/ccx_wsl.bat` (copy it next to FreeCAD first).
+- **FreeCAD** (Windows, optional): a free CAD program with a clickable FEA front end. Download the portable version from freecad.org, unzip it anywhere, and run `FreeCAD.bat` / `bin\freecad.exe`. To make it use the Linux CalculiX, set Edit → Preferences → FEM → CalculiX → binary to the wrapper `sim/freecad/ccx_wsl.bat` (copy it next to FreeCAD first).
 - **Ollama** (optional local AI helper): install from ollama.com, then `ollama pull qwen2.5-coder:14b`. Nothing in the toolkit needs it.
 - **uv**: a fast Python installer that `setup.sh` puts in `~/.local/bin` if missing.
 
@@ -37,14 +37,14 @@ bash setup.sh --check
 Every line should be green `[ok]` (yellow `[skip]` is fine for extras). Then the quick test:
 
 ```bash
-source sim-tools/env.sh
+source sim/env.sh
 .venv/bin/python -c "import build123d; print('build123d', build123d.__version__)"
 ccx -v | head -2
 ```
 
 **You should see** `build123d 0.13.0` and `This is Version 2.2x`.
 
-Each time you open a new Ubuntu window, run `source sim-tools/env.sh` inside the repo folder (it loads the simulation box and OpenFOAM if present).
+Each time you open a new Ubuntu window, run `source sim/env.sh` inside the repo folder (it loads the simulation box and OpenFOAM if present).
 
 ## Problems
 
@@ -54,6 +54,6 @@ Each time you open a new Ubuntu window, run `source sim-tools/env.sh` inside the
 | pip/uv download errors | Internet hiccup: run `bash setup.sh` again. |
 | `pypardiso` fails | Only works on normal Intel/AMD (x86_64) PCs; setup skips it on ARM. The quick tools don't need it. |
 | ParaView pictures are black/fail | `sudo apt install xvfb`, and use `xvfb-run -a pvpython script.py`. |
-| `ZSH_NAME: unbound variable` | You sourced OpenFOAM in a strict shell; use `source sim-tools/env.sh`, which handles it. |
+| `ZSH_NAME: unbound variable` | You sourced OpenFOAM in a strict shell; use `source sim/env.sh`, which handles it. |
 
-Old helper scripts still work and now just call `setup.sh`: `sim-tools/scripts/setup_venv_wsl.sh` (= `--python`) and `sim-tools/scripts/install_sim_tools_wsl.sh` (= `--full`). Details on the solvers, smoke tests and uninstall: [`sim-tools/SIM_TOOLS.md`](../../sim-tools/SIM_TOOLS.md).
+Old helper scripts still work and now just call `setup.sh`: `sim/scripts/setup_venv_wsl.sh` (= `--python`) and `sim/scripts/install_sim_tools_wsl.sh` (= `--full`). Details on the solvers, smoke tests and uninstall: [`sim/SIM_TOOLS.md`](../../sim/SIM_TOOLS.md).

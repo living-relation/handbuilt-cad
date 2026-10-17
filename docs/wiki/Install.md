@@ -12,11 +12,11 @@ You never need to run the commands on the other wiki pages. They're instructions
 
 **What to tell your agent** (copy, then change the details):
 
-> Use the handbuilt-models repo in `~/handbuilt-models` (start with `README.md` and `docs/wiki/AI-agents.md`). Here's a scan of my bracket: `~/scans/bracket.stl`. Make a clean STEP I can machine from 6061, keep the holes where they are on the scan, run the fit, CNC and strength checks, and show me the 6-view sheet before you call it done.
+> Use the handbuilt-cad repo in `~/handbuilt-cad` (start with `README.md` and `docs/wiki/AI-agents.md`). Here's a scan of my bracket: `~/scans/bracket.stl`. Make a clean STEP I can machine from 6061, keep the holes where they are on the scan, run the fit, CNC and strength checks, and show me the 6-view sheet before you call it done.
 
 Or start from an idea instead of a scan:
 
-> Using handbuilt-models, design a 90° -10 AN adapter pipe, no longer than 53 mm, with a smooth bore. Show me the 6-view sheet and the checks.
+> Using handbuilt-cad, design a 90° -10 AN adapter pipe, no longer than 53 mm, with a smooth bore. Show me the 6-view sheet and the checks.
 
 ## Installing
 
@@ -42,8 +42,8 @@ Paste these lines one at a time:
 
 ```bash
 sudo apt update && sudo apt install -y git curl python3
-git clone https://github.com/living-relation/handbuilt-models.git
-cd handbuilt-models
+git clone https://github.com/living-relation/handbuilt-cad.git
+cd handbuilt-cad
 bash setup.sh
 ```
 
@@ -52,7 +52,7 @@ bash setup.sh
 **You should see** green `[ok]` lines at the end, like:
 
 ```
-[ok]   model venv  .../handbuilt-models/.venv  (build123d 0.13.0)
+[ok]   model venv  .../handbuilt-cad/.venv  (build123d 0.13.0)
 [ok]   sim venv    /home/you/simvenv  (gmsh 4.15.2)
 [ok]   CalculiX    /usr/bin/ccx
 ```
@@ -62,7 +62,7 @@ Yellow `[skip]` lines are optional extras. Red `[fail]` lines need fixing (see b
 ## C. Try it
 
 ```bash
-source sim-tools/env.sh
+source sim/env.sh
 bash examples/bracket/run_all.sh
 ```
 
@@ -79,7 +79,7 @@ To see the files from Windows: in the Ubuntu window type `explorer.exe .` (with 
 | `Permission denied` on setup.sh | Run it as `bash setup.sh` (not `./setup.sh`). |
 | `[fail] model venv install failed` | Check the internet, then just run `bash setup.sh` again. It's safe to re-run. |
 | `[fail] CalculiX missing` | Run `bash setup.sh` again and type your password when it asks. |
-| Very slow when working in `/mnt/c/...` | Keep the folder in your Linux home (`~/handbuilt-models`), as above. |
+| Very slow when working in `/mnt/c/...` | Keep the folder in your Linux home (`~/handbuilt-cad`), as above. |
 | Using a Mac | Not tested. Use a Linux virtual machine, or install Docker/Ubuntu. |
 
-To update later: `cd ~/handbuilt-models && git pull && bash setup.sh`.
+To update later: `cd ~/handbuilt-cad && git pull && bash setup.sh`.

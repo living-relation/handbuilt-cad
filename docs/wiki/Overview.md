@@ -16,10 +16,10 @@ On top of that, some parts get:
 
 | Piece | Where | Notes |
 |---|---|---|
-| This repo (models, scripts, notes, docs) | PC → WSL Ubuntu `~/projects/handbuilt-models`; GitHub `living-relation/handbuilt-models` | The single source of truth for hand-built work |
+| This repo (models, scripts, notes, docs) | PC → WSL Ubuntu `~/projects/handbuilt-cad`; GitHub `living-relation/handbuilt-cad` | The single source of truth for hand-built work |
 | Fairsolid (scan cleanup / measuring helper) | `C:\projects\active\fairsolid`; GitHub `living-relation/fairsolid` | Separate repo, linked |
 | Raw scans | Creality Scan folders on the PC, OneDrive, Google Drive | Not in git; listed in `scans/INDEX.md` |
-| Simulation tools | WSL (CalculiX, Gmsh, Elmer, OpenFOAM, ParaView, `~/simvenv`) | Install script in `sim-tools/scripts/` |
+| Simulation tools | WSL (CalculiX, Gmsh, Elmer, OpenFOAM, ParaView, `~/simvenv`) | Install script in `sim/scripts/` |
 | FreeCAD | Windows `C:\projects\_tools\FreeCAD` | Optional front end |
 | Older trials | `C:\projects\_scratch\scan2param-trials`, `%USERPROFILE%\agent-tools\` | Historical; not needed to use this repo |
 | Backups | `C:\projects\_archive\` | Zip snapshots before big changes |

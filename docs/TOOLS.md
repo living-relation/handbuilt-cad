@@ -16,7 +16,7 @@
 | sim venv packages | PyPI (`requirements-sim.txt`) | existing | see file | optional meshing/FEA post (Python 3.14 venv) |
 | FreeCAD | FreeCAD release | existing | 1.1.4 | headless FEM / edge breaks; its bundled Python is never imported by this repo |
 | FreeCAD launcher wrappers | `sim/` (`*.bat`) | modified (our wrappers) | - | run ccx/gmsh in WSL from FreeCAD |
-| tools/* | `tools/` | made | - | toolkit |
+| tools/* | `tools/` | made | - | toolkit (`sketch_blend.py`, `chamfer_batch.py` ported from handbuilt-models 2026-10-17) |
 | drawing engine (part/asm/dwg/feat/hw) + revs.py + templates | `drawing/` | made | - | 2D drawings from B-rep (no hidden lines, rev log), rev letters, revision register |
 | model checks | `tools/checks/` | made | - | mesh, structural-only minimum wall (`check_printed_walls.py` + `wall_classes.py`, per-project config from `walls.example.toml`; `walls_any.py` detection only), round-trip, interference, edge breaks, hole fixes |
 | FreeCAD smoke check | `sim/smoke/run_freecad_check.py` | made | - | FreeCAD FEM import check using `[paths] freecad_dir` from `local.toml` |

@@ -1,8 +1,8 @@
 #!/bin/bash
 REPO="${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"; export REPO
-D=$REPO/sim-tools/smoke/ccx
+D=$REPO/sim/smoke/ccx
 mkdir -p $D && cd $D
-$HOME/simvenv/bin/python $REPO/sim-tools/scripts/gen_ccx.py $D
+$HOME/simvenv/bin/python $REPO/sim/scripts/gen_ccx.py $D
 ccx -i beam > beam_ccx.log 2>&1; echo "beam ccx exit $?"
 ccx -i heat > heat_ccx.log 2>&1; echo "heat ccx exit $?"
 python3 - <<'EOF'
