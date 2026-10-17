@@ -30,7 +30,7 @@ The drawing engine's full rule list (and which ones it enforces) is `drawing/DRA
 4. **Rev log table** at the top-right of sheet 1: Rev, Description, By, Date (dd/mm/yy). One entry per PR/release, not per edit; clerical revs are not listed; Rev A is "Initial"; drop the oldest rows when it gets too long. Template: `drawing/templates/REVLOG.md`.
 5. **No hidden lines.** Center marks and center lines are fine.
 6. **Smooth bodies, no mesh** in renders or drawings.
-7. **Minimum wall thickness applies to critical or structural features only.** Anything questionable (e.g. a thin non-structural wall) is flagged for the maintainer to change or approve, never auto-fixed or auto-failed.
+7. **Minimum wall thickness applies to critical or structural features only.** Anything questionable (e.g. a thin non-structural wall) is flagged for the maintainer to change or approve, never auto-fixed or auto-failed. No tool assumes a minimum: `tools/cnc_check.py` needs `--min-wall`, the spec's `min_wall_mm` or `--walls-config`, otherwise it reports walls as "not checked".
 8. **Edge breaks are optional.** If the CAD can't do them cleanly, use a drawing note instead.
 9. **Dimension each feature once.** Use an (xN) count for repeats, e.g. "Ø6.6 (x4)".
 10. **Correct view.** Put each dimension in the ASME/ISO-correct view; chain, baseline and ordinate styles are all fine.
@@ -38,6 +38,8 @@ The drawing engine's full rule list (and which ones it enforces) is `drawing/DRA
 12. **Made with.** Each model folder gets a `MADE-WITH.md` naming the tool that made it; the revision register has a "Made with" column (`drawing/templates/DRAWING-REVS.md`).
 13. **STEP only.** No STL unless a specific job needs it.
 14. Project-specific naming rules (e.g. whether file names carry rev letters) live in that project, not here.
+15. **Capped sections only.** Every rendered section view uses closed-surface clipping: the cut part is a closed solid with its cut faces filled (caps). Never clip just the outer skin; open cut faces render as hollow shells and misread wall thickness. Use `tools/render/section.py` (or `smooth_render.py --section`); the drawing engine's section views are capped too. All of them refuse an open cut.
+16. **Rev folders are lettered.** `tools/rev.py` makes `rev<LETTER>` (clerical `rev<LETTER>.<NN>`) folders by the rules above; it never converts old numeric `revN` folders.
 
 ## Checks before a PR
 - `.venv/bin/python -m pytest -q` (repo tests) and the checks for the files you touched.

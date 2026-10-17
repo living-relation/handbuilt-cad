@@ -1,6 +1,8 @@
 """CNC design check for any STEP file: likely setups, inside corners, vertical corners, thin walls.
 
-    .venv/bin/python tools/cnc_check.py part.step                      # defaults
+    .venv/bin/python tools/cnc_check.py part.step                      # defaults (walls: not checked, see below)
+    .venv/bin/python tools/cnc_check.py part.step --min-wall 2.0       # + thin-wall scan at the minimum the user gave
+    .venv/bin/python tools/cnc_check.py part.step --walls-config walls.toml   # minimum from the project's wall config
     .venv/bin/python tools/cnc_check.py part.step --spec cnc_spec.json  # your tools / rules
     .venv/bin/python tools/cnc_check.py part.step --strict              # exit 1 if anything is flagged
     .venv/bin/python tools/cnc_check.py part.step --stl part.stl        # wall scan on this mesh (same part, same units/position)
@@ -13,7 +15,8 @@ Spec JSON (every key optional; defaults shown):
     {"tool_radii_mm": [3.0, 5.0, 6.0],   # end mills you have (radius). Smallest = tightest inside corner you can cut
      "lip_max_mm": 0.1,                  # a concave edge next to a face narrower than this, with the faces either side of that
                                          # sliver within 15 deg of tangent, is a lip (tiny step, e.g. a blend run-out), not a corner. 0 = off
-     "min_wall_mm": 1.5,                 # thinner walls are flagged (aluminium rule of thumb; use more for parts that carry load)
+     "min_wall_mm": null,                # NO default (never assume a minimum wall): the value the user gave for structural /
+                                         # critical features. Unset = the wall scan is skipped and reported as "not checked"
      "spindle_axis": "z",                # the "Z-down" direction for the vertical-corner check (x, y or z)
      "wall_samples": 20000,              # surface points used for the wall scan
      "reach_samples": 20000,             # surface points used for --reach
@@ -21,6 +24,12 @@ Spec JSON (every key optional; defaults shown):
      "ray_chunk": 1000,                  # rays cast per batch (lower = less memory, a bit slower)
      "mesh_tol_mm": 0.02,                # STEP mesh chord tolerance in mm (coarser = faster, but can invent thin walls)
      "max_listed": 25}                   # longest lists are cut to this many entries in the text report
+
+Minimum wall (DRAWING-RULES 21, skills/cnc-part-check step 3): there is no default. Give the value the user set with
+--min-wall, the spec's "min_wall_mm" or --walls-config (the project's tools/checks wall TOML, its required min_wall); first
+one set wins in that order. Without one the walls are "not checked". Thin spots found are candidates for review: the minimum
+applies to structural / critical features only, so classify them (tools/checks/check_printed_walls.py or the project's own
+record) and flag the rest for the user; never auto-fix or auto-fail them.
 
 It is a quick geometric screen, not CAM: setups ignore part-on-part shadowing (a lower bound), and walls
 come from inward ray casting on a tessellated mesh. Holes (>=180 deg of arc) are assumed drilled/bored and are not corners.
@@ -39,9 +48,32 @@ from OCP.BRepTools import BRepTools
 from OCP.TopAbs import TopAbs_IN
 from OCP.gp import gp_Pnt
 
-DEFAULTS = dict(tool_radii_mm=[3.0, 5.0, 6.0], lip_max_mm=0.1, min_wall_mm=1.5, spindle_axis="z", wall_samples=20000,
+DEFAULTS = dict(tool_radii_mm=[3.0, 5.0, 6.0], lip_max_mm=0.1, min_wall_mm=None, spindle_axis="z", wall_samples=20000,
                 reach_samples=20000, reach_min_gain_pct=0.25, ray_chunk=1000, mesh_tol_mm=0.02, max_listed=25)
 AXES = {"x": Vector(1, 0, 0), "y": Vector(0, 1, 0), "z": Vector(0, 0, 1)}
+
+def resolve_min_wall(spec, cli=None, walls_config=None):
+    """(min wall mm or None, where it came from). Order: --min-wall, spec min_wall_mm, the wall config's min_wall. Never a default."""
+    if cli is not None:
+        v, src = cli, "--min-wall"
+    elif spec.get("min_wall_mm") is not None:
+        v, src = spec["min_wall_mm"], "spec min_wall_mm"
+    elif walls_config:
+        import tomllib
+        with open(walls_config, "rb") as f:
+            cfg = tomllib.load(f)
+        if cfg.get("min_wall") is None:
+            raise ValueError(f"{walls_config}: no min_wall (it is required there; ask the user once, never assume one)")
+        v, src = cfg["min_wall"], f"walls config {os.path.basename(walls_config)}"
+    else:
+        return None, None
+    v = float(v)
+    if not v > 0:
+        raise ValueError(f"minimum wall must be > 0 mm (got {v} from {src})")
+    return v, src
+
+NOT_CHECKED = ("not checked: no minimum wall given (never assumed). Pass --min-wall MM, spec min_wall_mm or "
+               "--walls-config with the value the user set for structural / critical features")
 
 def xyz(v, nd=1): return [round(v.X, nd), round(v.Y, nd), round(v.Z, nd)]
 
@@ -376,7 +408,9 @@ def report_text(name, part, spec, setups, small, sharp, walls, mesh, reach, lips
     out = [f"CNC check: {name}",
            f"size {bb.X:.1f} x {bb.Y:.1f} x {bb.Z:.1f} mm, volume {part.solid.volume/1000:.2f} cm3, "
            f"{part.n_solids} solid(s), valid: {part.valid}",
-           f"rules: tools r {spec['tool_radii_mm']} mm (smallest r{rmin}), min wall {spec['min_wall_mm']} mm, spindle {ax}", "",
+           f"rules: tools r {spec['tool_radii_mm']} mm (smallest r{rmin}), "
+           + (f"min wall {spec['min_wall_mm']} mm ({spec.get('min_wall_source')})" if spec.get('min_wall_mm') is not None
+              else "min wall not set") + f", spindle {ax}", "",
            f"1. Setups: about {len(setups)} tool direction(s) needed (lower bound, ignores shadowing)"]
     out += [f"   - from {s['direction']}: {s['flat_faces']} flat faces, {s['holes']} holes" for s in setups]
     out += ["", f"2. Inside corners smaller than the smallest tool (r{rmin}): {len(small)} rounded, {len(sharp)} sharp (r0)"]
@@ -394,10 +428,15 @@ def report_text(name, part, spec, setups, small, sharp, walls, mesh, reach, lips
     out += [f"   - {'sharp' if 'length' in c else 'r' + str(c['r'])} at {c['at']}" + (f", {c['length']} mm tall" if 'length' in c else "")
             for c in vert[:L]]
     if vert: out.append(f"   Fix: add a corner radius of at least r{rmin} in CAD (a bit more than the tool is kinder), or accept the tool radius there.")
-    if walls:
+    if walls and walls.get("checked") is False:
+        out += ["", f"4. Walls: {walls['reason']}"]
+    elif walls:
         out += ["", f"4. Walls thinner than {spec['min_wall_mm']} mm: {len(walls['thin_spots'])} spot(s) "
                 f"(thinnest wall found {walls['min_wall_mm']} mm, {walls['wall_samples']} wall samples)"]
         out += [f"   - {s['t_mm']} mm at {s['at']}" for s in walls["thin_spots"][:L]]
+        if walls["thin_spots"]:
+            out.append("   These are candidates: the minimum applies to structural / critical features only. Classify each one "
+                       "(structural = fix; other or unclear = flag for the user to change or approve); never auto-fix or auto-fail.")
     else: out += ["", "4. Walls: not checked (no usable mesh)"]
     msrc = f"mesh: {mesh['source']}" + (f" ({mesh['method']})" if mesh.get("method") else "") + (f", {mesh['triangles']} triangles, {mesh['open_edges']} open edge(s)" if mesh.get("triangles") else "")
     out.append("   " + msrc); out += [f"   note: {t}" for t in mesh["notes"]]
@@ -411,14 +450,14 @@ def report_text(name, part, spec, setups, small, sharp, walls, mesh, reach, lips
             out.append(f"   ({reach['left_to_small_directions_pct']}% more is visible only from directions that each add < {spec['reach_min_gain_pct']}%; per_direction in the JSON)")
         out.append(f"   unreachable from every direction tried: {reach['unreachable_pct']}% (~{reach['unreachable_mm2']} mm2)")
         out += [f"   - ~{a['mm2']} mm2 around {a['around']}" for a in reach["unreachable_areas"][:L]]
-    flagged = bool(small or [c for c in sharp if not c["round_edge"]] or vert or (walls and walls["thin_spots"]))
+    flagged = bool(small or [c for c in sharp if not c["round_edge"]] or vert or (walls and walls.get("thin_spots")))
     out += ["", "Result: " + ("things to look at (see above)" if flagged else "nothing flagged")]
     return "\n".join(out), flagged
 
 def peak_rss_mb():
     return round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024, 1)     # Linux: KiB
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser(description="CNC design check of a STEP file (setups, inside corners, vertical corners, thin walls, optional reach).",
                                  epilog="Spec keys and defaults: " + json.dumps(DEFAULTS))
     ap.add_argument("step", help="part .step/.stp")
@@ -428,9 +467,15 @@ def main():
     ap.add_argument("--reach", nargs="?", const="auto", metavar="DIRS",
                     help="surface reachability; alone = try the 6 axes + setup + hole directions, or give planned directions "
                          "like '+Z,-Z,+X,0.97/0/-0.24'")
+    ap.add_argument("--min-wall", type=float, metavar="MM", help="minimum wall for structural / critical features, as the user set it "
+                    "(no default: without this, spec min_wall_mm or --walls-config the walls are not checked)")
+    ap.add_argument("--walls-config", metavar="TOML", help="the project's wall-check config (tools/checks/walls.example.toml format); "
+                    "its min_wall is used when --min-wall and spec min_wall_mm are not given")
     ap.add_argument("--strict", action="store_true", help="exit 1 if anything is flagged")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     spec = dict(DEFAULTS, **(json.load(open(a.spec)) if a.spec else {}))
+    try: spec["min_wall_mm"], spec["min_wall_source"] = resolve_min_wall(spec, a.min_wall, a.walls_config)
+    except (ValueError, OSError) as ex: sys.exit(f"cnc_check: {ex}")
     if spec["spindle_axis"] not in AXES: sys.exit("spindle_axis must be x, y or z")
     try: planned = parse_dirs(a.reach) if a.reach and a.reach != "auto" else None
     except Exception: sys.exit(f"--reach: can't read directions {a.reach!r} (use e.g. '+Z,-X,0.97/0/-0.24'; put --reach after the STEP file)")
@@ -439,7 +484,10 @@ def main():
     small, sharp, holes, lips = find_corners(part, spec); tic("corners")
     setups = find_setups(part, holes); tic("setups")
     m, mesh = load_mesh(part, a.stl, mesh_tol(part, spec)); tic("mesh")
-    walls = find_thin_walls(m, spec) if m is not None else None; tic("walls")
+    if m is None: walls = None
+    elif spec["min_wall_mm"] is None: walls = dict(checked=False, reason=NOT_CHECKED)
+    else: walls = dict(find_thin_walls(m, spec), checked=True, min_wall_set_mm=spec["min_wall_mm"], source=spec["min_wall_source"])
+    tic("walls")
     reach = find_reach(m, spec, setups, holes, planned) if (a.reach and m is not None) else None
     if a.reach: tic("reach")
     txt, flagged = report_text(os.path.basename(a.step), part, spec, setups, small, sharp, walls, mesh, reach, lips)

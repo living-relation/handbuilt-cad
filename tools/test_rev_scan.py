@@ -14,29 +14,7 @@ import scan_helper  # noqa: E402
 D = dt.date(2026, 10, 15)
 
 
-def test_new_job_and_next_rev(tmp_path):
-    r1 = rev.create(tmp_path, "bracket", today=D)
-    assert r1 == tmp_path / "bracket_1015" / "rev1"
-    assert "bracket_1015 / rev1" in (r1 / "SUMMARY.md").read_text()
-    (r1 / "SUMMARY.md").write_text("mine")
-    r2 = rev.create(tmp_path, "bracket", today=D)
-    assert r2.name == "rev2" and (r1 / "SUMMARY.md").read_text() == "mine"
-
-
-def test_existing_job_variants_and_date(tmp_path):
-    (tmp_path / "knuckle_1009" / "rev4b").mkdir(parents=True)
-    (tmp_path / "knuckle_1009" / "rev1-best").mkdir()
-    assert rev.create(tmp_path, "knuckle_1009", today=D).name == "rev5"
-    assert rev.create(tmp_path, "knuckle", today=D).parent.name == "knuckle_1009"
-    assert rev.create(tmp_path, "pipe", date="1014", today=D).parent.name == "pipe_1014"
-
-
-def test_never_overwrites(tmp_path, monkeypatch):
-    r1 = rev.create(tmp_path, "x", today=D)
-    monkeypatch.setattr(rev, "next_rev", lambda d: 1)
-    with pytest.raises(FileExistsError):
-        rev.create(tmp_path, "x", today=D)
-    assert (r1 / "SUMMARY.md").exists()
+# rev folder tests (lettered revs) are in tests/test_rev_folders.py
 
 
 def test_models_dir_required(tmp_path):
