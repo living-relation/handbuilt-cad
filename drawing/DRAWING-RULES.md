@@ -1,4 +1,4 @@
-# Drawing rules (SteveCAD drawing engine)
+# Drawing rules (drawing engine)
 
 Rules for every drawing this engine makes. The engine enforces the ones marked **(engine)**.
 

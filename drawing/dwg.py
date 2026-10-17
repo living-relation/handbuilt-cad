@@ -1,5 +1,7 @@
-"""SteveCAD 2D drawing engine: HLR views (build123d/OCCT) -> 11x17 ANSI B sheets -> PDF (+DXF)."""
-import math, datetime, os, numpy as np
+"""2D drawing engine: HLR views (build123d/OCCT) -> 11x17 ANSI B sheets -> PDF (+DXF)."""
+import math, datetime, os, sys, numpy as np
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from settings import title_info
 from build123d import *
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -441,6 +443,7 @@ def ordinate(sh,pts,axis,base_pg,at,vals,h=2.8):
 
 # ---------------- frame ----------------
 def frame(sh,info,sheet_no,n_sheets,proj=True):
+    info=title_info(info)   # project / drawn-by: spec, then DRAWING_* env, then local.toml [drawing], then neutral defaults
     m=10.0
     sh.pl([(m,m),(PW-m,m),(PW-m,PH-m),(m,PH-m)],'border',closed=True)
     sh.pl([(5,5),(PW-5,5),(PW-5,PH-5),(5,PH-5)],'thin',closed=True)
@@ -461,7 +464,7 @@ def frame(sh,info,sheet_no,n_sheets,proj=True):
         sh.txt(a+1,d-1,label,h=1.8,ha='left',va='top')
         sh.txt((a+c)/2,(b+d)/2-1.2,val,h=vh,bold=bold)
     # rows
-    box(x0,y1-10,x1,y1,'COMPANY / PROJECT',info.get('project','PROJECT'),3.2,True)
+    box(x0,y1-10,x1,y1,'COMPANY / PROJECT',info['project'],3.2,True)
     box(x0,y1-24,x1,y1-10,'TITLE',info['title'],4.6 if len(info['title'])<38 else 3.6,True)
     box(x0,y1-34,x0+90,y1-24,'PART / DWG NO.',info['pn'],3.2,True)
     box(x0+90,y1-34,x0+110,y1-24,'REV',info.get('rev','1'),3.6,True)
@@ -471,7 +474,7 @@ def frame(sh,info,sheet_no,n_sheets,proj=True):
     box(x0+52,y0+8,x0+80,y1-34,'SIZE','B (11x17)',2.6)
     box(x0+80,y0+8,x0+108,y1-34,'SHEET',f"{sheet_no} OF {n_sheets}",3.0)
     box(x0+108,y0+8,x0+140,y1-34,'DATE',info.get('date',datetime.date.today().isoformat()),2.8)
-    box(x0+140,y0+8,x1,y1-34,'DRAWN',"SteveCAD",3.0)
+    box(x0+140,y0+8,x1,y1-34,'DRAWN',info['drawn'],3.0 if len(info['drawn'])<20 else 2.4)
     box(x0,y0,x0+140,y0+8,'SOURCE',info.get('source',''),min(2.0,2.0*86/max(1,len(info.get('source','')))))
     # projection symbol (third angle)
     a,b=x0+140,y0

@@ -384,7 +384,7 @@ def make_part(spec,out_pdf,out_dxf=None,png_prefix=None):
         lbl=labels.get(k,k.upper())
         if k==secslot or spec.get('label_views'):
             sh.txt(v.cx,side_pos(v,'below',tiers[(id(v),'below')]+1)+2,lbl,h=3.5,bold=True,va='top')
-    info=dict(title=spec['title'],pn=spec['pn'],material=spec['material'],scale=scale_str(s),source=spec.get('source',''),rev=rev or '-',revlog=revrows)
+    info=dict(title=spec['title'],pn=spec['pn'],material=spec['material'],scale=scale_str(s),source=spec.get('source',''),rev=rev or '-',revlog=revrows,project=spec.get('project'),drawn=spec.get('drawn'))
     frame(sh,info,1,1)
     nb=overlap_warnings(sh,rlr)
     if nb: print(f"WARNING: {nb} view/dim lines run into the rev log table on {spec['pn']}")

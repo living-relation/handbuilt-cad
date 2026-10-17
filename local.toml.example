@@ -8,5 +8,9 @@ freecad_dir = ""       # FREECAD_DIR; folder that holds bin/freecadcmd(.exe)
 fairsolid_runs = ""    # FAIRSOLID_RUNS; where pipeline run folders go (outside the repo)
 scratch_dir = ""       # SCRATCH_DIR; disposable clones and handoff packs for toolkit patches (outside every live checkout)
 
+[drawing]
+project = ""           # DRAWING_PROJECT; title-block COMPANY / PROJECT (empty = "PROJECT"); a spec's "project" key wins
+drawn = ""             # DRAWING_DRAWN; title-block DRAWN (empty = "-"); a spec's "drawn" key wins
+
 [python]
 cad_py = ""            # CAD_PY; empty = <repo>/.venv/bin/python
