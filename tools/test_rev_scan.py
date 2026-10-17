@@ -70,6 +70,7 @@ def test_scan_helper_builds_command(tmp_path):
         scan_helper.build_cmd("run", None, None, [], env)
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="runs a POSIX shell-script fake of fairsolid; Linux/WSL only")
 def test_scan_helper_main_runs_fake(tmp_path, monkeypatch, capfd):
     _fake_fairsolid(tmp_path)
     monkeypatch.setenv("FAIRSOLID_HOME", str(tmp_path))

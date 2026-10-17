@@ -38,14 +38,17 @@ git config core.hooksPath .githooks
 # 4. local settings
 [ -f local.toml ] || cp local.toml.example local.toml
 
-# 5. models folder (Desktop known folder; OneDrive Desktops work; never hard-coded)
+# 5. models folder. Order: $MODELS_DIR, then [paths] models_dir in local.toml, then <Desktop>/models.
+#    On WSL, <Desktop> is the Windows OneDrive Desktop when OneDrive keeps one, else the Desktop known folder.
 desktop=""
 if command -v powershell.exe >/dev/null 2>&1; then
-  win=$(powershell.exe -NoProfile -Command "[Environment]::GetFolderPath('Desktop')" | tr -d '\r')
+  win=$(powershell.exe -NoProfile -Command '$d=[Environment]::GetFolderPath("Desktop"); foreach($o in @($env:OneDriveConsumer,$env:OneDrive,$env:OneDriveCommercial)){ if($o -and -not $d.StartsWith($o,[StringComparison]::OrdinalIgnoreCase) -and (Test-Path -LiteralPath (Join-Path $o "Desktop") -PathType Container)){ $d=Join-Path $o "Desktop"; break } }; $d' | tr -d '\r')
   [ -n "$win" ] && desktop=$(wslpath -u "$win")
 fi
 [ -z "$desktop" ] && desktop=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")
-MODELS="${MODELS_DIR:-$desktop/models}"
+local_models=$(sed -nE "s/^[[:space:]]*models_dir[[:space:]]*=[[:space:]]*['\"]([^'\"]*)['\"].*/\1/p" local.toml 2>/dev/null | head -1)
+case "$local_models" in [A-Za-z]:\\*|[A-Za-z]:/*) command -v wslpath >/dev/null 2>&1 && local_models=$(wslpath -u "$local_models");; esac
+MODELS="${MODELS_DIR:-${local_models:-$desktop/models}}"
 if [ "$NO_MODELS" = 1 ]; then echo "models folder: $MODELS (not created: --no-models)";
 elif [ -d "$MODELS" ]; then echo "models folder: $MODELS (exists, left as is)";
 else mkdir -p "$MODELS"; echo "models folder: created $MODELS"; fi
