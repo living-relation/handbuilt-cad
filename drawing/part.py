@@ -179,7 +179,7 @@ def make_part(spec,out_pdf,out_dxf=None,png_prefix=None):
         bb=solid.bounding_box(); solid=solid.moved(Location(Vector(-(bb.min.X+bb.max.X)/2,-(bb.min.Y+bb.max.Y)/2,-bb.min.Z)))
     proc=spec['process']
     revrows,rev,revsrc=resolve_revlog(spec,spec['file'])   # model drives the letter; drawing must match
-    rlr=revlog_rect(len(revrows))
+    rlr=revlog_rect(revrows)
     hidden=False  # RULE 2026-10-17: never show hidden lines; spec 'hidden' ignored
     bb=solid.bounding_box()
     W,D,H=bb.size.X,bb.size.Y,bb.size.Z

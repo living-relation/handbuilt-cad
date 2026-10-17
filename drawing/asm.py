@@ -147,7 +147,7 @@ def make_assembly(spec,out_pdf,png_prefix=None):
     revrows,rev,_=resolve_revlog(spec,spec.get('file'))
     info.update(rev=rev or '-',revlog=revrows)
     sh=Sheet(); occ=Occ(); occ.rects=sh.rects
-    rlr=revlog_rect(len(revrows))      # rev log top right; BOM starts below it
+    rlr=revlog_rect(revrows)      # rev log top right; BOM starts below it
     ybot=bom_table(sh,items,PW-10,rlr[1]-3,colw=spec.get('bom_cols',(9,9,44,80,40)),h=spec.get('bom_h',2.0))
     bom_x0=PW-10-sum(spec.get('bom_cols',(9,9,44,80,40)))
     # views region
