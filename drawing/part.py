@@ -388,11 +388,6 @@ def make_part(spec,out_pdf,out_dxf=None,png_prefix=None):
     frame(sh,info,1,1)
     nb=overlap_warnings(sh,rlr)
     if nb: print(f"WARNING: {nb} view/dim lines run into the rev log table on {spec['pn']}")
-    for k,v in V.items():
-        st=getattr(v,'stats',{})
-        if st.get('planar_facets',0)>=50:
-            print(f"WARNING: {spec['pn']} {k} view: {st['planar_facets']} facet edges between near-coplanar flat faces - "
-                  "the model is polygonised (faceted outline); rebuild those curves as true arcs. Facet lines were filtered from the view.")
     spec['_revlog_src']=revsrc; spec['_view_stats']={k:getattr(v,'stats',{}) for k,v in V.items()}
     notes=list(spec.get('notes',[]))
     notes_block(sh,14,72,notes,h=2.3,width=128)

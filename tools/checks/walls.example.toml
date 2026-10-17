@@ -1,0 +1,41 @@
+# Wall-check config for tools/checks/check_printed_walls.py - one per project (or per job). Example values only.
+# The project's own rules (AGENTS.md, decision log, register) win over anything here.
+# Paths are relative to this file.
+
+min_wall = 2.0        # mm, REQUIRED: a structural / critical spot at or under this fails. No default: ask the user once.
+attach_min = 3.0      # mm, optional: features held on by less than this (A check). Leave out to skip the A check.
+step = 0.5            # mm, section spacing for the wall check
+pitch = 0.2           # mm, voxel size for the attachment check
+output = "wall_check.json"
+flags_md = "WALL-FLAGS.md"   # optional: the flag list the user reads
+
+[classes]
+fail = ["structural", "critical"]          # thin spot here = FAIL
+flag = ["non-structural", "questionable"]  # thin spot here = listed for the user to change or approve
+attach_class = "structural"                # class for A spots (an attachment is a mounting / retention question)
+outer_band = 4.5                           # mm from the part's x / y extent = outer skin -> structural. Remove to skip.
+default = "questionable"                   # anything the boxes and rules can't place
+
+[[parts]]
+name = "Example_Base"
+file = "out/Example_Base.stl"
+
+  [[parts.features]]                       # named boxes, first match wins: [x0, x1, y0, y1, z0, z1] mm
+  class = "structural"
+  why = "mounting ears"
+  box = [-5.0, 5.0, -5.0, 60.0, 0.0, 8.0]
+
+  [[parts.features]]
+  class = "non-structural"
+  why = "cable guide rib - carries no load (user approved as non-structural)"
+  box = [40.0, 44.0, 10.0, 30.0, 0.0, 12.0]
+
+  [[parts.exempt]]                         # thin spots the user approved; re-check if the geometry there changes
+  why = "snap barb, 1.2 mm by design"
+  approved = "2026-10-17"
+  thickness = 1.2
+  box = [70.0, 74.0, 20.0, 24.0, 10.0, 14.0]
+
+[[parts]]
+name = "Example_Cover"
+file = "out/Example_Cover.stl"

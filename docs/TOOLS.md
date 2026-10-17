@@ -18,7 +18,8 @@
 | FreeCAD launcher wrappers | `sim/` (`*.bat`) | modified (our wrappers) | - | run ccx/gmsh in WSL from FreeCAD |
 | tools/* | `tools/` | made | - | toolkit |
 | drawing engine (part/asm/dwg/feat/hw) + revs.py + templates | `drawing/` | made | - | 2D drawings from B-rep (no hidden lines, rev log), rev letters, revision register |
-| model checks | `tools/checks/` | made | - | mesh, walls, round-trip, interference, edge breaks, hole fixes |
+| model checks | `tools/checks/` | made | - | mesh, structural-only minimum wall (`check_printed_walls.py` + `wall_classes.py`, per-project config from `walls.example.toml`; `walls_any.py` detection only), round-trip, interference, edge breaks, hole fixes |
+| FreeCAD smoke check | `sim/smoke/run_freecad_check.py` | made | - | FreeCAD FEM import check using `[paths] freecad_dir` from `local.toml` |
 | renders | `tools/render/` | made | - | smooth-shaded renders, section plots |
 | fairsolid | `pipelines/fairsolid/` | made | - | scan -> parametric STEP |
 | sim scripts | `sim/` | made | - | meshing/FEA helpers and smoke tests |

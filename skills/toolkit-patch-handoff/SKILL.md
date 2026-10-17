@@ -1,23 +1,27 @@
 ---
 name: toolkit-patch-handoff
 description: >-
-  Use when improving the handbuilt-models (or similar) public toolkit: edit only
-  in a scratch clone on DansPC WSL, never commit from the worker, run tests
-  there, and hand Grok Bot a clean patch plus report for review and push.
+  Use when improving a shared CAD toolkit repo: edit only in a scratch clone on
+  the user's machine, never commit from the worker, run tests there, and hand
+  the reviewer a clean patch plus report; the reviewer pushes a branch and opens
+  a PR, never commits to main.
 ---
-Use this whenever a bot improves tools, wiki, or scripts in the public handbuilt-models toolkit (or the same pattern for another shared repo). All work runs on DansPC in WSL, never on the bot's own computer; if DansPC is offline, stop and tell Daniel.
+Use this whenever an agent improves tools, docs or scripts in a shared CAD toolkit repo (or the same pattern for another shared repo). All work runs on the user's machine (e.g. in WSL), never on the agent's own computer; if that machine is offline, stop and tell the user. Follow safe-repo-preflight and the repo's own rules (AGENTS.md, hooks, CI) throughout; they win over this skill.
 
 ## Steps
-1. **Scratch clone only.** Work in a disposable clone on DansPC WSL outside the live repo (e.g. `/home/daniel/projects/scratch-<bot>/`). Never edit the live checkout at `/home/daniel/projects/handbuilt-models` that the user or other bots rely on.
-2. **Confirm clean start.** `git status` clean; note the base commit SHA. Confirm the live repo is still clean and on the expected SHA before you finish.
-3. **Small scope.** Touch only the files the task names (tool + wiki How-To-Use when docs are needed).
-4. **Patch, don't commit.** Produce a patch that applies cleanly to the base SHA (and preferably alone to main). No commits and no pushes from the worker.
-5. **Test.** Run the project's full smoke/tests (e.g. `run_all.sh`) in WSL plus any task-specific cases. Capture a short log.
-6. **Secrets/path scan.** Grep the diff for home paths, tokens, and passwords before handoff.
-7. **Handoff pack.** Put it in the scratch folder: `REPORT.md` (what/why/results/limitations), patch + diffstat, test log, and any sheets. Give the reviewer its path, the base SHA, and confirm the live repo is untouched.
-8. **Reviewer pushes.** The reviewer (usually Grok Bot) re-reads the report, applies on a clean tree, commits, and pushes only that toolkit change, never force-push.
-9. **Cleanup.** Leave the scratch clone in place. It is removed only after Grok Bot has pushed and Daniel says yes, because deleting is destructive.
+1. **Scratch clone only.** Work in a disposable clone outside every live checkout (e.g. `<scratch_dir>/<agent>/<task>/`, where `scratch_dir` is a folder the user set aside for scratch work, outside the repo). Never edit the user's or another agent's working copy of the repo.
+2. **Confirm clean start.** `git status` clean; note the base commit SHA (origin/main). Confirm the live checkouts are still clean and on the expected SHA before you finish.
+3. **Small scope.** Touch only the files the task names (tool plus its How-To-Use doc when docs are needed).
+4. **Patch, don't commit.** Produce a patch that applies cleanly to the base SHA. No commits and no pushes from the worker.
+5. **Test.** Run the repo's full tests/smoke checks plus any task-specific cases, using the repo's own environment (`[python] cad_py` in its `local.toml`, or the venv its setup builds). Capture a short log.
+6. **Secrets/path scan.** Grep the diff for home and user paths, cloud-drive paths, personal names, emails, tokens and passwords before handoff. Paths belong in `local.toml`, never in tracked files.
+7. **Handoff pack.** Put it in the scratch folder: `REPORT.md` (what/why/results/limitations), patch + diffstat, test log, and any sheets. Give the reviewer its path, the base SHA, and confirm the live checkouts are untouched.
+8. **Reviewer opens a PR.** The reviewer re-reads the report, applies the patch in its own clean clone on a new branch, commits only that change (hooks run normally, never `--no-verify`), pushes the branch and opens a PR. Never commit to main, never force-push.
+9. **After merge.** Whoever merged pulls every local copy (e.g. Windows and WSL) fast-forward only, and stops if a copy is dirty or diverged.
+10. **Cleanup.** Leave the scratch clone in place. It is removed only after the PR is merged and the user says yes, because deleting is destructive.
 
 ## Notes
-- Personal part models stay off the public repo.
-- If a pause or StopSubagent cuts a push mid-flight, re-check what was lost before retrying.
+- CAD models stay out of the toolkit repo, apart from small samples when needed.
+- Frozen dependencies are not part of this workflow: a project that pins its own environment or run outputs keeps them until the user says otherwise. Never change or repoint them from a toolkit patch.
+- Outside services (e.g. a CAD app's MCP server, a harness-design MCP) are outside dependencies; reference them, never vendor them into the repo.
+- If a pause or stop cuts a push mid-flight, re-check what was lost before retrying.

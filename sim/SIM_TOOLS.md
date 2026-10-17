@@ -1,6 +1,6 @@
 # Simulation tools
 
-> Location: this repo lives in WSL at `/home/daniel/projects/handbuilt-models` (Windows: `\\wsl.localhost\Ubuntu\home\daniel\projects\handbuilt-models`). FreeCAD stays on Windows at `C:\projects\_tools\FreeCAD`.
+> Location: run these from the repo root in WSL (or Linux); paths below are relative to this `sim/` folder unless they start with `/`. FreeCAD stays on Windows; its folder is `[paths] freecad_dir` in `local.toml` (written as `<freecad_dir>` below).
 
 Strength (FEA), heat and CFD tools. The solvers run in WSL (Ubuntu 26.04), and FreeCAD on Windows is the front end. Everything was installed on Oct 9 2026 and passed a smoke test (see `smoke/`).
 
@@ -13,15 +13,15 @@ Strength (FEA), heat and CFD tools. The solvers run in WSL (Ubuntu 26.04), and F
 | OpenFOAM | CFD | OpenFOAM 14 (openfoam.org apt repo, package `openfoam14` 20261008) | WSL `/opt/openfoam14` | Lid-driven cavity tutorial ran to the end; residuals Ux 1 -> 3e-5, p 1 -> 4e-6. `smoke/openfoam/` |
 | Gmsh | Meshing | 4.14.0 (apt) in WSL; 4.15.2 Python module in the venv | WSL `/usr/bin/gmsh` | Meshed `pcv_adapter.step`: 4114 nodes, 13295 tets. `smoke/gmsh/` |
 | ParaView | Post-processing, `pvpython` | 6.0.1 (apt) | WSL `/usr/bin/paraview`, `pvpython` | Rendered the beam result to `smoke/paraview/beam_displacement_x50.png` (headless with `xvfb-run`) |
-| Python venv | meshio 5.3.5, gmsh 4.15.2, pygmsh 7.1.17, numpy 2.5.3, matplotlib 3.11.2, vtk 9.7.1, ccx2paraview 3.2.0 | Python 3.14 | WSL `/home/daniel/simvenv` | Used by the smoke tests |
-| FreeCAD | CAD and FEM front end | 1.1.4 portable (official 7z, SHA256 checked) | Windows `C:\projects\_tools\FreeCAD` (kept on Windows), start with `C:\projects\_tools\FreeCAD\FreeCAD.bat` | FEM workbench imports OK (`smoke/freecad_check_result.txt`) |
+| Python venv | meshio 5.3.5, gmsh 4.15.2, pygmsh 7.1.17, numpy 2.5.3, matplotlib 3.11.2, vtk 9.7.1, ccx2paraview 3.2.0 | Python 3.14 | WSL `~/simvenv` | Used by the smoke tests |
+| FreeCAD | CAD and FEM front end | 1.1.4 portable (official 7z, SHA256 checked) | Windows `<freecad_dir>` (kept on Windows), start with `<freecad_dir>\FreeCAD.bat` | FEM workbench imports OK (`smoke/freecad_check_result.txt`) |
 
 ## How to run
 
 Inside WSL, load everything first:
 
 ```bash
-source /home/daniel/projects/handbuilt-models/sim-tools/wsl-env.sh   # OpenFOAM env + simvenv + $SIM
+source sim/wsl-env.sh   # from the repo root: OpenFOAM env + simvenv + $SIM
 ```
 
 - **CalculiX:** `ccx -i job` (reads `job.inp`, writes `job.frd` / `job.dat`). Convert for ParaView with `ccx2paraview job.frd vtu`.
@@ -33,11 +33,11 @@ source /home/daniel/projects/handbuilt-models/sim-tools/wsl-env.sh   # OpenFOAM 
 
 ## FreeCAD on Windows with the WSL solvers
 
-FreeCAD 1.1.4 comes with its own Windows `ccx.exe` and `gmsh.exe` in `C:\projects\_tools\FreeCAD\bin`, so FEM works out of the box. To use the WSL CalculiX instead:
+FreeCAD 1.1.4 comes with its own Windows `ccx.exe` and `gmsh.exe` in `<freecad_dir>\bin`, so FEM works out of the box. To use the WSL CalculiX instead:
 
-1. Open FreeCAD (`C:\projects\_tools\FreeCAD\FreeCAD.bat`).
-2. Go to Edit > Preferences > FEM > CalculiX, untick "Use built-in path", and set the binary to `C:\projects\_tools\FreeCAD\ccx_wsl.bat`.
-3. The wrapper runs `wsl ccx` in FreeCAD's working folder and uses all CPU threads. `C:\projects\_tools\FreeCAD\gmsh_wsl.bat` does the same for Gmsh and converts Windows file paths. The copies in `sim-tools/` are the reference versions; FreeCAD should use the ones in `C:\projects\_tools\FreeCAD`, because Windows programs shouldn't run `.bat` files from a WSL path.
+1. Open FreeCAD (`<freecad_dir>\FreeCAD.bat`).
+2. Go to Edit > Preferences > FEM > CalculiX, untick "Use built-in path", and set the binary to `<freecad_dir>\ccx_wsl.bat`.
+3. The wrapper runs `wsl ccx` in FreeCAD's working folder and uses all CPU threads. `<freecad_dir>\gmsh_wsl.bat` does the same for Gmsh and converts Windows file paths. The copies in `sim/freecad/` are the reference versions; FreeCAD should use the ones in `<freecad_dir>`, because Windows programs shouldn't run `.bat` files from a WSL path.
 
 FreeCAD's Elmer and OpenFOAM (CfdOF add-on) links expect Windows builds. For those, set up the case in FreeCAD, export it, and run it in WSL.
 
@@ -48,11 +48,11 @@ FreeCAD's Elmer and OpenFOAM (CfdOF add-on) links expect Windows builds. For tho
 ## Disk used
 
 - WSL root went from 5.4 GB to about 9.1 GB used. That's 385 apt packages (about 2.6 GB including OpenFOAM), Elmer at 37 MB plus a 64 MB source tarball, and the venv at about 0.9 GB.
-- Windows: FreeCAD 2.2 GB unpacked in `C:\projects\_tools\FreeCAD`, plus the 0.4 GB download in `C:\projects\_tools\FreeCAD\_download\` (safe to delete).
+- Windows: FreeCAD 2.2 GB unpacked in `<freecad_dir>`, plus the 0.4 GB download in `<freecad_dir>\_download\` (safe to delete).
 
 ## Uninstall / rollback
 
-- WSL: `wsl -d Ubuntu -u root -- bash /home/daniel/projects/handbuilt-models/sim-tools/rollback/uninstall_wsl_sim_tools.sh` (add `--dry-run` to preview). It purges only the packages this install added, removes the OpenFOAM apt source, `/opt/elmer`, `/opt/src`, `~/simvenv` and `~/sim-runs` (it does not touch `~/projects/handbuilt-models`), and then compares against `rollback/wsl-packages-before.txt`.
-- Windows: run `rollback/uninstall_windows_sim_tools.ps1` (copy it to Windows first, or run `powershell -File \\wsl.localhost\Ubuntu\home\daniel\projects\handbuilt-models\sim-tools\rollback\uninstall_windows_sim_tools.ps1`). It deletes `C:\projects\_tools\FreeCAD` (the app, the download and the wrappers). Nothing was installed system-wide, and no registry or PATH changes were made.
+- WSL: `wsl -d <distro> -u root -- bash <repo>/sim/rollback/uninstall_wsl_sim_tools.sh` (add `--dry-run` to preview). It purges only the packages this install added, removes the OpenFOAM apt source, `/opt/elmer`, `/opt/src`, `~/simvenv` and `~/sim-runs` (it does not touch this repo), and then compares against `rollback/wsl-packages-before.txt`.
+- Windows: run `rollback/uninstall_windows_sim_tools.ps1` (copy it to Windows first, or run `powershell -File \\wsl.localhost\<distro>\<repo path>\sim\rollback\uninstall_windows_sim_tools.ps1`). It deletes `<freecad_dir>` (the app, the download and the wrappers). Nothing was installed system-wide, and no registry or PATH changes were made.
 - Package lists: `rollback/wsl-packages-before.txt` (rebuilt from `/var/log/dpkg.log`, 544 packages), `wsl-packages-added.txt` (385), `wsl-manual-added.txt`, and `etc-apt-before/` (copy of `/etc/apt` before the change).
 - Three packages that were already installed got minor security updates from Ubuntu (curl, libcurl4t64, libevent-core). The uninstall leaves those alone.
