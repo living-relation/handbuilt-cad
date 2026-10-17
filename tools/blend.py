@@ -21,11 +21,19 @@ How it works ("section loft", what blend() does):
  3. Each section: the r arc between the tangent points, trimmed 4 deg short of each, a steep line to 0.3 mm under the
     tangent point, closed through the crease point pushed 0.6 mm into both solids. The blend surface therefore crosses
     each face at ~35 deg (robust boolean) instead of touching it (the step left is r (1 - cos 4 deg) = 0.015 mm at r6).
- 4. Ruled loft through the sections (closed loop -> closed loft), fuse, check.
+ 4. Section spacing (adaptive, default): start at 2 x step, then halve every interval whose ruled strip is more than
+    chord_tol (0.005 mm) off the true blend surface, measured against a section built half-way (strip_deviation()).
+    Curved / twisting roots get dense sections, straight ones stay coarse, so no flat "teeth" between sections.
+ 5. Failed sections (crease over a small round or edge): retried nudged along the crease, then with a locally shrunk
+    radius; sections that cross a neighbour's plane (concave round smaller than r: the loft would fold) are removed.
+    Whatever is left out is listed in res.skipped (loop, u, xyz, reason) and logged as a WARNING; gaps up to 3 x step
+    are bridged, wider ones split the loft into separate runs. Nothing is dropped silently.
+ 6. Ruled loft through the sections (closed loop -> closed loft; loft='auto' / 'smooth' tries a B-spline loft with the
+    ruled one as fallback), fuse, check.
 No offsets of the input bodies and no pipe sweeps, so it works on lofted / multi-face bodies where BRepOffsetAPI and
 MakePipeShell fail.
 
-Checks: fuse_blend() returns valid, solid count, STEP re-import, and the volume check: the fused part must gain the
+Checks: fuse_blend() returns valid, solid count (single_valid_solid), STEP re-import, skipped_sections, and the volume check: the fused part must gain the
 expected volume within 10 %. Expected = sum over sections of the true 2-D region (section profile minus A and B, cut
 in each section plane, so it follows a dihedral angle that changes along the crease) times the slab between
 neighbouring sections. The gain is measured locally as vol(pieces - base) with a mesh cross-check (added_volume),
@@ -121,7 +129,8 @@ def kinks(loop, ds=0.2, max_deg=25.0):
     return merged
 
 def segments(loop, step, phase=0.5, min_len=2.0):
-    """Sample parameters per smooth stretch of the crease: [(us, closed)]. One closed list if there is no kink."""
+    """Sample parameters per smooth stretch of the crease: [(us, closed)]. One closed list if there is no kink.
+    Parameters of a stretch that runs over the loop's start are UNWRAPPED (> 1, increasing): evaluate with _uw()."""
     L = loop.length; ks = kinks(loop); closed = is_closed(loop)
     if not ks:
         n = max(16, int(math.ceil(L / step)))
@@ -134,8 +143,12 @@ def segments(loop, step, phase=0.5, min_len=2.0):
         ln = (b - a) * L
         if ln < min_len: continue
         n = max(3, int(math.ceil(ln / step)))
-        out.append(([(a + (b - a) * (i + phase) / n) % 1.0 for i in range(n)], False))
+        out.append(([a + (b - a) * (i + phase) / n for i in range(n)], False))
     return out, ks
+
+def _uw(u):
+    """Wire parameter in [0, 1] for an unwrapped parameter (1.0 itself stays 1.0: the end of an open wire)."""
+    return u - math.floor(u) if u > 1.0 else u
 
 def ball_at(c, dA, dB, r, it=30, tol=1e-4):
     """Newton: move c until dist(c, A) = dist(c, B) = r. Returns dict or None."""
@@ -154,29 +167,66 @@ def ball_at(c, dA, dB, r, it=30, tol=1e-4):
         c = c + step
     return None
 
+def ball_sample(loop, u, A, B, r, dA=None, dB=None, prev=None):
+    """One rolling-ball section at wire parameter u: (sample, None) or (None, reason)."""
+    dA, dB = dA or Dist(A), dB or Dist(B)
+    q = loop.position_at(_uw(u))
+    try:
+        nA, nB = outward_normal(A, q), outward_normal(B, q)
+    except Exception:
+        return None, "no face normal at the crease point"
+    k = max(-0.999, min(0.999, nA.dot(nB))); t = math.pi - math.acos(k)
+    w = (nA + nB); w = w / w.length if w.length > 1e-9 else nA
+    c0 = q + w * (r / math.sin(t / 2))
+    s = ball_at(c0, dA, dB, r) or (ball_at(prev["c"], dA, dB, r) if prev else None)
+    if s is None: return None, "no ball position (faces tangent here, or the ball does not fit)"
+    s["q"], s["wq"], s["u"], s["r"] = q, -w, u, r                       # crease point + direction into both solids
+    return s, None
+
+def normal_sample(loop, u, A, B, r, dA=None, dB=None, prev=None):
+    """One crease-normal section at wire parameter u (circle tangent to the two 2-D section curves): (sample, None)
+    or (None, reason)."""
+    uu = _uw(u); q = loop.position_at(uu); e_ = 1e-4
+    T = loop.position_at(min(1.0, uu + e_)) - loop.position_at(max(0.0, uu - e_))   # chord tangent: right at seams too
+    if T.length < 1e-9: return None, "no crease tangent"
+    T = T.normalized()
+    try:
+        nA, nB = outward_normal(A, q), outward_normal(B, q)
+    except Exception:
+        return None, "no face normal at the crease point"
+    nA, nB = nA - T * nA.dot(T), nB - T * nB.dot(T)
+    if nA.length < 1e-6 or nB.length < 1e-6: return None, "face normal along the crease"
+    nA, nB = nA.normalized(), nB.normalized()
+    k = max(-0.999, min(0.999, nA.dot(nB))); t = math.pi - math.acos(k)
+    w = (nA + nB); w = w / w.length if w.length > 1e-9 else nA
+    reach = r / math.sin(t / 2) + 3 * r
+    pl = Plane(origin=q, z_dir=T)
+    eA, eB = _section_edges(A, pl, reach), _section_edges(B, pl, reach)
+    if eA is None or eB is None: return None, "empty 2-D section"
+    s = ball_at(q + w * (r / math.sin(t / 2)), Dist(eA), Dist(eB), r)
+    if s is None: return None, "no section circle (the circle does not fit)"
+    s["q"], s["wq"], s["u"], s["r"] = q, -w, u, r
+    return s, None
+
+def _default_us(loop, r, step, phase):
+    L = loop.length; step = step or min(1.0, r / 4); n = max(16, int(math.ceil(L / step)))
+    closed = is_closed(loop)
+    return ([(i + phase) / n for i in range(n)] if closed else [0.0] + [(i + phase) / n for i in range(n)] + [1.0]), closed
+
 def trace(loop, A, B, r, step=None, phase=0.5, log=print, us=None, closed=None):
-    """Ball positions along one crease loop. Each sample: c, tangent points pA/pB, normals nA/nB, dihedral t, crease point q.
-    phase: offset of the samples in steps. The crease wire starts on a vertex (often a face seam) and a section plane
-    through a seam makes the later boolean misclassify, so samples sit between the wire's vertices by default."""
+    """Ball positions along one crease loop. Each sample: c, tangent points pA/pB, normals nA/nB, dihedral t, crease
+    point q, wire parameter u, radius r. phase: offset of the samples in steps. The crease wire starts on a vertex (often
+    a face seam) and a section plane through a seam makes the later boolean misclassify, so samples sit between the
+    wire's vertices by default. Misses are logged as a WARNING with their positions."""
     dA, dB = Dist(A), Dist(B)
-    if us is None:
-        L = loop.length; step = step or min(1.0, r / 4); n = max(16, int(math.ceil(L / step)))
-        closed = is_closed(loop)
-        us = [(i + phase) / n for i in range(n)] if closed else [0.0] + [(i + phase) / n for i in range(n)] + [1.0]
-    out, miss, prev = [], 0, None
+    if us is None: us, closed = _default_us(loop, r, step, phase)
+    out, miss, prev = [], [], None
     for u in us:
-        q = loop.position_at(u)
-        try:
-            nA, nB = outward_normal(A, q), outward_normal(B, q)
-        except Exception:
-            miss += 1; continue
-        k = max(-0.999, min(0.999, nA.dot(nB))); t = math.pi - math.acos(k)
-        w = (nA + nB); w = w / w.length if w.length > 1e-9 else nA
-        c0 = q + w * (r / math.sin(t / 2))
-        s = ball_at(c0, dA, dB, r) or (ball_at(prev["c"], dA, dB, r) if prev else None)
-        if s is None: miss += 1; continue
-        s["q"], s["wq"] = q, -w; out.append(s); prev = s                # crease point + direction into both solids
-    if miss: log("  trace: %d of %d crease points had no ball position (skipped)" % (miss, len(us)))
+        s, why = ball_sample(loop, u, A, B, r, dA, dB, prev)
+        if s is None: miss.append(u); continue
+        out.append(s); prev = s
+    if miss: log("  WARNING trace: %d of %d crease points had no ball position (skipped) at u = %s"
+                 % (len(miss), len(us), ", ".join("%.4f" % m for m in miss[:12])))
     return out, closed
 
 def _section_edges(S, plane, radius):
@@ -190,33 +240,14 @@ def trace_normal(loop, A, B, r, step=None, phase=0.5, log=print, us=None, closed
     """Like trace(), but every section lies in the plane NORMAL TO THE CREASE and the circle of radius r is tangent to
     the two 2-D section curves (a constant-radius cross-section blend). Sections then fan out from the crease and never
     overlap, also where the rolling-ball centre curve turns tighter than r / sin(t/2) (acute wedges on curved bodies)."""
-    if us is None:
-        L = loop.length; step = step or min(1.0, r / 4); n = max(16, int(math.ceil(L / step)))
-        closed = is_closed(loop)
-        us = [(i + phase) / n for i in range(n)] if closed else [0.0] + [(i + phase) / n for i in range(n)] + [1.0]
-    out, miss = [], 0
+    if us is None: us, closed = _default_us(loop, r, step, phase)
+    out, miss = [], []
     for u in us:
-        q = loop.position_at(u); e_ = 1e-4
-        T = loop.position_at(min(1.0, u + e_)) - loop.position_at(max(0.0, u - e_))   # chord tangent: right at seams too
-        if T.length < 1e-9: miss += 1; continue
-        T = T.normalized()
-        try:
-            nA, nB = outward_normal(A, q), outward_normal(B, q)
-        except Exception:
-            miss += 1; continue
-        nA, nB = nA - T * nA.dot(T), nB - T * nB.dot(T)
-        if nA.length < 1e-6 or nB.length < 1e-6: miss += 1; continue
-        nA, nB = nA.normalized(), nB.normalized()
-        k = max(-0.999, min(0.999, nA.dot(nB))); t = math.pi - math.acos(k)
-        w = (nA + nB); w = w / w.length if w.length > 1e-9 else nA
-        reach = r / math.sin(t / 2) + 3 * r
-        pl = Plane(origin=q, z_dir=T)
-        eA, eB = _section_edges(A, pl, reach), _section_edges(B, pl, reach)
-        if eA is None or eB is None: miss += 1; continue
-        s = ball_at(q + w * (r / math.sin(t / 2)), Dist(eA), Dist(eB), r)
-        if s is None: miss += 1; continue
-        s["q"], s["wq"] = q, -w; out.append(s)
-    if miss: log("  trace: %d of %d crease points had no section circle (skipped)" % (miss, len(us)))
+        s, why = normal_sample(loop, u, A, B, r)
+        if s is None: miss.append(u); continue
+        out.append(s)
+    if miss: log("  WARNING trace: %d of %d crease points had no section circle (skipped) at u = %s"
+                 % (len(miss), len(us), ", ".join("%.4f" % m for m in miss[:12])))
     return out, closed
 
 def centre_min_radius(samples, closed):
@@ -367,16 +398,15 @@ def expected_from_sections(samples, wires, body, closed, every=1):
 
 def expected_volume(samples, r, closed):
     """Pappus sum of the exact section areas along the section centroids."""
-    ac = [section_centroid(s, r) for s in samples]; n = len(ac); V = 0.0
+    ac = [section_centroid(s, s.get("r", r)) for s in samples]; n = len(ac); V = 0.0
     for i in range(n if closed else n - 1):
         (a0, c0), (a1, c1) = ac[i], ac[(i + 1) % n]; V += 0.5 * (a0 + a1) * (c1 - c0).length
     return V
 
 def loft_sections(wires, closed, chunk=40, ruled=True):
     """Closed (or open) loft through the sections; if one loft fails, abutting chunks that share their end sections.
-    ruled=True (default): one ruled strip per section pair. The smooth (approximated) loft looks nicer but on tilted /
-    curved junctions it intermittently breaks the following boolean (same piece fused in different orders gave
-    different volumes); the ruled one fused identically in every order in the tests."""
+    ruled=True: one ruled strip per section pair (flat facets between sections: 'teeth' on curved roots unless the
+    sections are close, see blend(adaptive=True)). ruled=False: B-spline (approximated) loft through the sections."""
     try:
         s = pos(Solid.make_loft(wires + [wires[0]] if closed else wires, ruled=ruled))
         if s.is_valid and s.volume > 0: return [s], "one %s loft" % ("ruled" if ruled else "smooth")
@@ -388,63 +418,243 @@ def loft_sections(wires, closed, chunk=40, ruled=True):
         s = pos(Solid.make_loft(part, ruled=ruled))
         if not s.is_valid: raise RuntimeError("loft chunk %d invalid" % (i // chunk))
         out.append(s)
-    return out, "%d chunks" % len(out)
+    return out, "%d %s chunks" % (len(out), "ruled" if ruled else "smooth")
+
+def loft_auto(wires, closed, mode="auto", vol_tol=0.02):
+    """Pieces for one run of sections. mode 'ruled' | 'smooth' | 'auto'. auto: the smooth B-spline loft if it is one
+    valid solid whose volume is within vol_tol of the ruled loft (no wiggle / overshoot), else the ruled one.
+    Returns (pieces, fallback pieces or None, description). fuse_blend() falls back to the ruled pieces when a smooth
+    piece will not fuse into one valid solid or fails the volume check."""
+    if mode == "ruled": p, how = loft_sections(wires, closed, ruled=True); return p, None, how
+    try: sp, shw = loft_sections(wires, closed, ruled=False)
+    except Exception as ex: sp, shw = None, "smooth loft failed (%s)" % str(ex)[:40]
+    if mode == "smooth":
+        if sp is None: raise RuntimeError(shw)
+        return sp, None, shw
+    rp, rhw = loft_sections(wires, closed, ruled=True)
+    if sp is not None and len(sp) == 1 and len(rp) == 1 and sp[0].is_valid:
+        vs, vr = sp[0].volume, rp[0].volume
+        if vr > 0 and abs(vs / vr - 1) <= vol_tol: return sp, rp, shw + " (ruled kept as fallback)"
+        shw = "smooth loft volume x%.3f of ruled" % (vs / vr if vr else 0)
+    return rp, None, rhw + " (smooth rejected: %s)" % (shw if sp is None or len(sp) != 1 else (shw if "x" in shw else "not one valid solid"))
+
+def arc_point(s, f):
+    """Point at fraction f (0 = tangent point on A, 1 = on B) of the TRUE blend arc of section s."""
+    dA, dB = -s["nA"], -s["nB"]
+    return s["c"] + _slerp(dA, dB, f) * s.get("r", 1.0)
+
+def strip_deviation(s0, s1, sm, fs=(0.25, 0.5, 0.75)):
+    """How far the ruled strip between sections s0 and s1 is from the true blend surface at the section sm half-way
+    between them: the strip point (average of the two arc points) vs the ball of sm. This is the tooth height."""
+    return max(abs(((arc_point(s0, f) + arc_point(s1, f)) * 0.5 - sm["c"]).length - sm.get("r", 1.0)) for f in fs)
 
 @dataclass
 class BlendResult:
     pieces: list = field(default_factory=list)
+    fallback: list = field(default_factory=list)    # per piece: ruled replacement (smooth piece) or None
     expected_mm3: float = 0.0
-    loops: list = field(default_factory=list)       # per loop: dict(n, length, closed, t range, min centre radius, loft)
+    loops: list = field(default_factory=list)       # per run: dict(n, length, closed, t range, min centre radius, loft)
     samples: list = field(default_factory=list)
     notes: list = field(default_factory=list)
+    skipped: list = field(default_factory=list)     # sections that could not be built: dict(loop, u, xyz, reason, bridged)
+    adjusted: list = field(default_factory=list)    # sections built only after a fix: dict(loop, u, xyz, fix)
     seconds: float = 0.0
 
+class _Sections:
+    """Builds sections for one stretch of one crease loop, with recovery: if a section fails at u (the crease crosses
+    a small round or edge), try u nudged by +-15 / 30 % of the local spacing, then a locally shrunk radius
+    (0.8, 0.6, 0.4 r). What still fails is reported (never dropped silently)."""
+    def __init__(self, lp, A, B, r, how, follow, trim_deg, depth):
+        self.lp, self.A, self.B, self.r, self.how, self.follow = lp, A, B, r, how, follow
+        self.trim, self.depth = trim_deg, depth; self.dA, self.dB = Dist(A), Dist(B); self.prev = None
+    def one(self, u, r):
+        f = ball_sample if self.how == "ball" else normal_sample
+        s, why = f(self.lp, u, self.A, self.B, r, self.dA, self.dB, self.prev)
+        if s is None: return None, None, why
+        w = section_wire_follow(s, r, self.A, self.B, self.trim, self.depth) if self.follow else section_wire(s, r, self.trim, self.depth)
+        if w is None: return None, None, "section profile could not be built (the crease crosses a small round / edge?)"
+        return s, w, None
+    def robust(self, u, du, lo=None, hi=None):
+        s, w, why = self.one(u, self.r)
+        if s is not None: self.prev = s; return s, w, None, None
+        for k in (0.15, -0.15, 0.3, -0.3):
+            uu = u + k * du
+            if (lo is not None and uu <= lo) or (hi is not None and uu >= hi) or uu < 0: continue
+            s, w, _ = self.one(uu, self.r)
+            if s is not None: self.prev = s; return s, w, None, "moved %+.0f %% of the spacing" % (100 * k)
+        for k in (0.8, 0.6, 0.4):
+            s, w, _ = self.one(u, self.r * k)
+            if s is not None: self.prev = s; return s, w, None, "radius shrunk to %.2f" % (self.r * k)
+        return None, None, why, None
+
+def _build_stretch(S, us, closed, L, tag, res, log):
+    """Sections at us (sorted, unwrapped). Returns entries [(u, s, w)] and failures [(u, reason)]."""
+    ok, bad = [], []
+    for i, u in enumerate(us):
+        du = (us[i + 1] - u) if i + 1 < len(us) else (u - us[i - 1] if i else 0.01)
+        s, w, why, fix = S.robust(u, du, us[i - 1] if i else None, us[i + 1] if i + 1 < len(us) else None)
+        if s is None: bad.append((u, why)); continue
+        if fix: res.adjusted.append(dict(loop=tag, u=round(s["u"], 5), xyz=[round(x, 2) for x in s["q"]], fix=fix))
+        ok.append((s["u"], s, w))
+    return ok, bad
+
+def _refine(S, ok, bad, closed, L, tol, step_min, max_sections, tag, res):
+    """Adaptive spacing: halve every interval whose ruled strip deviates from the true blend by more than tol (checked
+    against a section built half-way) until it fits or the spacing reaches step_min (crease mm)."""
+    ok = sorted(ok, key=lambda e: e[0]); n_probe = 0
+    i = 0
+    while len(ok) < max_sections:
+        n = len(ok); last = n if closed else n - 1
+        if i >= last: break
+        (u0, s0, w0), (u1, s1, w1) = ok[i], ok[(i + 1) % n]
+        if i + 1 >= n: u1 = u1 + 1.0
+        span = (u1 - u0) * L
+        if span <= 2 * step_min or any(u0 < b[0] < u1 or u0 < b[0] + 1 < u1 for b in bad): i += 1; continue
+        um = 0.5 * (u0 + u1); n_probe += 1
+        s, w, why = S.one(um, S.r if abs(s0.get("r", S.r) - S.r) < 1e-9 else s0["r"])
+        if s is None: i += 1; continue  # failed probe: leave interval coarse; do not count as a skipped section
+        if strip_deviation(s0, s1, s) > tol:
+            ok.insert(i + 1, (um, s, w))                                 # re-check the left half next
+        else: i += 1
+    if closed: ok = sorted(((u - math.floor(u), s, w) for u, s, w in ok), key=lambda e: e[0])
+    return ok, n_probe
+
+def _profile_points(s, depth, dip=0.3):
+    r = s.get("r", 1.0); nrm = s["nA"].cross(s["nB"]).normalized()
+    q = s["q"] - nrm * (s["q"] - s["c"]).dot(nrm); wq = s["wq"] - nrm * s["wq"].dot(nrm)
+    wq = wq.normalized() if wq.length > 1e-9 else wq
+    return [arc_point(s, f) for f in (0.0, 0.5, 1.0)] + [s["c"] - s["nA"] * (r + dip), s["c"] - s["nB"] * (r + dip), q + wq * depth]
+
+def _crossing(ok, closed, depth, eps=1e-3):
+    """Indices of sections whose profile crosses a neighbour's section plane (the crease turns tighter than the blend
+    reaches, e.g. over a concave round smaller than r: the loft would fold over itself and the fuse fails)."""
+    n = len(ok); P = [_profile_points(e[1], depth) for e in ok]; Q = [e[1]["c"] for e in ok]   # ball centre: in the plane
+    N = []
+    for i in range(n):
+        a, b = Q[(i - 1) % n if closed or i else i], Q[(i + 1) % n if closed or i + 1 < n else i]
+        d = b - a; nrm = ok[i][1]["nA"].cross(ok[i][1]["nB"]).normalized()
+        N.append(nrm if d.length < 1e-12 or nrm.dot(d) >= 0 else nrm * -1)
+    bad = set()
+    for i in range(n if closed else n - 1):
+        j = (i + 1) % n
+        if any((p - Q[i]).dot(N[i]) < -eps for p in P[j]) or any((p - Q[j]).dot(N[j]) > eps for p in P[i]): bad.update((i, j))
+    return sorted(bad)
+
+def _drop_crossing(ok, bad, closed, depth, rounds=50):
+    """Remove crossing sections (repeat until none cross) and record them as failures."""
+    for _ in range(rounds):
+        if len(ok) < 3: break
+        ix = _crossing(ok, closed, depth)
+        if not ix: break
+        for i in ix: bad.append((ok[i][0], "sections cross: the crease turns tighter than the blend reaches (concave round / corner smaller than r)"))
+        ok = [e for k, e in enumerate(ok) if k not in set(ix)]
+    return ok
+
+def _runs(ok, bad, closed, L, max_bridge):
+    """Split the sections into runs at failed spots wider than max_bridge (crease mm); narrower gaps are bridged."""
+    us = [e[0] for e in ok]; cut = []
+    n = len(ok)
+    for i in range(n if closed else n - 1):
+        u0, u1 = us[i], us[(i + 1) % n] + (1.0 if i + 1 >= n else 0.0)
+        hit = [b for b in bad if u0 < b[0] < u1 or (closed and u0 < b[0] + 1.0 < u1)]
+        if hit: cut.append((i, (u1 - u0) * L > max_bridge, hit))
+    splits = [i for i, wide, _ in cut if wide]
+    if not splits: return [(ok, closed)], cut
+    if closed:
+        k = splits[0] + 1; ok = ok[k:] + ok[:k]; splits = sorted(((i - k) % n) for i in splits)
+    runs, start = [], 0
+    for i in splits:
+        runs.append(ok[start:i + 1]); start = i + 1
+    runs.append(ok[start:])
+    return [(r_, False) for r_ in runs if len(r_) >= 2], cut
+
 def blend(A, B, r, paths=None, step=None, trim_deg=4.0, depth=0.6, min_loop=2.0, loops=None, phase=0.5, section_every=1,
-          method="auto", ruled=True, follow=True, log=print):
+          method="auto", ruled=None, follow=True, adaptive=True, chord_tol=0.005, step_min=None, max_bridge=None,
+          loft="ruled", max_sections=3000, log=print):
     """Rolling-ball blend solids between solids A and B along all crease loops (or the given loop indices, or your own
     crease wires via paths=). method: 'auto' (ball sections, crease-normal where they would cross), 'ball', 'normal'.
-    Expected volume per loop = Pappus sum of the true section regions (profile minus A and B, cut in each section plane);
+    adaptive (default): start at 2 x step and halve every interval whose ruled strip is more than chord_tol (mm) off the
+    true blend surface (measured against a section half-way), down to step_min (default step / 8): fine where the root
+    curves or twists, coarse where it is straight. adaptive=False: uniform step (the old behaviour).
+    loft: 'ruled' (default), 'auto' (B-spline loft through the sections when it is one valid solid within 2 % of the
+    ruled volume; the ruled loft is kept and used whenever the smooth piece does not fuse or fails the volume check),
+    'smooth'. The B-spline loft is closer to the true surface between sections (p99 0.0007 vs 0.005 mm on the boss
+    test) but overshoots at the closing seam of closed loops and where the spacing changes fast (up to 0.2 mm), so
+    adaptive ruled is the default. ruled=True/False is the old switch and overrides loft.
+    Sections whose profile crosses a neighbour's plane (the crease turns tighter than the blend reaches: a concave round
+    smaller than r) are removed and reported like failed ones; the loft is split there, never folded over itself.
+    Sections that fail (crease crossing a small round / edge) are retried nudged along the crease, then with a locally
+    shrunk radius; what still fails is skipped with a WARNING and listed in res.skipped (loop, u, xyz, reason). Gaps
+    wider than max_bridge (default 3 x step) split the loft into separate runs instead of bridging across.
+    Expected volume per run = Pappus sum of the true section regions (profile minus A and B, cut in each section plane);
     planar_formula_mm3 = the same with r^2 (cot(t/2) - (pi - t)/2), exact for flat faces only."""
     t0 = time.time(); res = BlendResult(); body = A + B
+    if ruled is not None: loft = "ruled" if ruled else "smooth"
     ls = list(paths) if paths is not None else crease_loops(A, B)
     log("  crease: %d loop(s), lengths %s" % (len(ls), [round(w.length, 1) for w in ls]))
-    step = step or min(1.0, r / 4)
+    step = step or min(1.0, r / 4); step_min = step_min or step / 8; max_bridge = max_bridge or 3 * step
     for i, lp in enumerate(ls):
         if (loops is not None and i not in loops) or lp.length < min_loop: continue
-        segs, ks = segments(lp, step, phase)
+        L = lp.length
+        segs, ks = segments(lp, 2 * step if adaptive else step, phase)
         if ks: res.notes.append("loop %d: crease has %d sharp corner(s) (it runs over a sharp edge, e.g. a flat end cap); "
                                 "blended as %d open stretch(es), corners left without a vertex blend" % (i, len(ks), len(segs)))
         for j_, (us, closed) in enumerate(segs):
             tag = "%d" % i if len(segs) == 1 else "%d.%d" % (i, j_)
-            smp, _ = trace(lp, A, B, r, us=us, closed=closed, log=log)
-            if len(smp) < 3: res.notes.append("loop %s: no ball positions" % tag); continue
-            mr = centre_min_radius(smp, closed) if len(smp) > 5 else 1e9
-            reach = max(r / math.sin(s_["t"] / 2) for s_ in smp) + depth   # how far a section reaches from its ball centre
             how_sec = "ball"
-            if method == "normal" or (method == "auto" and reach > 0.9 * mr):
-                smp, _ = trace_normal(lp, A, B, r, us=us, closed=closed, log=log); how_sec = "crease-normal"
-                if len(smp) < 3: res.notes.append("loop %s: no section circles" % tag); continue
-            info = dict(loop=tag, length=round(lp.length * (1 if closed else (us[-1] - us[0]) % 1.0 or 1), 1), closed=closed, samples=len(smp), sections=how_sec,
-                        t_min_deg=round(math.degrees(min(s_["t"] for s_ in smp)), 1), t_max_deg=round(math.degrees(max(s_["t"] for s_ in smp)), 1),
-                        centre_min_radius=round(mr, 2))
-            if mr < r: res.notes.append("loop %s: ball-centre curve turns tighter (%.2f) than r (%.2f): the true rolling ball would self-intersect" % (tag, mr, r))
-            if follow:
-                ws, keep = [], []
-                for s_ in smp:
-                    w_ = section_wire_follow(s_, r, A, B, trim_deg, depth)
-                    if w_ is not None: ws.append(w_); keep.append(s_)
-                if len(keep) < len(smp): res.notes.append("loop %s: %d of %d sections could not be built (dropped)" % (tag, len(smp) - len(keep), len(smp)))
-                smp, wires = keep, ws
-            else:
-                wires = [section_wire(s_, r, trim_deg, depth) for s_ in smp]
-            if len(wires) < 2: res.notes.append("loop %s: too few sections" % tag); continue
-            pcs, how = loft_sections(wires, closed, ruled=ruled)
-            info["loft"] = how; info["planar_formula_mm3"] = round(expected_volume(smp, r, closed), 1)
-            ve, ns = expected_from_sections(smp, wires, body, closed, every=section_every)
-            info["expected_mm3"] = round(ve, 1); info["expected_sections"] = ns
-            res.pieces += pcs; res.expected_mm3 += info["expected_mm3"]; res.loops.append(info); res.samples += smp
-            log("  loop %s: %d %s sections, dihedral %.0f..%.0f deg, centre radius >= %.1f, %s, expected %.0f mm3 (flat-face formula %.0f)"
-                % (tag, len(smp), how_sec, info["t_min_deg"], info["t_max_deg"], mr, how, info["expected_mm3"], info["planar_formula_mm3"]))
+            S = _Sections(lp, A, B, r, "ball", follow, trim_deg, depth)
+            ok, bad = _build_stretch(S, us, closed, L, tag, res, log)
+            smp = [e[1] for e in ok]
+            mr = centre_min_radius(smp, closed) if len(smp) > 5 else 1e9
+            reach = max((r / math.sin(s_["t"] / 2) for s_ in smp), default=0) + depth
+            if len(smp) >= 3 and (method == "normal" or (method == "auto" and reach > 0.9 * mr)):
+                res.adjusted = [a_ for a_ in res.adjusted if a_["loop"] != tag]
+                S = _Sections(lp, A, B, r, "normal", follow, trim_deg, depth); how_sec = "crease-normal"
+                ok, bad = _build_stretch(S, us, closed, L, tag, res, log)
+            n_probe = 0
+            if adaptive and len(ok) >= 2:
+                ok, n_probe = _refine(S, ok, bad, closed, L, chord_tol, step_min, max_sections, tag, res)
+            if len(ok) >= 3: ok = _drop_crossing(ok, bad, closed, depth)
+            bad.sort(key=lambda b: b[0])
+            for u, why in bad:
+                q = lp.position_at(_uw(u))
+                res.skipped.append(dict(loop=tag, u=round(_uw(u), 5), xyz=[round(x, 2) for x in q], reason=why))
+            runs, cuts = _runs(ok, bad, closed, L, max_bridge) if len(ok) >= 2 else ([], [])
+            if bad:
+                groups = []                                              # consecutive failures with the same reason
+                for u, why in bad:
+                    if groups and groups[-1][2] == why and u - groups[-1][1] <= 4 * step / L: groups[-1][1] = u; groups[-1][3] += 1
+                    else: groups.append([u, u, why, 1])
+                fmt = lambda u: "(%.1f, %.1f, %.1f)" % tuple(lp.position_at(_uw(u)))
+                where = "; ".join(("%d at u=%.4f %s" % (g[3], _uw(g[0]), fmt(g[0])) if g[3] == 1 else
+                                   "%d between u=%.4f %s and u=%.4f %s" % (g[3], _uw(g[0]), fmt(g[0]), _uw(g[1]), fmt(g[1]))) + ": " + g[2]
+                                  for g in groups[:10]) + (" ..." if len(groups) > 10 else "")
+                msg = ("WARNING loop %s: %d section(s) could not be built and were skipped: %s; %d gap(s) bridged, %d split into "
+                       "separate runs (no blend in the split gaps)" % (tag, len(bad), where, sum(1 for c in cuts if not c[1]), sum(1 for c in cuts if c[1])))
+                res.notes.append(msg); log("  " + msg)
+            if not runs: res.notes.append("WARNING loop %s: too few sections, no blend here" % tag); continue
+            for k_, (run, rclosed) in enumerate(runs):
+                rtag = tag if len(runs) == 1 else "%s/%d" % (tag, k_)
+                smp, wires = [e[1] for e in run], [e[2] for e in run]
+                if len(wires) < 2: continue
+                mr = centre_min_radius(smp, rclosed) if len(smp) > 5 else 1e9
+                span = L if rclosed else ((run[-1][0] - run[0][0]) % 1.0 or 1.0) * L
+                info = dict(loop=rtag, length=round(span, 1), closed=rclosed, samples=len(smp), sections=how_sec,
+                            adaptive=adaptive, probes=n_probe, skipped=len(bad),
+                            min_spacing=round(min(((b[0] - a[0]) % 1.0) * L for a, b in zip(run[:-1], run[1:])), 3),
+                            t_min_deg=round(math.degrees(min(s_["t"] for s_ in smp)), 1), t_max_deg=round(math.degrees(max(s_["t"] for s_ in smp)), 1),
+                            centre_min_radius=round(mr, 2))
+                if mr < r: res.notes.append("loop %s: ball-centre curve turns tighter (%.2f) than r (%.2f): the true rolling ball would self-intersect" % (rtag, mr, r))
+                pcs, fb, how = loft_auto(wires, rclosed, loft)
+                info["loft"] = how; info["planar_formula_mm3"] = round(expected_volume(smp, r, rclosed), 1)
+                ve, ns = expected_from_sections(smp, wires, body, rclosed, every=section_every)
+                info["expected_mm3"] = round(ve, 1); info["expected_sections"] = ns
+                res.pieces += pcs; res.fallback += (fb if fb and len(fb) == len(pcs) else [None] * len(pcs))
+                res.expected_mm3 += info["expected_mm3"]; res.loops.append(info); res.samples += smp
+                log("  loop %s: %d %s sections (min spacing %.3f mm, %d probes), dihedral %.0f..%.0f deg, centre radius >= %.1f, %s, expected %.0f mm3 (flat-face formula %.0f)"
+                    % (rtag, len(smp), how_sec, info["min_spacing"], n_probe, info["t_min_deg"], info["t_max_deg"], mr, how, info["expected_mm3"], info["planar_formula_mm3"]))
+    if res.adjusted: res.notes.append("%d section(s) built only after a local fix (moved along the crease / smaller radius): %s"
+                                      % (len(res.adjusted), "; ".join("%s u=%.4f %s" % (a_["loop"], a_["u"], a_["fix"]) for a_ in res.adjusted[:8])))
     res.seconds = time.time() - t0
     return res
 
@@ -499,22 +709,49 @@ def added_volume(base, pieces, part=None):
     return added, rep
 
 def fuse_blend(base, res, step_path=None, tol=0.1, log=print):
-    """Fuse the blend pieces into base; checks validity, single solid, STEP re-import and added volume vs expected."""
-    part = base
-    for i, p in enumerate(res.pieces):
-        for f in (lambda: part + p, lambda: part.fuse(p).clean()):
-            try: q = f()
-            except Exception: continue
-            if len(q.solids()) == 1 and q.is_valid: part = q; break
-        else: raise RuntimeError("fuse of blend piece %d failed" % i)
-    rep = check_solid(part, step_path)
-    added, vrep = added_volume(base, res.pieces, part); rep.update(vrep)
+    """Fuse the blend pieces into base; checks validity, single solid, STEP re-import and added volume vs expected.
+    A smooth (B-spline) piece that will not fuse into one valid solid is replaced by its ruled fallback; if the volume
+    check then fails with smooth pieces in, the whole fuse is redone with the ruled pieces."""
+    fb = list(res.fallback) + [None] * (len(res.pieces) - len(res.fallback))
+    def run(pieces):
+        part, used, swaps = base, [], 0
+        for i, p in enumerate(pieces):
+            cands = [p] + ([fb[i]] if fb[i] is not None and fb[i] is not p else [])
+            for j, cand in enumerate(cands):
+                done = False
+                for f in (lambda: part + cand, lambda: part.fuse(cand).clean()):
+                    try: q = f()
+                    except Exception: continue
+                    if len(q.solids()) == 1 and q.is_valid: part = q; used.append(cand); swaps += j; done = True; break
+                if done: break
+            else: raise RuntimeError("fuse of blend piece %d failed" % i)
+        return part, used, swaps
+    part, used, swaps = run(res.pieces)
+    added, vrep = added_volume(base, used, part); notes = []
+    if swaps: notes.append("%d smooth piece(s) would not fuse cleanly: ruled fallback used" % swaps)
+    if volume_verdict(added, res.expected_mm3, tol) != "PASS" and any(f is not None for f in fb):
+        rp = [f if f is not None else p for p, f in zip(res.pieces, fb)]
+        part2, used2, _ = run(rp); added2, vrep2 = added_volume(base, used2, part2)
+        # expected_mm3 can be 0 (no expected volume): never divide by it; prefer the closer absolute added volume.
+        closer = (abs(added2 / res.expected_mm3 - 1) < abs(added / res.expected_mm3 - 1)
+                  if res.expected_mm3 else abs(added2) < abs(added))
+        if volume_verdict(added2, res.expected_mm3, tol) == "PASS" or closer:
+            notes.append("volume check failed with the smooth lofts (added %.1f of %.1f mm3): redone with the ruled ones" % (added, res.expected_mm3))
+            part, used, added, vrep = part2, used2, added2, vrep2
+    res.used = used                                                     # the pieces actually fused (smooth or ruled)
+    rep = check_solid(part, step_path); rep.update(vrep)
+    rep["loft_used"] = "smooth" if any(u is p for u, p, f in zip(used, res.pieces, fb) if f is not None) else "ruled"
+    rep["single_valid_solid"] = bool(rep["valid"] and rep["solids"] == 1)
     rep.update(added_mm3=round(added, 1), expected_mm3=round(res.expected_mm3, 1),
                ratio=round(added / res.expected_mm3, 4) if res.expected_mm3 else None,
-               volume_check=volume_verdict(added, res.expected_mm3, tol))
-    rep["ok"] = rep["ok"] and rep["volume_check"] == "PASS"
-    log("  fused: valid %s, solids %d, added %.1f vs expected %.1f mm3 (x%.3f) -> %s"
-        % (rep["valid"], rep["solids"], added, res.expected_mm3, rep["ratio"] or 0, rep["volume_check"]))
+               volume_check=volume_verdict(added, res.expected_mm3, tol),
+               sections=sum(l.get("samples", 0) for l in res.loops), skipped_sections=len(res.skipped),
+               skipped=res.skipped, adjusted_sections=len(res.adjusted), fuse_notes=notes)
+    rep["ok"] = rep["ok"] and rep["single_valid_solid"] and rep["volume_check"] == "PASS"
+    log("  fused: valid %s, solids %d, added %.1f vs expected %.1f mm3 (x%.3f) -> %s%s"
+        % (rep["valid"], rep["solids"], added, res.expected_mm3, rep["ratio"] or 0, rep["volume_check"],
+           ("; WARNING %d section(s) skipped" % len(res.skipped)) if res.skipped else ""))
+    for n_ in notes: log("  " + n_)
     return part, rep
 
 # ------------------------------------------------------------------ tubes and the classic construction (comparison)
