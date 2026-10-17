@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+dist/
+out/
+previews*/
+*.pdf
+*.dxf
+*.png
+*.step
+*.stl
+_test/
