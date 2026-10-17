@@ -38,7 +38,7 @@ Usage and examples: [How to use it](How-To-Use.md#tool-cheat-sheet).
 | OpenFOAM | 14 (openfoam.org apt) | `/opt/openfoam14` |
 | ParaView | 6.0.1 (apt), `pvpython` headless via `xvfb-run` | `/usr/bin/paraview` |
 
-Load them with `source sim-tools/wsl-env.sh`. Full details, smoke tests and rollback: [`sim-tools/SIM_TOOLS.md`](../../sim-tools/SIM_TOOLS.md).
+Load them with `source sim/wsl-env.sh`. Full details, smoke tests and rollback: [`sim/SIM_TOOLS.md`](../../sim/SIM_TOOLS.md).
 
 ## Windows side
 

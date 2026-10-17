@@ -11,7 +11,7 @@
 | **PC, Windows** | Creality Scan, Fusion, FreeCAD, Fairsolid (`C:\projects\active\fairsolid`), backups in `C:\projects\_archive` |
 | **PC, WSL Ubuntu** | This repo, both Python venvs, all solvers (CalculiX, Gmsh, Elmer, OpenFOAM, ParaView) |
 | **Agent box** (Linux machine the AI agent works on) | Heavy or parallel runs (FEA iterations, topology, renders). Results are copied back into this repo; the box is not a source of truth |
-| **GitHub** | `living-relation/handbuilt-models` (this repo, public) and `living-relation/fairsolid` (separate) |
+| **GitHub** | `living-relation/handbuilt-cad` (this repo) and `living-relation/fairsolid` (separate) |
 
 ## Data flow
 

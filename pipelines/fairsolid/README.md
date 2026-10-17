@@ -48,7 +48,7 @@ Then use the same commands with `.venv/bin/fairsolid` and forward slashes:
     .venv/bin/fairsolid fit --run runs/X --units metric
 
 Tests: `.venv/bin/python -m pytest -q`. Tools that call Fairsolid from elsewhere (for example the
-handbuilt-models `tools/scan_helper.py`) find it through the `FAIRSOLID_HOME` environment variable,
+handbuilt-cad `tools/scan_helper.py`) find it through the `FAIRSOLID_HOME` environment variable,
 which should point at this checkout.
 
 ## Stages

@@ -1,4 +1,4 @@
-# Source this to load the toolkit:   source sim-tools/env.sh
+# Source this to load the toolkit:   source sim/env.sh
 # Works from any folder; finds the repo from this file's location.
 export HBM="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export SIM="$HBM"
