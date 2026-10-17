@@ -5,9 +5,9 @@ Daniel's rules for every drawing this engine makes. The engine enforces the ones
 ## Revisions
 1. **The model drives the letter and the drawing matches.** The model generates the drawing; model and drawing letters are always the same. **(engine)** the title-block letter must equal the newest rev log entry, or the run fails.
 2. **Letters:** A to Z, skipping I, L, O and Q. After Z comes AA, AB ... AZ, BA ... (same skips). **(engine)** `drawing/revs.py` (`next_letter`, `bump_model`, `letter_from_release_count`).
-3. **Rev A is for brand-new models only.** An existing model's letter comes from counting its past releases (PRs / major edits) in the repo history, or from converting an old rev number.
+3. **Rev A is for brand-new models only.** An existing model's letter comes from counting its past releases in the repo history: merged PRs that changed that model (moves and render-only PRs do not count). With no repo history, count the saved versions where the model changed. Never convert an old rev number.
 4. **Model change** (fit, form or function): bump the letter, reset the decimal (C.02 -> D).
-5. **Clerical rev** (drawing-only change that doesn't affect fit, form or function): add a decimal, C -> C.01 -> C.02. **(engine)** `bump_clerical`.
+5. **Clerical rev** (drawing-only change to an already-released drawing that doesn't affect fit, form or function): add a decimal, C -> C.01 -> C.02. **(engine)** `bump_clerical`.
 6. **Workflow:** redline the drawing first, then fix the model, then regenerate the drawing. Never hand-edit a drawing to differ from the model.
 7. **No rev letters in st185 file names.** Revs live only in title blocks, rev logs and registers. (Renaming outside st185 is fine.)
 
