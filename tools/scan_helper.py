@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """Run Fairsolid on a scan without hard-coding where Fairsolid lives.
 
-Fairsolid (https://github.com/living-relation/fairsolid) is found ONLY through
-the FAIRSOLID_HOME environment variable: the folder of a Fairsolid checkout
-that has its own virtual environment in .venv.
+Fairsolid lives in this repo's pipelines/fairsolid/ (docs/FAIRSOLID.md). The helper
+uses FAIRSOLID_HOME if it is set, otherwise pipelines/fairsolid/; either way the folder
+needs its own virtual environment in .venv (bash setup.sh --with-fairsolid).
 
-    export FAIRSOLID_HOME=~/projects/fairsolid
     python tools/scan_helper.py check
     python tools/scan_helper.py prepare ~/scans/bracket.stl --run /tmp/bracket_run
     python tools/scan_helper.py fit --run /tmp/bracket_run
@@ -30,19 +29,21 @@ class FairsolidNotFound(RuntimeError):
     pass
 
 
-def fairsolid_exe(env: dict | None = None) -> Path:
-    """Return the Fairsolid executable inside $FAIRSOLID_HOME/.venv."""
+def default_home() -> Path:
+    """This repo's pipelines/fairsolid/ (used when FAIRSOLID_HOME is not set)."""
+    return Path(__file__).resolve().parents[1] / "pipelines" / "fairsolid"
+
+
+def fairsolid_exe(env: dict | None = None, default: Path | None = None) -> Path:
+    """Return the Fairsolid executable inside $FAIRSOLID_HOME/.venv, else pipelines/fairsolid/.venv."""
     env = os.environ if env is None else env
-    home = env.get("FAIRSOLID_HOME")
-    if not home:
-        raise FairsolidNotFound("FAIRSOLID_HOME is not set. Point it at your Fairsolid checkout, "
-                                "e.g. export FAIRSOLID_HOME=~/projects/fairsolid")
+    home = env.get("FAIRSOLID_HOME") or str(default if default is not None else default_home())
     home_p = Path(home).expanduser()
     for cand in (home_p / ".venv" / "bin" / "fairsolid", home_p / ".venv" / "Scripts" / "fairsolid.exe"):
         if cand.is_file():
             return cand
-    raise FairsolidNotFound(f"No Fairsolid venv found in {home_p}/.venv. Create it there first "
-                            "(see the Fairsolid README).")
+    raise FairsolidNotFound(f"No Fairsolid venv found in {home_p}/.venv. Build it first "
+                            "(bash setup.sh --with-fairsolid, or see pipelines/fairsolid/README.md).")
 
 
 def build_cmd(command: str, scan: str | None, run_dir: str | None, extra: list[str], env: dict | None = None) -> list[str]:

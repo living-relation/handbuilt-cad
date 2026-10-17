@@ -8,15 +8,15 @@
 
 | Where | What runs there |
 |---|---|
-| **PC, Windows** | Creality Scan, Fusion, FreeCAD, Fairsolid (`C:\projects\active\fairsolid`, see [`docs/FAIRSOLID.md`](../FAIRSOLID.md)) |
+| **PC, Windows** | Creality Scan, Fusion, FreeCAD, Fairsolid (`pipelines/fairsolid/` here; old runs in `C:\projects\_archive\2026-10-17-fairsolid\fairsolid\runs`, see [`docs/FAIRSOLID.md`](../FAIRSOLID.md)) |
 | **PC, WSL Ubuntu** | This repo, both Python venvs, all solvers (CalculiX, Gmsh, Elmer, OpenFOAM, ParaView) |
 | **Agent box** (Linux machine the AI agent works on) | Heavy or parallel runs (FEA iterations, topology, renders). Results are copied back into this repo; the box is not a source of truth |
-| **GitHub** | `living-relation/handbuilt-cad` (this repo) and `living-relation/fairsolid` (separate) |
+| **GitHub** | `living-relation/handbuilt-cad` (this repo, includes Fairsolid); `living-relation/fairsolid` is archived |
 
 ## Data flow
 
 ```
-Creality Scan ──Mesh.ply──► Fairsolid (Windows) ──10_clean / 15_ideal / 20_frame / 40_ref_surfaces──► part scripts here (WSL .venv)
+Creality Scan ──Mesh.ply──► Fairsolid (pipelines/fairsolid) ──10_clean / 15_ideal / 20_frame / 40_ref_surfaces──► part scripts here (WSL .venv)
                                                                                                         │ build123d
                                                                                                         ▼
                                                                                          <part>.step / .stl ──► Fusion / FreeCAD
@@ -39,4 +39,4 @@ Creality Scan ──Mesh.ply──► Fairsolid (Windows) ──10_clean / 15_id
 
 ## Fairsolid link
 
-Fairsolid is used as a tool, not a library: run it, then read its output files from `C:\projects\active\fairsolid\runs\<part>\` (in WSL: `/mnt/c/projects/active/fairsolid/runs/<part>/`). Nothing here imports Fairsolid code, and nothing here writes into Fairsolid.
+Fairsolid is used as a tool, not a library: run it (`tools/scan_helper.py` or `pipelines/fairsolid/.venv/bin/fairsolid`), then read its output files from the run folder (`[paths] fairsolid_runs` / `FAIRSOLID_RUNS`, outside git). Runs made before 2026-10-17 are in `C:\projects\_archive\2026-10-17-fairsolid\fairsolid\runs\<part>\` (WSL: `/mnt/c/projects/_archive/2026-10-17-fairsolid/fairsolid/runs/<part>/`). Part code here doesn't import Fairsolid code.

@@ -1,12 +1,21 @@
 # Notes for AI assistants running Fairsolid
 
+## Read first, before starting work or asking
+Before starting work or asking the maintainer anything, read in order: (1) this guide and handbuilt-cad's
+`AGENTS.md` (Fairsolid lives in handbuilt-cad's `pipelines/fairsolid/`, see `docs/FAIRSOLID.md`), (2) the binding
+rules there (`AGENTS.md`, `CONTRIBUTING.md`), (3) the shared working memory
+`%USERPROFILE%\.claude\working-memory\<project>\INDEX.md` (WSL:
+`/mnt/c/Users/<user>/.claude/working-memory/<project>/INDEX.md`), (4) the newest handoff note if one
+exists. If a rule or note already answers a question, act on it and cite it - never ask the
+maintainer something the rules already answer.
+
 Fairsolid is Grok Bot's private helper tool (see README). It is not meant for manual use.
 
 - Always run the venv: `.venv\Scripts\fairsolid.exe ...` (or `.venv\Scripts\python.exe -m fairsolid.cli ...`).
   Don't install into the system Python, and don't set PYTHONIOENCODING.
 - On Linux / WSL, use the checkout's own venv: `.venv/bin/fairsolid ...` (setup in README,
   "Linux / WSL"). Keep the clone on the Linux file system, not `/mnt/c`. Use `runs/X` paths.
-  Other tools find this checkout through `FAIRSOLID_HOME`.
+  Other tools find it through `FAIRSOLID_HOME` (handbuilt-cad's `tools/scan_helper.py` falls back to this folder).
 - Put each scan in its own new folder under `runs\`. Never reuse or overwrite an existing run
   folder unless the user asks. `runs\` is not committed.
 - Never rescale a scan. If a size or units check stops a run, report it; don't "fix" it with

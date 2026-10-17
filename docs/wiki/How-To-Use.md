@@ -25,7 +25,7 @@ source sim/env.sh
 | Step | What you do | Tool |
 |---|---|---|
 | 1. Scan | Scan the part (any 3D scanner), export a mesh (`.ply`/`.stl`/`.obj`). Keep scans **outside** the repo. | your scanner app |
-| 2. Measure | Load the mesh in Python and measure holes, faces and distances. Round to real sizes (6.6 mm not 6.58). Keep the scan's true scale: only move/rotate, never stretch. Optional helper: [Fairsolid](https://github.com/living-relation/fairsolid) cleans scans and finds a coordinate frame. | `.venv/bin/python` + trimesh |
+| 2. Measure | Load the mesh in Python and measure holes, faces and distances. Round to real sizes (6.6 mm not 6.58). Keep the scan's true scale: only move/rotate, never stretch. Optional helper: Fairsolid (`pipelines/fairsolid/`) cleans scans and finds a coordinate frame. | `.venv/bin/python` + trimesh |
 | 3. Hand-build | Copy `examples/bracket/bracket.py` into a new folder and change it. All sizes are named numbers at the top. | build123d |
 | 4. Export | The script writes `part.step` (the deliverable, for Fusion/CAM). STL only if a print job needs one. | build123d |
 | 5. Fitment check | Write where the holes must be in `spec.json`, then check. | `tools/features.py` |
@@ -163,10 +163,10 @@ More detail: [For AI agents](AI-agents.md).
 
 ## Helpers: Fairsolid runs and new revs
 
-- `tools/scan_helper.py` runs [Fairsolid](https://github.com/living-relation/fairsolid) on a scan. It finds Fairsolid **only** through `FAIRSOLID_HOME` (a Fairsolid checkout with its own `.venv`), so nothing in this repo hard-codes where it lives:
+- `tools/scan_helper.py` runs Fairsolid (`pipelines/fairsolid/`, venv from `bash setup.sh --with-fairsolid`) on a scan. `FAIRSOLID_HOME` overrides where it looks; unset, it uses this repo's `pipelines/fairsolid/`:
 
   ```bash
-  export FAIRSOLID_HOME=~/projects/fairsolid
+  bash setup.sh --with-fairsolid
   .venv/bin/python tools/scan_helper.py check
   .venv/bin/python tools/scan_helper.py prepare ~/scans/bracket.stl --run /tmp/bracket_run
   .venv/bin/python tools/scan_helper.py fit --run /tmp/bracket_run
