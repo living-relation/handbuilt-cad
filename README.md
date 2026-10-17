@@ -32,7 +32,7 @@ Then use the venv: `.venv/bin/python tools/cnc_check.py --help` (or set `CAD_PY`
 | `parts/` | build scripts and specs, one folder per part (no model files) |
 | `pipelines/fairsolid/` | scan mesh -> parametric STEP pipeline (own venv, see its README) |
 | `examples/` | small generic examples |
-| `skills/` | agent skills (Claude, Cursor and bots install them from here) |
+| `skills/` | agent skills (Claude, Cursor and bots install them from here); cnc-part-check, publish-to-models and scan-to-parametric are owned by SteveCAD (see `skills/README.md`) |
 | `docs/` | wiki, tools index (`docs/TOOLS.md`), history |
 
 ## Rules in one line
