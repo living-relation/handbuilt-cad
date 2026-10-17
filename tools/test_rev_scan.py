@@ -31,11 +31,20 @@ def _fake_fairsolid(home: Path) -> Path:
     return exe
 
 
-def test_scan_helper_needs_env(tmp_path):
+def test_scan_helper_needs_venv(tmp_path):
     with pytest.raises(scan_helper.FairsolidNotFound):
-        scan_helper.fairsolid_exe({})
+        scan_helper.fairsolid_exe({}, default=tmp_path / "none")
     with pytest.raises(scan_helper.FairsolidNotFound):
         scan_helper.fairsolid_exe({"FAIRSOLID_HOME": str(tmp_path)})
+
+
+def test_scan_helper_falls_back_to_pipelines(tmp_path):
+    assert scan_helper.default_home().parts[-2:] == ("pipelines", "fairsolid")
+    exe = _fake_fairsolid(tmp_path)
+    assert scan_helper.fairsolid_exe({}, default=tmp_path) == exe
+    other = tmp_path / "other"
+    exe2 = _fake_fairsolid(other)
+    assert scan_helper.fairsolid_exe({"FAIRSOLID_HOME": str(other)}, default=tmp_path) == exe2
 
 
 def test_scan_helper_builds_command(tmp_path):
@@ -55,4 +64,5 @@ def test_scan_helper_main_runs_fake(tmp_path, monkeypatch, capfd):
     assert scan_helper.main(["fit", "--run", str(tmp_path / "r")]) == 0
     assert "fake fit --run" in capfd.readouterr().out
     monkeypatch.delenv("FAIRSOLID_HOME")
+    monkeypatch.setattr(scan_helper, "default_home", lambda: tmp_path / "none")
     assert scan_helper.main(["check"]) == 2

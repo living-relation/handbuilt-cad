@@ -49,7 +49,9 @@ Then use the same commands with `.venv/bin/fairsolid` and forward slashes:
 
 Tests: `.venv/bin/python -m pytest -q`. Tools that call Fairsolid from elsewhere (for example the
 handbuilt-cad `tools/scan_helper.py`) find it through the `FAIRSOLID_HOME` environment variable,
-which should point at this checkout.
+which should point at this folder (handbuilt-cad `pipelines/fairsolid/`; the helper falls back to it).
+Test meshes (`tests/data/*.stl`, `nominal.step`) are synthetic and gitignored; `tests/make_fixture.py` makes them.
+The Grok Bot handoff zip is built by `scripts/make_handoff.py` (see its docstring).
 
 ## Stages
 

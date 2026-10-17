@@ -59,5 +59,5 @@ Done. Add these to your shell profile if you want them (setup does not edit dotf
   export CAD_HOME="$ROOT"
   export CAD_PY="$ROOT/.venv/bin/python"
   export MODELS_DIR="$MODELS"
-  export FAIRSOLID_HOME=<your fairsolid checkout>   # for now the live fairsolid repo, see docs/FAIRSOLID.md
+  export FAIRSOLID_HOME="$ROOT/pipelines/fairsolid"   # optional: scan_helper falls back to it (docs/FAIRSOLID.md)
 MSG
