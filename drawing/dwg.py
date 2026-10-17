@@ -492,13 +492,43 @@ def frame(sh,info,sheet_no,n_sheets,proj=True):
 
 # ---------------- rev log (top right, sheet 1) ----------------
 REVLOG_COLS=(9,66,18,15)     # Rev | Description | By | Date  (108 mm wide)
-REVLOG_RH=4.2
-def revlog_rect(nrows,x1=PW-10,y1=PH-10):
-    """page rect (x0,y0,x1,y1) the rev log table will occupy: title + header + nrows (min 1)."""
-    return (x1-sum(REVLOG_COLS),y1-REVLOG_RH*(max(nrows,1)+2),x1,y1)
+REVLOG_RH=4.2                # minimum row height; a row grows when its text wraps
+REVLOG_H=(1.8,1.7)           # text height: description, other columns
+REVLOG_HMIN=1.3              # smallest text height the wrap may shrink to
+REVLOG_MAX_H=48.0            # table height cap (mm); past it the text shrinks a step before growing into the views
+REVLOG_LP=1.45               # line pitch / text height
+
+def _wrap(t,w,h):
+    """wrap t to column width w (mm) at text height h; never truncates."""
+    import textwrap
+    nc=max(4,int((w-1.5)/(h*0.82)))
+    return textwrap.wrap(str(t),nc,break_long_words=True,break_on_hyphens=False) or ['']
+
+def revlog_layout(rows,max_h=REVLOG_MAX_H):
+    """wrapped cell lines and row heights for the rev log. rows: RevEntry list, or an int (row count,
+    legacy: one-line rows). Returns (cells, heights, (hd,ho), total_height). The 6-row cap counts releases,
+    not lines (revs.table_rows); long Description / By text wraps and the row grows. When the table would pass
+    max_h the text shrinks 0.1 mm at a time (down to REVLOG_HMIN) before the table grows further."""
+    if isinstance(rows,int): rows=[None]*rows
+    hd,ho=REVLOG_H
+    while True:
+        cells=[];hts=[]
+        for e in (rows or [None]):
+            c=('-','(NO REV LOG)','','') if e is None else (e.rev,e.desc,e.by,e.date)
+            ls=[_wrap(x,REVLOG_COLS[k],hd if k==1 else ho) if k in (1,2) else [str(x)] for k,x in enumerate(c)]
+            n=max(len(l) for l in ls)
+            cells.append(ls); hts.append(max(REVLOG_RH,n*max(hd,ho)*REVLOG_LP+1.4))
+        tot=REVLOG_RH*2+sum(hts)
+        if tot<=max_h or max(hd,ho)<=REVLOG_HMIN+1e-9: return cells,hts,(hd,ho),tot
+        hd=round(max(REVLOG_HMIN,hd-0.1),2); ho=round(max(REVLOG_HMIN,ho-0.1),2)
+
+def revlog_rect(rows,x1=PW-10,y1=PH-10):
+    """page rect (x0,y0,x1,y1) the rev log table will occupy: title + header + rows (wrapped heights)."""
+    tot=revlog_layout(rows)[3]
+    return (x1-sum(REVLOG_COLS),y1-tot,x1,y1)
 
 def _fit(t,w,h,hmin=1.3):
-    """shrink text to fit width w (mm); truncate with ... at hmin."""
+    """shrink text to fit width w (mm); truncate with ... at hmin (not used by the rev log, which wraps)."""
     while _tw(t,h)>w-1.5 and h>hmin: h=round(h-0.1,2)
     if _tw(t,h)>w-1.5:
         n=max(3,int((w-1.5)/(h*0.82))-3); t=t[:n].rstrip()+'...'
@@ -506,23 +536,27 @@ def _fit(t,w,h,hmin=1.3):
 
 def revlog_table(sh,rows,x1=PW-10,y1=PH-10):
     """Rev | Description | By | Date table in the top-right corner of sheet 1. rows: revs.RevEntry list
-    (already filtered/capped by revs.table_rows). Returns its rect and reserves it in sh.rects."""
-    x0,y0,_,_=revlog_rect(len(rows),x1,y1); rh=REVLOG_RH
+    (already filtered/capped by revs.table_rows). Same width and corner always; long text wraps, rows grow.
+    Returns its rect and reserves it in sh.rects."""
+    cells,hts,(hd,ho),tot=revlog_layout(rows)
+    x0,y0=x1-sum(REVLOG_COLS),y1-tot; rh=REVLOG_RH
     xs=np.cumsum([x0]+list(REVLOG_COLS))
     sh.pl([(x0,y0),(x1,y0),(x1,y1),(x0,y1)],'tb',closed=True)
     sh.line((x0,y1-rh),(x1,y1-rh),'thin')
     sh.items.append(('tx',(x0+x1)/2,y1-rh/2,'REVISIONS',2.2,'center','center',0,True,False,'TEXT'))
     yt=y1-rh
-    for k,hd in enumerate(('REV','DESCRIPTION','BY','DATE')):
-        sh.items.append(('tx',(xs[k]+xs[k+1])/2,yt-rh/2,hd,1.8,'center','center',0,True,False,'TEXT'))
+    for k,hdr in enumerate(('REV','DESCRIPTION','BY','DATE')):
+        sh.items.append(('tx',(xs[k]+xs[k+1])/2,yt-rh/2,hdr,1.8,'center','center',0,True,False,'TEXT'))
     yt-=rh; sh.line((x0,yt),(x1,yt),'thin')
-    for e in (rows or [None]):
-        cells=('-','(NO REV LOG)','','') if e is None else (e.rev,e.desc,e.by,e.date)
-        for k,t in enumerate(cells):
-            t,h=_fit(str(t),REVLOG_COLS[k],1.7 if k!=1 else 1.8)
-            if k==1: sh.items.append(('tx',xs[k]+1,yt-rh/2,t,h,'left','center',0,False,False,'TEXT'))
-            else: sh.items.append(('tx',(xs[k]+xs[k+1])/2,yt-rh/2,t,h,'center','center',0,k==0,False,'TEXT'))
-        yt-=rh
+    for ls,r in zip(cells,hts):
+        for k,lines in enumerate(ls):
+            h=hd if k==1 else ho; lp=max(hd,ho)*REVLOG_LP
+            ytop=yt-r/2+(len(lines)-1)*lp/2
+            for i,t in enumerate(lines):
+                y=ytop-i*lp
+                if k==1: sh.items.append(('tx',xs[k]+1,y,t,h,'left','center',0,False,False,'TEXT'))
+                else: sh.items.append(('tx',(xs[k]+xs[k+1])/2,y,t,h,'center','center',0,k==0,False,'TEXT'))
+        yt-=r
         if yt>y0+1e-6: sh.line((x0,yt),(x1,yt),'thin')
     for a in xs[1:-1]: sh.line((a,y0),(a,y1-rh),'thin')
     sh.rects.append((x0,y0,x1,y1))
