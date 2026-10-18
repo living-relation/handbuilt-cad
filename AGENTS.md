@@ -44,3 +44,6 @@ The drawing engine's full rule list (and which ones it enforces) is `drawing/DRA
 ## Checks before a PR
 - `.venv/bin/python -m pytest -q` (repo tests) and the checks for the files you touched.
 - The pre-commit hook (guard + pinned gitleaks) must pass.
+
+## Linux runtime
+Open3D needs the system library `libEGL.so.1`. On Ubuntu install it with `sudo apt-get install -y --no-install-recommends libegl1` or `import open3d` fails. `bash setup.sh` does not install apt packages. Fairsolid and the sim toolbox stay optional (`--with-fairsolid`, and `--sim`, which only prints the sim commands).
