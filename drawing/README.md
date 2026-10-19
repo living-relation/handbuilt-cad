@@ -16,3 +16,5 @@ for d in ('drawing', 'tools/render', 'tools/checks', 'tools'):
 import part, asm, revs                      # part.make_part(spec, pdf, dxf, preview_prefix)
 ```
 Put `project` / `drawn` in each spec (or in `local.toml` `[drawing]`) for the title block. The engine's rules (no hidden lines, center marks kept, rev log table top right of sheet 1 from `<part no>.REVLOG.md`, model/drawing letters match, letters skip I/L/O/Q then AA, AB ...) are in `DRAWING-RULES.md`. Renders: `tools/render/smooth_render.py` (smooth shading, no mesh lines).
+
+Assembly spec keys for the balloon, exploded-view and label rules (DRAWING-RULES 24-30): item `primary`, `no_balloon`; spec `iso_balloons`, `exploded`, `label_views` (`labels`, `wires`), `tol`. Every run writes `<pdf>.checks.json` beside the PDF. Tests: `tests/test_drawing_rules.py`.
