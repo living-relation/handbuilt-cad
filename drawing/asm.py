@@ -122,7 +122,7 @@ def vis_tree(view):
             pts.append(np.linspace(a,b,n))
     return cKDTree(np.vstack(pts))
 
-def balloon(sh,c,num,anchor,r=4.0,note=None,side=None):
+def balloon(sh,c,num,anchor,r=4.0,note=None,side=None,th=2.2):
     """balloon with the item number, leader to anchor, optional note (circuit / device it serves) beside the balloon."""
     c=np.asarray(c,float); a=np.asarray(anchor,float)
     d=a-c; L=np.linalg.norm(d)
@@ -135,7 +135,7 @@ def balloon(sh,c,num,anchor,r=4.0,note=None,side=None):
     if note:
         right=(side!='left') if side else (c[0]>=a[0])
         x=c[0]+((r+1.2) if num is not None else 0.8)*(1 if right else -1)
-        sh.txt(x,c[1],note,h=2.2,ha='left' if right else 'right',va='center',bg=True)
+        sh.txt(x,c[1],note,h=th,ha='left' if right else 'right',va='center',bg=True)
 
 def place_balloons(sh,view,anchors,occ,margin=12,r=4.0,bounds=None,log=None,notes=None):
     """anchors: list of (num, page_pt). Balloons on a ring round the view bbox, pushed apart so no two touch;
@@ -166,7 +166,7 @@ def place_balloons(sh,view,anchors,occ,margin=12,r=4.0,bounds=None,log=None,note
             if s<W: return (x1-s,y1)
             s-=W; return (x0,y1-s)
         ids=list(range(len(anch))); S=np.array([to_ring(a) for _,a in anch],float); n=len(S)
-        g=gap*1.12    # perimeter spacing a little over the chord so corner turns do not bring two balloons together
+        g=gap*1.45    # perimeter spacing over the chord: across a corner two balloons are only 1/sqrt(2) of it apart
         for _ in range(3000):    # spread along the ring; re-sorted every pass so pushed balloons never pass each other
             o=np.argsort(S); S=S[o]; ids=[ids[k] for k in o]; moved=False
             for k in range(n if n>1 else 0):
@@ -182,11 +182,15 @@ def place_balloons(sh,view,anchors,occ,margin=12,r=4.0,bounds=None,log=None,note
         return D.min()<2*r+0.5
     cx,cy=(x0+x1)/2,(y0+y1)/2
     srt=sorted(anchors,key=lambda a:math.atan2(a[1][1]-cy,a[1][0]-cx))
-    per0=2*((x1-x0)+(y1-y0)); tiers=max(1,math.ceil(len(anchors)*gap*1.12/per0))
+    per0=2*((x1-x0)+(y1-y0)); tiers=max(1,math.ceil(len(anchors)*gap*1.45/per0))
+    def tier_rect(t):     # nested rings grow outward but never leave the bounds (a step cell, a view's own area)
+        g2=gap+1.0; q=[x0-t*g2,y0-t*g2,x1+t*g2,y1+t*g2]
+        if bounds: q=[max(q[0],bounds[0]+r+1),max(q[1],bounds[1]+r+1),min(q[2],bounds[2]-r-1),min(q[3],bounds[3]-r-1)]
+        return q
     while True:   # one ring, or as many nested rings as it takes for no two balloons to touch
-        g2=gap+1.0; out=[]
+        out=[]
         for t in range(tiers):
-            o,_=ring(x0-t*g2,y0-t*g2,x1+t*g2,y1+t*g2,srt[t::tiers]); out+=o
+            o,_=ring(*tier_rect(t),srt[t::tiers]); out+=o
         if not overlaps(out) or tiers>=8: break
         tiers+=1
     for num,c,a in out:
@@ -196,19 +200,24 @@ def place_balloons(sh,view,anchors,occ,margin=12,r=4.0,bounds=None,log=None,note
     if log is not None: log.add(out,r)
     return out
 
-def column_labels(sh,view,entries,area,r=4.0,log=None):
+def column_labels(sh,view,entries,area,r=4.0,log=None,th=2.2,col_w=112):
     """Label-view layout: every entry gets a balloon (item number) or a boxed wire label in a column left or right of
     the view, sorted top to bottom so leaders do not cross, text outward. entries: dicts num / anchor / text / box."""
-    x0,y0,x1,y1=area; vx0,vy0,vx1,vy1=view.bbox(); cx=(vx0+vx1)/2
+    x0,y0,x1,y1=area; vx0,vy0,vx1,vy1=view.bbox()
+    # split at the mean of the tips, not the view centre, so each column takes the parts on its own side
+    cx=float(np.mean([e['anchor'][0] for e in entries])) if entries else (vx0+vx1)/2
     cols={'left':[e for e in entries if e['anchor'][0]<cx],'right':[e for e in entries if e['anchor'][0]>=cx]}
     placed=[]
+    nc=max(12,int((col_w-22)/(th*0.82)))
+    for es_ in cols.values():
+        for e in es_: e['text']=textwrap.fill(e['text'],nc) if e.get('text') else e.get('text')
     for side,es in cols.items():
         if not es: continue
         es=sorted(es,key=lambda e:-e['anchor'][1])
-        pitch=[max(2*r+BAL_GAP,(e['text'].count('\n')+1)*2.2*1.6+1.6) for e in es]
-        ys=[]; y=None
-        for e,p in zip(es,pitch):   # 1-D: each at its anchor height, pushed down below the one above
-            want=e['anchor'][1]; y=want if y is None else min(want,y-p); ys.append(y)
+        pitch=[max(2*r+BAL_GAP if e.get('num') is not None else 0,(e['text'].count('\n')+1)*th*1.6+1.6) for e in es]
+        ys=[]; y=None; pp=None
+        for e,p in zip(es,pitch):   # 1-D: each at its anchor height, pushed down below the one above (half of each one's height)
+            want=e['anchor'][1]; y=want if y is None else min(want,y-(p+pp)/2); ys.append(y); pp=p
         lo=y0+r+2
         if ys and ys[-1]<lo:        # ran off the bottom: shift up, then squeeze to fit
             sh_=lo-ys[-1]; ys=[v+sh_ for v in ys]
@@ -219,16 +228,18 @@ def column_labels(sh,view,entries,area,r=4.0,log=None):
         for e,y in zip(es,ys):
             c=np.array([bx,y]); a=np.asarray(e['anchor'],float)
             if e.get('num') is None:   # wire label: boxed text, leader to the connection point
-                t=e['text']; w=_tw(t,2.2)+2; h=(t.count('\n')+1)*2.2*1.6+1.0
+                t=e['text']; w=_tw(t,th)+2; h=(t.count('\n')+1)*th*1.6+1.0
                 bx0=c[0]-w if side=='left' else c[0]; sh.pl([(bx0,y-h/2),(bx0+w,y-h/2),(bx0+w,y+h/2),(bx0,y+h/2)],'thin',closed=True)
-                sh.txt(bx0+1,y,t,h=2.2,ha='left',va='center')
+                sh.txt(bx0+1,y,t,h=th,ha='left',va='center')
                 sh.line((c[0],y),a,'dim'); sh.circle(a,0.5,'tb',n=12); sh.tri([a+[0.55,0],a+[-0.3,0.48],a+[-0.3,-0.48]])
                 sh.rects.append((bx0,y-h/2,bx0+w,y+h/2))
                 placed.append((None,c,a))
             else:
-                balloon(sh,c,e['num'],a,r,note=e.get('text'),side=side)
+                balloon(sh,c,e['num'],a,r,note=e.get('text'),side=side,th=th)
                 sh.rects.append((c[0]-r,c[1]-r,c[0]+r,c[1]+r)); placed.append((e['num'],c,a))
-    if log is not None: log.add([p for p in placed if p[0] is not None],r)
+    if log is not None:
+        log.add([p for p in placed if p[0] is not None],r)
+        log.cur['labels']=log.cur.get('labels',0)+sum(1 for p in placed if p[0] is None)
     return placed
 
 class BalloonLog:
@@ -348,14 +359,64 @@ def _label_entries(v,items,lv,drawn,log):
         if not len(c): log.miss(key); continue
         ents.append(dict(num=lab['item'],anchor=choose_anchors({0:c})[0],text=lab['text'],key=key))
     for w in lv.get('wires',[]):
-        p=np.asarray(w['at'],float); pg=v.P(p)
-        if occl.hidden(p,v.c): log.miss('wire:'+w['text']); continue
-        ents.append(dict(num=None,anchor=pg,text=w['text'],key='wire:'+w['text']))
+        p=np.asarray(w['at'],float); key='wire:'+w['text']
+        if w.get('item') is not None:   # anchored on the part at that point (the terminal / lug / plug the wire lands in)
+            shs=byno(items,w['item']).get('shapes') or []
+            inst=sorted(shs,key=lambda s:np.linalg.norm(np.array(tuple(s.center()))-p))[:1]
+            c=visible_candidates(v,inst,tree,None,occl) if inst else np.zeros((0,2))
+            if not len(c): log.miss(key); continue
+            pg=c[np.argmin(np.linalg.norm(c-v.P(p),axis=1))]
+        else:
+            pg=v.P(p)
+            if occl.hidden(p,v.c): log.miss(key); continue
+        ents.append(dict(num=None,anchor=pg,text=w['text'],key=key))
     # spread tips that land on the same spot
     for i in range(len(ents)):
         for j in range(i):
             if np.linalg.norm(ents[i]['anchor']-ents[j]['anchor'])<0.3: ents[i]['anchor']=ents[i]['anchor']+np.array([0.0,0.8])
     return ents
+
+def stage_sheet_count(groups):
+    return sum(-(-len(g)//4) for g in groups)
+
+def add_stage_sheets(sheets,items,groups,ctx,info,nsheets,log,iso='iso',notes=None):
+    """one sheet per group of exploded install steps (2 x n cells), balloons on the parts that move in each step (and the base
+    parts not ballooned yet), dotted lines from each part to its place. notes: {item: text} printed beside its balloon."""
+    chunks=[]     # at most 4 steps (2 x 2) on a sheet, so each step view is big enough to read
+    for stages in groups:
+        for k in range(0,len(stages),4): chunks.append(stages[k:k+4])
+    for stages in chunks:
+        sh=Sheet()
+        n=len(stages); cols=2 if n>1 else 1; rows=math.ceil(n/cols)
+        gx0,gy0,gx1,gy1=14,66,PW-14,PH-14
+        cw=(gx1-gx0)/cols; ch=(gy1-gy0)/rows
+        _done=set()
+        for k,st in enumerate(stages):
+            r_=k//cols; c_=k%cols
+            # bottom row reserved for title block area on right: shrink cells in lowest row
+            cx0=gx0+c_*cw; cy1=gy1-r_*ch; cx1=cx0+cw; cy0=cy1-ch
+            if r_==rows-1 and c_==cols-1 and cols>1: cy0=max(cy0,66)
+            shs,moving,pairs=exploded_shapes(items,st,ctx)
+            if not shs: continue
+            v=View(Compound(shs),st.get('view',iso),1.0)
+            title_h=12
+            sc=min((cw-40)/(v.umax-v.umin),(ch-30-title_h)/(v.vmax-v.vmin))
+            v.scale=sc; v.w=(v.umax-v.umin)*sc; v.h=(v.vmax-v.vmin)*sc
+            v.place((cx0+cx1)/2,(cy0+cy1)/2-4)
+            v.draw(sh)
+            explode_lines(sh,v,pairs)
+            mv_ids=list(dict.fromkeys([x for x,_ in st.get('move',[])]+[x for x,_,_ in st.get('custom',[])]))
+            bb_=st.get('balloon_base',[b for b in st.get('base',[]) if b not in _done])
+            ids=[i for i in dict.fromkeys(mv_ids+bb_) if not byno(items,i).get('no_balloon')]
+            sbk={i:([m for j,m in moving if j==i] or (byno(items,i).get('shapes') or []))[:6] for i in ids}
+            log.view(f"STEP {st['no']}")
+            out=balloon_view(sh,v,sbk,log,margin=9,bounds=(cx0+2,cy0+2,cx1-2,cy1-title_h),drawn=shs,notes=notes)
+            _done.update(i for i,_,_ in out)
+            sh.txt((cx0+cx1)/2,cy1-2,f"STEP {st['no']}: {st['title']}",h=3.2,bold=True,va='top')
+            sh.txt((cx0+cx1)/2,cy1-7.5,st.get('subtitle',"EXPLODED TRIMETRIC (NOT TO SCALE)"),h=2.4,va='top')
+            if st.get('note'): sh.txt(cx0+4,cy0+4,st['note'],h=2.4,ha='left',va='bottom')
+        frame(sh,dict(info,scale='AS SHOWN'),len(sheets)+1,nsheets)
+        sheets.append(sh)
 
 def make_assembly(spec,out_pdf,png_prefix=None):
     items=spec['items']
@@ -365,7 +426,7 @@ def make_assembly(spec,out_pdf,png_prefix=None):
     bb=comp.bounding_box()
     sheets=[]; log=BalloonLog()
     lviews=spec.get('label_views',[])
-    nsheets=1+len(lviews)+len(spec.get('stage_sheets',[]))
+    nsheets=1+len(lviews)+stage_sheet_count(spec.get('stage_sheets',[]))
     info=dict(title=spec['title'],pn=spec['pn'],material='SEE BOM',source=spec.get('source',''),project=spec.get('project'),drawn=spec.get('drawn'))
     if spec.get('tol'): info['tol']=spec['tol']
     # ---- sheet 1
@@ -471,44 +532,12 @@ def make_assembly(spec,out_pdf,png_prefix=None):
         v.draw(sh)
         log.view(f"LABELS {li+1}")
         ents=_label_entries(v,items,lv,lsh,log)
-        column_labels(sh,v,ents,(14,66,PW-14,PH-16),log=log)
+        column_labels(sh,v,ents,(14,66,PW-14,PH-16),log=log,th=lv.get('text_h',2.2),col_w=colw)
         sh.txt(PW/2,PH-14,lv.get('title','FUSE, RELAY AND WIRE LABELS'),h=3.6,bold=True,va='top')
         sh.txt(PW/2,PH-20,f"{lv.get('view','top').upper()} VIEW  SCALE {scale_str(sc)}",h=2.6,va='top')
         frame(sh,dict(info,scale=scale_str(sc)),len(sheets)+1,nsheets)
         sheets.append(sh)
-    # ---- stage sheets
-    for si_,stages in enumerate(spec.get('stage_sheets',[])):
-        sh=Sheet()
-        n=len(stages); cols=2 if n>1 else 1; rows=math.ceil(n/cols)
-        gx0,gy0,gx1,gy1=14,66,PW-14,PH-14
-        cw=(gx1-gx0)/cols; ch=(gy1-gy0)/rows
-        _done=set()
-        for k,st in enumerate(stages):
-            r_=k//cols; c_=k%cols
-            # bottom row reserved for title block area on right: shrink cells in lowest row
-            cx0=gx0+c_*cw; cy1=gy1-r_*ch; cx1=cx0+cw; cy0=cy1-ch
-            if r_==rows-1 and c_==cols-1 and cols>1: cy0=max(cy0,66)
-            shs,moving,pairs=exploded_shapes(items,st,ctx)
-            if not shs: continue
-            v=View(Compound(shs),st.get('view',spec.get('iso','iso')),1.0)
-            title_h=12
-            sc=min((cw-40)/(v.umax-v.umin),(ch-30-title_h)/(v.vmax-v.vmin))
-            v.scale=sc; v.w=(v.umax-v.umin)*sc; v.h=(v.vmax-v.vmin)*sc
-            v.place((cx0+cx1)/2,(cy0+cy1)/2-4)
-            v.draw(sh)
-            explode_lines(sh,v,pairs)
-            mv_ids=list(dict.fromkeys([x for x,_ in st.get('move',[])]+[x for x,_,_ in st.get('custom',[])]))
-            bb_=st.get('balloon_base',[b for b in st.get('base',[]) if b not in _done])
-            ids=[i for i in dict.fromkeys(mv_ids+bb_) if not byno(items,i).get('no_balloon')]
-            sbk={i:([m for j,m in moving if j==i] or (byno(items,i).get('shapes') or []))[:6] for i in ids}
-            log.view(f"STEP {st['no']}")
-            out=balloon_view(sh,v,sbk,log,margin=9,bounds=(cx0+2,cy0+2,cx1-2,cy1-title_h),drawn=shs)
-            _done.update(i for i,_,_ in out)
-            sh.txt((cx0+cx1)/2,cy1-2,f"STEP {st['no']}: {st['title']}",h=3.2,bold=True,va='top')
-            sh.txt((cx0+cx1)/2,cy1-7.5,"EXPLODED TRIMETRIC (NOT TO SCALE)",h=2.4,va='top')
-            if st.get('note'): sh.txt(cx0+4,cy0+4,st['note'],h=2.4,ha='left',va='bottom')
-        frame(sh,dict(info,scale='AS SHOWN'),len(sheets)+1,nsheets)
-        sheets.append(sh)
+    add_stage_sheets(sheets,items,spec.get('stage_sheets',[]),ctx,info,nsheets,log,iso=spec.get('iso','iso'),notes=spec.get('stage_notes'))
     render(sheets,out_pdf,None,png_prefix)
     want=[it['item'] for it in items if it.get('shapes') and not it.get('hide_in_asm') and not it.get('no_balloon')]
     nb=[i for i in want if i not in log.ballooned]

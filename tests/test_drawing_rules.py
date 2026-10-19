@@ -130,3 +130,36 @@ def test_label_sheet_notes_and_wire_labels(tmp_path):
     rep = asm.make_assembly(spec, out)
     lab = [v for v in rep["balloon_views"] if v["view"].startswith("LABELS")][0]
     assert lab["hidden"] == [] and lab["placed"] == 3 and lab["overlaps"] == 0
+
+
+def test_part_drawing_with_step_sheet(tmp_path):
+    """DRAWING-RULES 31: a part drawing keeps its shop sheet and gains install-step sheets (exploded, dotted lines, balloons + notes)."""
+    import part
+    from build123d import export_step
+    plate = Box(40, 20, 3)
+    step = str(tmp_path / 'p.step')
+    export_step(plate, step)
+    nut = Cylinder(3, 4).moved(Location((10, 0, 3.5)))
+    items = [dict(item=1, desc='STRAP', shapes=[plate.moved(Location((0, 0, 1.5)))]), dict(item=2, desc='PEM NUT', shapes=[nut])]
+    spec = dict(file=step, pn='T-117', title='T', material='C110', process='machined', notes=['ONE NOTE.'],
+                stage_items=items, stage_notes={2: 'PRESS FROM THIS SIDE'},
+                stage_sheets=[[dict(no=1, title='PRESS THE NUT IN', base=[1], move=[(2, (0, 0, 25))])]])
+    out = str(tmp_path / 't.pdf')
+    part.make_part(spec, out, None, str(tmp_path / 'pv'))
+    assert os.path.exists(str(tmp_path / 'pv_sh2.png'))
+    d = json.load(open(tmp_path / 't.checks.json'))
+    assert d['not_ballooned'] == [] and d['ok'] is True
+    assert [v['view'] for v in d['balloon_views']] == ['STEP 1']
+
+
+def test_wire_label_anchored_on_its_terminal(tmp_path):
+    items = _items()
+    term = Box(3, 3, 6).moved(Location((25, 0, 3)))
+    items[0]['shapes'] = [Box(80, 60, 4).moved(Location((0, 0, -2)))]
+    items.append(dict(item=4, qty=1, pn='T', desc='TERMINAL', shapes=[term]))
+    spec = dict(title='T', pn='T-103', items=items, open_hide=[2],
+                label_views=[dict(view='top', hide=[2, 3], text_h=1.8,
+                                  wires=[dict(item=4, at=(25, 0, 6), text='BUS2-12 > Bulkhead A pin 42 (DRB102, RH firewall) - EHPS pump logic enable (pump pin C1)')])])
+    rep = asm.make_assembly(spec, str(tmp_path / 't.pdf'))
+    lab = [v for v in rep['balloon_views'] if v['view'].startswith('LABELS')][0]
+    assert lab['hidden'] == []
