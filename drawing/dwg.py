@@ -235,6 +235,17 @@ def _edge_pts3d(e,defl=0.02):
     except Exception: pass
     return None
 
+def lines_in_box(lines,shape,r,u,pad=1.0):
+    """(kept, n_dropped): a projected line can never leave the part's own projected bounding box. OCCT's HLR can turn a tiny curved
+    edge seen end-on into a degenerate 2D curve whose sampling runs hundreds of mm off the part (seen on a vendor connector STEP:
+    a 0.66 mm edge drew a 600 mm line and pushed the view scale down); any such line is dropped, nothing inside the box is touched."""
+    if not lines: return lines,0
+    b=shape.bounding_box()
+    box=np.array([(x,y,z) for x in (b.min.X,b.max.X) for y in (b.min.Y,b.max.Y) for z in (b.min.Z,b.max.Z)])
+    lo=np.array([(box@r).min(),(box@u).min()])-pad; hi=np.array([(box@r).max(),(box@u).max()])+pad
+    kept=[p for p in lines if len(p)==0 or bool(((np.asarray(p)>=lo)&(np.asarray(p)<=hi)).all())]
+    return kept,len(lines)-len(kept)
+
 def project(shape,view,hidden=False,defl=0.02,soft_deg=SOFT_EDGE_DEG,tangent=None,return_tangent=False):
     """Exact B-rep hidden-line removal (OCCT HLR) - never a mesh. Visible edges only (hidden lines are never drawn).
     Seam and facet edges (see soft_edges) are filtered out unless they are silhouettes. Tangent edges (where a blend
@@ -276,7 +287,9 @@ def project(shape,view,hidden=False,defl=0.02,soft_deg=SOFT_EDGE_DEG,tangent=Non
                     continue
                 keep.append(p)
             vis=keep
-    LAST_PROJECT_STATS.update(view=view,visible=len(vis),soft_3d=nsoft,planar_facets=nfacet,dropped=dropped,tangent=len(tan))
+    vis,out_v=lines_in_box(vis,shape,r,u); tan,out_t=lines_in_box(tan,shape,r,u)
+    if out_v+out_t: print(f"WARNING: {out_v+out_t} projected line(s) outside the part's own box dropped in view {view} (HLR artifact)")
+    LAST_PROJECT_STATS.update(view=view,visible=len(vis),soft_3d=nsoft,planar_facets=nfacet,dropped=dropped,tangent=len(tan),outside_box=out_v+out_t)
     # RULE: never show hidden lines; 'hidden' arg ignored.
     hid=[]
     if return_tangent: return vis,hid,(c,r,u),tan
