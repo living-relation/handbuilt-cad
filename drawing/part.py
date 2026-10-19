@@ -385,6 +385,7 @@ def make_part(spec,out_pdf,out_dxf=None,png_prefix=None):
         if k==secslot or spec.get('label_views'):
             sh.txt(v.cx,side_pos(v,'below',tiers[(id(v),'below')]+1)+2,lbl,h=3.5,bold=True,va='top')
     info=dict(title=spec['title'],pn=spec['pn'],material=spec['material'],scale=scale_str(s),source=spec.get('source',''),rev=rev or '-',revlog=revrows,project=spec.get('project'),drawn=spec.get('drawn'))
+    if spec.get('tol'): info['tol']=spec['tol']
     frame(sh,info,1,1)
     nb=overlap_warnings(sh,rlr)
     if nb: print(f"WARNING: {nb} view/dim lines run into the rev log table on {spec['pn']}")
@@ -394,6 +395,8 @@ def make_part(spec,out_pdf,out_dxf=None,png_prefix=None):
     for dt in spec.get('details',[]):
         draw_detail(sh,V[dt['parent']],dt)
     render([sh],out_pdf,out_dxf,png_prefix)
+    spec['_checks']=write_checks(out_pdf,spec['pn'],None,notes,info.get('tol'),
+                                 dict(tangent_lines_trimetric=len(V['iso'].tan)))
     return s
 
 def _detail_body(sh,pv,dt,px,py):

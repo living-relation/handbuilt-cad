@@ -1,5 +1,5 @@
 """2D drawing engine: HLR views (build123d/OCCT) -> 11x17 ANSI B sheets -> PDF (+DXF)."""
-import math, datetime, os, sys, numpy as np
+import math, datetime, os, sys, json, hashlib, numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from settings import title_info
 from build123d import *
@@ -25,11 +25,15 @@ PW,PH=431.8,279.4
 MM2PT=72/25.4
 STY={'vis':(0.50,None),'hid':(0.25,(3.0,1.5)),'ctr':(0.18,(8,1.5,1.5,1.5)),'thin':(0.18,None),
      'dim':(0.18,None),'border':(0.7,None),'tb':(0.35,None),'phantom':(0.25,(8,1.5,1.5,1.5,1.5,1.5)),
-     'expl':(0.25,(2.0,1.5)),'cut':(0.6,(10,2,2,2)),'detail':(0.5,(7,1.8))}
+     'expl':(0.30,(0.4,1.4)),'cut':(0.6,(10,2,2,2)),'detail':(0.5,(7,1.8)),'tan':(0.25,None)}
+# 'expl' = dotted assembly lines in exploded views; 'tan' = tangent edges, drawn in pictorial (trimetric) views only
 DXF_LAYER={'vis':('VISIBLE','CONTINUOUS',7),'hid':('HIDDEN','HIDDEN',8),'ctr':('CENTER','CENTER',1),'thin':('THIN','CONTINUOUS',7),
      'dim':('DIM','CONTINUOUS',3),'border':('BORDER','CONTINUOUS',7),'tb':('TITLE','CONTINUOUS',7),'phantom':('PHANTOM','PHANTOM',6),
-     'expl':('EXPLODE','DASHED',6),'cut':('CUTPLANE','DASHDOT',1),'detail':('DETAIL','DASHED',5)}
+     'expl':('EXPLODE','DOT',6),'cut':('CUTPLANE','DASHDOT',1),'detail':('DETAIL','DASHED',5),'tan':('TANGENT','CONTINUOUS',7)}
 TH=3.0  # standard text height mm
+# the "unless otherwise specified" block; a spec's 'tol' replaces it (e.g. a project that bans notes about
+# features that are not in the model drops the edge-break line)
+DEFAULT_TOL="DIMENSIONS ARE IN MILLIMETERS\nTOLERANCES:\n  X     ±0.5      X.X  ±0.2\n  X.XX  ±0.05    ANGLES ±0.5°\nBREAK SHARP EDGES 0.2-0.4\nSURFACE FINISH Ra 3.2 µm\nINTERPRET PER ASME Y14.5-2018"
 
 class Sheet:
     def __init__(s): s.items=[]; s.rects=[]
@@ -189,11 +193,12 @@ def _edge_face_map(shape):
             if lst.Size()>=2: fl.append(F(lst.Last()))
         yield E(m.FindKey(i)),fl
 
-def soft_edges(shape,cam,deg=SOFT_EDGE_DEG):
+def soft_edges(shape,cam,deg=SOFT_EDGE_DEG,kinds=False):
     """3D edges that must not appear as lines in a view looking along -cam:
     seam edges and edges where the two faces meet within `deg` (tangent blends and the facets of a
     polygonised/faceted model), except silhouettes (one face toward the viewer, one away).
-    Returns (list of edges, n_planar_facets)."""
+    Returns (list of edges, n_planar_facets); with kinds=True the list holds (edge, kind) pairs,
+    kind 'seam' | 'facet' (two planes) | 'tangent' (a blend: at least one curved face)."""
     from OCP.BRep import BRep_Tool
     from OCP.BRepAdaptor import BRepAdaptor_Surface
     from OCP.GeomAbs import GeomAbs_Plane
@@ -204,16 +209,22 @@ def soft_edges(shape,cam,deg=SOFT_EDGE_DEG):
         seam=(len(fl)==1 and isclosed(e,fl[0])) or (len(fl)==2 and fl[0].IsSame(fl[1]))
         if seam:   # seam line of a closed surface: never drawn, unless it lies on the silhouette (HLR's outline sits on it)
             n=_face_normal_on_edge(e,fl[0])
-            if n is not None and abs(n@c)>1e-3: out.append(e)
+            if n is not None and abs(n@c)>1e-3: out.append((e,'seam'))
             continue
         if len(fl)!=2: continue
         n1=_face_normal_on_edge(e,fl[0]); n2=_face_normal_on_edge(e,fl[1])
         if n1 is None or n2 is None or n1@n2<cosd: continue
         d1,d2=n1@c,n2@c
         if d1*d2<0 or abs(d1)<1e-6 or abs(d2)<1e-6: continue   # silhouette / edge-on: keep
-        if BRepAdaptor_Surface(fl[0]).GetType()==GeomAbs_Plane and BRepAdaptor_Surface(fl[1]).GetType()==GeomAbs_Plane: nfacet+=1
-        out.append(e)
-    return out,nfacet
+        if BRepAdaptor_Surface(fl[0]).GetType()==GeomAbs_Plane and BRepAdaptor_Surface(fl[1]).GetType()==GeomAbs_Plane:
+            nfacet+=1; out.append((e,'facet'))
+        else: out.append((e,'tangent'))
+    return (out if kinds else [e for e,_ in out]),nfacet
+
+def is_pictorial(view):
+    """True for a trimetric / isometric view (not looking straight along a model axis)."""
+    cam=np.asarray(VIEWDIR[view][0] if isinstance(view,str) else view[0],float); cam=cam/np.linalg.norm(cam)
+    return np.sort(np.abs(cam))[-2]>1e-3
 
 def _edge_pts3d(e,defl=0.02):
     from OCP.GCPnts import GCPnts_QuasiUniformDeflection
@@ -224,21 +235,27 @@ def _edge_pts3d(e,defl=0.02):
     except Exception: pass
     return None
 
-def project(shape,view,hidden=False,defl=0.02,soft_deg=SOFT_EDGE_DEG):
+def project(shape,view,hidden=False,defl=0.02,soft_deg=SOFT_EDGE_DEG,tangent=None,return_tangent=False):
     """Exact B-rep hidden-line removal (OCCT HLR) - never a mesh. Visible edges only (hidden lines are never drawn).
-    Seam, tangent and facet edges (see soft_edges) are filtered out unless they are silhouettes."""
+    Seam and facet edges (see soft_edges) are filtered out unless they are silhouettes. Tangent edges (where a blend
+    meets its neighbours) are filtered out of orthographic views and KEPT in pictorial views (tangent=None: on for
+    trimetric / isometric views) so the corners and shapes of a trimetric read (DRAWING-RULES 16a).
+    return_tangent=True returns (vis, hid, basis, tangent_lines) with the tangent lines kept apart (drawn thin);
+    otherwise they are appended to vis."""
     cam,up=VIEWDIR[view] if isinstance(view,str) else view
     c,r,u=basis(cam,up)
+    if tangent is None: tangent=is_pictorial(view)
     v,h=shape.project_to_viewport(tuple(c*5000),tuple(u),(0,0,0))
     vis=[edge_pts(e,defl) for e in v]
-    nsoft=nfacet=0; dropped=0
+    nsoft=nfacet=0; dropped=0; tan=[]
     if soft_deg and vis:
         from shapely.geometry import LineString as _L
         from shapely.strtree import STRtree
-        se,nfacet=soft_edges(shape,c,soft_deg); nsoft=len(se)
+        from shapely.ops import unary_union
+        se,nfacet=soft_edges(shape,c,soft_deg,kinds=True); nsoft=len(se)
         from OCP.GeomAbs import GeomAbs_Line
-        buf=[]
-        for e in se:
+        buf=[]; kind=[]
+        for e,k in se:
             p=_edge_pts3d(e,defl)
             if p is None or len(p)<2: continue
             q=np.c_[p@r,p@u]
@@ -246,21 +263,24 @@ def project(shape,view,hidden=False,defl=0.02,soft_deg=SOFT_EDGE_DEG):
             # straight edges project exactly: tiny tolerance so a real silhouette 0.002 mm from a facet line survives;
             # curved soft edges are matched against our own polyline, so allow the sampling deflection
             tol=1e-4 if BRepAdaptor_Curve(e).GetType()==GeomAbs_Line else 1.5*defl
-            buf.append(_L(q).buffer(tol))
+            buf.append(_L(q).buffer(tol)); kind.append(k)
         if buf:
             tree=STRtree(buf); keep=[]
             for p in vis:
                 if len(p)<2: keep.append(p); continue
-                ln=_L(p); cand=[buf[k] for k in tree.query(ln)]
-                if cand:
-                    from shapely.ops import unary_union
-                    if unary_union(cand).covers(ln): dropped+=1; continue
+                ln=_L(p); ks=list(tree.query(ln))
+                if ks and unary_union([buf[k] for k in ks]).covers(ln):
+                    hard=[buf[k] for k in ks if kind[k]!='tangent']   # seams and facets: never drawn
+                    if tangent and not (hard and unary_union(hard).covers(ln)): tan.append(p)
+                    else: dropped+=1
+                    continue
                 keep.append(p)
             vis=keep
-    LAST_PROJECT_STATS.update(view=view,visible=len(vis),soft_3d=nsoft,planar_facets=nfacet,dropped=dropped)
+    LAST_PROJECT_STATS.update(view=view,visible=len(vis),soft_3d=nsoft,planar_facets=nfacet,dropped=dropped,tangent=len(tan))
     # RULE: never show hidden lines; 'hidden' arg ignored.
     hid=[]
-    return vis,hid,(c,r,u)
+    if return_tangent: return vis,hid,(c,r,u),tan
+    return vis+tan,hid,(c,r,u)
 
 def on_visible(view_obj,pg,tol=0.4):
     """True if page point pg lies on a visible line of the view (so a leader there points at something drawn)."""
@@ -312,12 +332,14 @@ def circle_marks(shape,view_obj,min_sweep_deg=150.0,min_r=0.5):
 
 class View:
     """A placed view. world->uv via basis; uv->page via center & scale."""
-    def __init__(s,shape,view,scale,hidden=False,name='',defl=None,section=None,polys=None,soft_deg=None):
-        s.view=view; s.scale=scale; s.name=name; s.hatches=[]
+    def __init__(s,shape,view,scale,hidden=False,name='',defl=None,section=None,polys=None,soft_deg=None,tangent=None):
+        s.view=view; s.scale=scale; s.name=name; s.hatches=[]; s.tan=[]
         if polys is not None:  # precomputed
-            s.vis,s.hid,(s.c,s.r,s.u)=polys
+            s.vis,s.hid,(s.c,s.r,s.u)=polys[:3]
+            if len(polys)>3: s.tan=list(polys[3])
         else:
-            s.vis,s.hid,(s.c,s.r,s.u)=project(shape,view,hidden,defl or 0.01/max(scale,0.2),SOFT_EDGE_DEG if soft_deg is None else soft_deg)
+            s.vis,s.hid,(s.c,s.r,s.u),s.tan=project(shape,view,hidden,defl or 0.01/max(scale,0.2),SOFT_EDGE_DEG if soft_deg is None else soft_deg,
+                                                   tangent=tangent,return_tangent=True)
             s.stats=dict(LAST_PROJECT_STATS)
         allp=np.vstack(s.vis) if s.vis else np.zeros((1,2))
         s.umin,s.vmin=allp.min(0); s.umax,s.vmax=allp.max(0)
@@ -333,6 +355,7 @@ class View:
         # hidden lines are never drawn (rule 2026-10-17)
         for loops in s.hatches: sh.hatch([[s.uv2pg(q) for q in l] for l in loops])
         for p in s.vis: sh.pl([s.uv2pg(q) for q in p],'vis')
+        for p in s.tan: sh.pl([s.uv2pg(q) for q in p],'tan')   # tangent edges (pictorial views only)
         if label:
             x0,y0,x1,y1=s.bbox()
             sh.txt(s.cx,y0-s.lab_off if hasattr(s,'lab_off') else y0-9,label+(f"\nSCALE {scale_str(s.scale)}" if label_scale else ''),h=3.5,va='top',bold=True)
@@ -502,7 +525,7 @@ def frame(sh,info,sheet_no,n_sheets,proj=True):
     tx0=x0-92; tx1=x0
     sh.pl([(tx0,y0),(tx1,y0),(tx1,y0+40),(tx0,y0+40)],'tb',closed=True)
     sh.txt(tx0+2,y0+38,"UNLESS OTHERWISE SPECIFIED:",h=2.2,ha='left',va='top',bold=True)
-    tol=info.get('tol',"DIMENSIONS ARE IN MILLIMETERS\nTOLERANCES:\n  X     ±0.5      X.X  ±0.2\n  X.XX  ±0.05    ANGLES ±0.5°\nBREAK SHARP EDGES 0.2-0.4\nSURFACE FINISH Ra 3.2 µm\nINTERPRET PER ASME Y14.5-2018")
+    tol=info.get('tol') or DEFAULT_TOL
     sh.txt(tx0+2,y0+33.5,tol,h=2.2,ha='left',va='top')
     if sheet_no==1 and info.get('revlog') is not None:
         revlog_table(sh,info['revlog'])
@@ -614,3 +637,23 @@ def notes_block(sh,x,y,notes,h=2.6,title='NOTES:',width=136):
         sh.txt(x,yy,f"{i}.  {n}",h=h,ha='left',va='top')
         yy-=h*1.6*(n.count('\n')+1)+1.0
     return yy
+
+# ---------------- drawing rule report ----------------
+def write_checks(out_pdf,pn,log=None,notes=None,tol=None,extra=None):
+    """<pdf minus .pdf>.checks.json: what the engine's drawing rules found, plus the printed notes, for project gates."""
+    sha=hashlib.sha256(open(out_pdf,'rb').read()).hexdigest()[:16]
+    d=dict(pn=pn,pdf_sha=sha,engine_rules='2026-10-18',tangent_edges_in_pictorial=True,dotted_explode_lines=True,
+           notes=list(notes or []),tol_block=tol or DEFAULT_TOL)
+    if log is not None:
+        d['balloon_views']=log.views
+        d['not_ballooned']=sorted(map(str,(extra or {}).get('not_ballooned',[])))
+        d['ok']=(not d['not_ballooned'] and all(v['overlaps']==0 and v['crowded']==0 for v in log.views)
+                 and all(not v['hidden'] for v in log.views if v['view'].startswith('LABELS')))
+    else: d['ok']=True
+    d.update({k:v for k,v in (extra or {}).items() if k!='not_ballooned'})
+    p=os.path.splitext(out_pdf)[0]+'.checks.json'
+    json.dump(d,open(p,'w'),indent=1)
+    bad=[] if d['ok'] else [v for v in d.get('balloon_views',[]) if v['overlaps'] or v['crowded'] or (v['view'].startswith('LABELS') and v['hidden'])]
+    if not d['ok']:
+        print(f"WARNING: {pn}: drawing rule check failed - not ballooned anywhere: {d.get('not_ballooned')}; views: {bad}")
+    return d
