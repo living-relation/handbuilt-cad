@@ -213,6 +213,7 @@ def make_part(spec,out_pdf,out_dxf=None,png_prefix=None):
     isc=max([q for q in [3,2,1.5,1.25,1,0.8,0.75,0.6,0.5,0.4,0.3,0.25,0.2,0.15,0.1] if q<=isc+1e-9] or [0.1]); iso.scale=isc; iso.w=(iso.umax-iso.umin)*isc; iso.h=(iso.vmax-iso.vmin)*isc
     iso.place((isb[0]+isb[2])/2,(isb[1]+isb[3])/2+4)
     sh=Sheet(); occ=Occ(); occ.rects=sh.rects
+    sh.anch['view'].update(V)
     for k,v in V.items(): occ.add(v.bbox())
     occ.add(rlr)
     labels={'front':'FRONT','top':'TOP','right':'RIGHT'}
@@ -403,8 +404,11 @@ def make_part(spec,out_pdf,out_dxf=None,png_prefix=None):
         log=_A.BalloonLog()
         _A.add_stage_sheets(sheets,spec['stage_items'],groups,spec.get('stage_context',[]),info,1+nst,log,
                             iso=spec.get('iso','iso'),notes=spec.get('stage_notes'))
+    import revmarks as _RM
+    rm=_RM.apply(spec,sheets,rev,revsrc if revsrc and os.path.isfile(str(revsrc)) else None)
+    _RM.warn_if_missing(spec,rev,rm)
     render(sheets,out_pdf,out_dxf,png_prefix)
-    extra=dict(tangent_lines_trimetric=len(V['iso'].tan))
+    extra=dict(tangent_lines_trimetric=len(V['iso'].tan),**rm)
     if log is not None:
         want=[it['item'] for it in spec['stage_items'] if it.get('shapes') and not it.get('no_balloon')]
         extra['not_ballooned']=[i for i in want if i not in log.ballooned]
