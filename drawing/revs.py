@@ -143,9 +143,13 @@ def write_revlog(path, entries, title=""):
         for e in entries:
             f.write(f"| {e.rev} | {e.desc.replace('|', '/')} | {e.by} | {to_ddmmyy(e.date)} |\n")
 
-def add_release(path, rev, desc, by, date=None, title=""):
+def add_release(path, rev, desc, by=None, date=None, title=""):
     """Record one release. Clerical revs are refused (not logged). If the letter is already logged
-    (several edits in one PR / session), the existing row is updated instead of adding a new one."""
+    (several edits in one PR / session), the existing row is updated instead of adding a new one.
+    `by` = the initials of the person who REQUESTED the change (never an agent or tool name); None = the
+    requester's initials from settings (env DRAWING_INITIALS / ~/.drawing-initials; prompts a human, stops an agent)."""
+    import settings as _S
+    by = _S.check_initials(by) if by else _S.requester_initials()
     l, c = parse_rev(rev)
     if c: raise ValueError(f"{rev} is a clerical rev; clerical revs are not listed in the rev log")
     entries = read_revlog(path) if os.path.exists(path) else []
@@ -174,6 +178,24 @@ def table_rows(entries, max_rows=REVLOG_MAX_ROWS):
         by_letter[l] = RevEntry(l, "Initial" if l == "A" else e.desc, e.by, to_ddmmyy(e.date))
     rows = sorted(by_letter.values(), key=lambda e: letter_to_index(e.rev))
     return rows[-max_rows:] if max_rows else rows
+
+def drawn_by(entries):
+    """DRAWN = the BY of Rev A (never changes). None when the log has no Rev A row."""
+    a = [e for e in entries if e.rev.strip().upper() == "A"]
+    return a[0].by.strip() if a else None
+
+def initials_problems(entries):
+    """Rule violations in a full rev log (oldest first): blank / agent-or-tool names in BY, and no Rev A row.
+    Returns a list of strings; empty = clean."""
+    import settings as _S
+    out = []
+    for e in entries:
+        why = _S.bad_initials(e.by)
+        if why:
+            out.append(f"rev {e.rev}: BY {why}")
+    if entries and drawn_by(entries) is None:
+        out.append("no Rev A row, so DRAWN is unknown")
+    return out
 
 def from_spec_revs(revs):
     """Legacy spec 'revs' tuples (rev, desc, date, by) -> RevEntry list."""

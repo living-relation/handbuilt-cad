@@ -10,7 +10,7 @@ scratch_dir = ""       # SCRATCH_DIR; disposable clones and handoff packs for to
 
 [drawing]
 project = ""           # DRAWING_PROJECT; title-block COMPANY / PROJECT (empty = "PROJECT"); a spec's "project" key wins
-drawn = ""             # DRAWING_DRAWN; title-block DRAWN (empty = "-"); a spec's "drawn" key wins
+# DRAWN / rev-log BY are not set here: they are people's initials from ~/.drawing-initials or DRAWING_INITIALS (drawing/DRAWING-RULES.md rule 32)
 
 [python]
 cad_py = ""            # CAD_PY; empty = <repo>/.venv/bin/python
