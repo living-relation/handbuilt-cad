@@ -50,14 +50,14 @@ def test_dates():
 def test_table_rows(tmp_path):
     p = tmp_path / "REVLOG.md"
     p.write_text("| Rev | Description | By | Date |\n|---|---|---|---|\n"
-                 "| A | first cut | SteveCAD | 2026-10-01 |\n| B | b | SC | 02/10/26 |\n| B.01 | note typo | SC | 03/10/26 |\n"
-                 "| C | c | SC | 04/10/26 |\n| D | d | SC | 05/10/26 |\n| E | e | SC | 06/10/26 |\n| F | f | SC | 07/10/26 |\n"
-                 "| G | g1 | SC | 08/10/26 |\n| G | g final | Grok Bot | 09/10/26 |\n")
+                 "| A | first cut | DG | 2026-10-01 |\n| B | b | DG | 02/10/26 |\n| B.01 | note typo | DG | 03/10/26 |\n"
+                 "| C | c | DG | 04/10/26 |\n| D | d | DG | 05/10/26 |\n| E | e | DG | 06/10/26 |\n| F | f | DG | 07/10/26 |\n"
+                 "| G | g1 | DG | 08/10/26 |\n| G | g final | JD | 09/10/26 |\n")
     e = R.read_revlog(str(p))
     rows = R.table_rows(e, max_rows=100)
     assert [r.rev for r in rows] == list("ABCDEFG")          # clerical dropped, one row per letter
     assert rows[0].desc == "Initial" and rows[0].date == "01/10/26"
-    assert rows[-1].desc == "g final" and rows[-1].by == "Grok Bot"
+    assert rows[-1].desc == "g final" and rows[-1].by == "JD"
     rows6 = R.table_rows(e, max_rows=6)
     assert [r.rev for r in rows6] == list("BCDEFG")          # oldest dropped first
     R.check_letter_matches("G.02", rows6)
@@ -65,22 +65,22 @@ def test_table_rows(tmp_path):
 
 def test_add_release(tmp_path):
     p = str(tmp_path / "REVLOG.md")
-    R.add_release(p, "A", "whatever", "SteveCAD", "2026-10-14", title="TEST")
-    R.add_release(p, "B", "first edit", "SteveCAD", "2026-10-15")
-    R.add_release(p, "B", "first edit + second edit, same PR", "SteveCAD", "2026-10-15")   # same release: updated, not added
-    with pytest.raises(ValueError): R.add_release(p, "B.01", "clerical", "SteveCAD")
-    with pytest.raises(ValueError): R.add_release(p, "A", "going backwards", "SteveCAD")
+    R.add_release(p, "A", "whatever", "DG", "2026-10-14", title="TEST")
+    R.add_release(p, "B", "first edit", "DG", "2026-10-15")
+    R.add_release(p, "B", "first edit + second edit, same PR", "DG", "2026-10-15")   # same release: updated, not added
+    with pytest.raises(ValueError): R.add_release(p, "B.01", "clerical", "DG")
+    with pytest.raises(ValueError): R.add_release(p, "A", "going backwards", "DG")
     e = R.read_revlog(p)
     assert [(x.rev, x.desc) for x in e] == [("A", "Initial"), ("B", "first edit + second edit, same PR")]
 
 def test_find_revlog(tmp_path):
     a = tmp_path / "multi"; a.mkdir()
     (a / "foot.step").write_text("x"); (a / "strut.step").write_text("x")
-    (a / "REVLOG.md").write_text("| A | Initial | SC | 01/10/26 |\n")
+    (a / "REVLOG.md").write_text("| A | Initial | DG | 01/10/26 |\n")
     assert R.find_revlog(str(a / "foot.step")) is None             # shared folder: plain REVLOG.md is ambiguous
-    (a / "foot.REVLOG.md").write_text("| A | Initial | SC | 01/10/26 |\n")
+    (a / "foot.REVLOG.md").write_text("| A | Initial | DG | 01/10/26 |\n")
     assert R.find_revlog(str(a / "foot.step")).endswith("foot.REVLOG.md")
-    (a / "PN-103.REVLOG.md").write_text("| A | Initial | SC | 01/10/26 |\n")
+    (a / "PN-103.REVLOG.md").write_text("| A | Initial | DG | 01/10/26 |\n")
     assert R.find_revlog(str(a / "strut.step"), pn="PN-103").endswith("PN-103.REVLOG.md")
     b = tmp_path / "single"; b.mkdir(); (b / "base.step").write_text("x"); (b / "REVLOG.md").write_text("")
     assert R.find_revlog(str(b / "base.step")).endswith("REVLOG.md")

@@ -624,6 +624,11 @@ def resolve_revlog(spec,step_path=None):
     if p: ent=_R.read_revlog(p); src=p
     elif spec.get('revs'): ent=_R.from_spec_revs(spec['revs']); src='spec revs'
     else: ent=[]; src=None
+    # initials rule: every BY is a person (the requester), DRAWN is the Rev A BY. No agent / tool names, nothing blank.
+    import settings as _S
+    bad=_R.initials_problems(ent) if ent else []
+    if bad: raise ValueError(f"{spec.get('pn')}: rev log initials ({src}): "+'; '.join(bad)+" - BY is the initials of the person who requested the change")
+    spec['_drawn']=_R.drawn_by(ent) or (_S.check_initials(spec['drawn']) if spec.get('drawn') else _S.requester_initials())
     rows=_R.table_rows(ent,spec.get('revlog_max_rows',_R.REVLOG_MAX_ROWS))
     rev=spec.get('rev')
     if rev in (None,'','1') and rows: rev=rows[-1].rev

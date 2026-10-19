@@ -431,7 +431,7 @@ def make_assembly(spec,out_pdf,png_prefix=None):
     if spec.get('tol'): info['tol']=spec['tol']
     # ---- sheet 1
     revrows,rev,_=resolve_revlog(spec,spec.get('file'))
-    info.update(rev=rev or '-',revlog=revrows)
+    info.update(rev=rev or '-',revlog=revrows,drawn=spec['_drawn'])
     sh=Sheet(); occ=Occ(); occ.rects=sh.rects
     rlr=revlog_rect(revrows)      # rev log top right; BOM starts below it
     ybot=bom_table(sh,items,PW-10,rlr[1]-3,colw=spec.get('bom_cols',(9,9,44,80,40)),h=spec.get('bom_h',2.0))

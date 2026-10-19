@@ -40,6 +40,7 @@ The drawing engine's full rule list (and which ones it enforces) is `drawing/DRA
 14. Project-specific naming rules (e.g. whether file names carry rev letters) live in that project, not here.
 15. **Capped sections only.** Every rendered section view uses closed-surface clipping: the cut part is a closed solid with its cut faces filled (caps). Never clip just the outer skin; open cut faces render as hollow shells and misread wall thickness. Use `tools/render/section.py` (or `smooth_render.py --section`); the drawing engine's section views are capped too. All of them refuse an open cut.
 16. **Rev folders are lettered.** `tools/rev.py` makes `rev<LETTER>` (clerical `rev<LETTER>.<NN>`) folders by the rules above; it never converts old numeric `revN` folders.
+17. **Initials, never agent names.** DRAWN = the person on Rev A; rev-log BY = the person who requested the change (`drawing/DRAWING-RULES.md` rule 32). They come from `~/.drawing-initials` (or env `DRAWING_INITIALS`); if missing and you are an agent (no terminal) the tool stops - ask the maintainer for the requester's initials, never guess or use "Claude" / "SteveCAD".
 
 ## Checks before a PR
 - `.venv/bin/python -m pytest -q` (repo tests) and the checks for the files you touched.
