@@ -128,6 +128,7 @@ def balloon(sh,c,num,anchor,r=4.0,note=None,side=None,th=2.2):
     d=a-c; L=np.linalg.norm(d)
     if num is not None:
         sh.circle(c,r,'tb',n=48); sh.txt(c[0],c[1],str(num),h=3.2,bold=True)
+        sh.anch['balloon'].setdefault(num,[]).append((c,r))
         if L>r: sh.line(c+d/L*r,a,'dim')
     else:
         sh.line(c,a,'dim')
@@ -275,7 +276,7 @@ def bom_table(sh,items,x1,ytop,colw=(9,9,44,80,40),h=2.0,title='BILL OF MATERIAL
     xs=np.cumsum([x0]+list(colw))
     for i,hd in enumerate(heads): sh.txt((xs[i]+xs[i+1])/2,y-rh*0.6,hd,h=h,bold=True)
     y-=rh*1.2
-    for r in rows:
+    for it,r in zip(items,rows):
         wrapped=[textwrap.wrap(str(c),max(3,int(colw[i]/(h*0.80))))or[''] for i,c in enumerate(r)]
         nl=max(len(w) for w in wrapped); hh=rh*(1+0.75*(nl-1))
         sh.pl([(x0,y),(x1,y),(x1,y-hh),(x0,y-hh)],'thin',closed=True)
@@ -283,6 +284,7 @@ def bom_table(sh,items,x1,ytop,colw=(9,9,44,80,40),h=2.0,title='BILL OF MATERIAL
             t='\n'.join(w)
             if i<2: sh.txt((xs[i]+xs[i+1])/2,y-hh/2,t,h=h)
             else: sh.txt(xs[i]+1,y-hh/2,t,h=h,ha='left')
+        sh.anch['bom'][it['item']]=(x0,y-hh,x1,y)
         y-=hh
     for xx in xs[1:-1]: sh.line((xx,ytop),(xx,y),'thin')
     sh.pl([(x0,ytop),(x1,ytop),(x1,y),(x0,y)],'tb',closed=True)
@@ -430,7 +432,7 @@ def make_assembly(spec,out_pdf,png_prefix=None):
     info=dict(title=spec['title'],pn=spec['pn'],material='SEE BOM',source=spec.get('source',''),project=spec.get('project'),drawn=spec.get('drawn'))
     if spec.get('tol'): info['tol']=spec['tol']
     # ---- sheet 1
-    revrows,rev,_=resolve_revlog(spec,spec.get('file'))
+    revrows,rev,revsrc=resolve_revlog(spec,spec.get('file'))
     info.update(rev=rev or '-',revlog=revrows,drawn=spec['_drawn'])
     sh=Sheet(); occ=Occ(); occ.rects=sh.rects
     rlr=revlog_rect(revrows)      # rev log top right; BOM starts below it
@@ -516,6 +518,7 @@ def make_assembly(spec,out_pdf,png_prefix=None):
     if spec.get('notes'): notes_block(sh,14,ry0-2,spec['notes'],h=2.2,width=130)
     info1=dict(info,scale=scale_str(s))
     frame(sh,info1,1,nsheets)
+    sh.anch['view'].update(V); sh.anch['view']['iso']=iso
     sheets.append(sh)
     # ---- label sheets: one view, every fuse / relay ballooned with the circuit it serves, every harness wire
     #      connection point labelled with the harness drawing's wire-end label (DRAWING-RULES 27, 28)
@@ -538,10 +541,13 @@ def make_assembly(spec,out_pdf,png_prefix=None):
         frame(sh,dict(info,scale=scale_str(sc)),len(sheets)+1,nsheets)
         sheets.append(sh)
     add_stage_sheets(sheets,items,spec.get('stage_sheets',[]),ctx,info,nsheets,log,iso=spec.get('iso','iso'),notes=spec.get('stage_notes'))
+    import revmarks as _RM
+    rm=_RM.apply(spec,sheets,rev,revsrc if revsrc and os.path.isfile(str(revsrc)) else None)
+    _RM.warn_if_missing(spec,rev,rm)
     render(sheets,out_pdf,None,png_prefix)
     want=[it['item'] for it in items if it.get('shapes') and not it.get('hide_in_asm') and not it.get('no_balloon')]
     nb=[i for i in want if i not in log.ballooned]
-    return write_checks(out_pdf,spec['pn'],log,spec.get('notes'),info.get('tol'),dict(not_ballooned=nb))
+    return write_checks(out_pdf,spec['pn'],log,spec.get('notes'),info.get('tol'),dict(not_ballooned=nb,**rm))
 
 def byno(items,i):
     for it in items:

@@ -36,7 +36,7 @@ TH=3.0  # standard text height mm
 DEFAULT_TOL="DIMENSIONS ARE IN MILLIMETERS\nTOLERANCES:\n  X     ±0.5      X.X  ±0.2\n  X.XX  ±0.05    ANGLES ±0.5°\nBREAK SHARP EDGES 0.2-0.4\nSURFACE FINISH Ra 3.2 µm\nINTERPRET PER ASME Y14.5-2018"
 
 class Sheet:
-    def __init__(s): s.items=[]; s.rects=[]
+    def __init__(s): s.items=[]; s.rects=[]; s.anch=dict(balloon={},bom={},note={},view={})   # anch: where things are, for revmarks
     def pl(s,pts,sty='thin',closed=False): s.items.append(('pl',np.asarray(pts,float),sty,closed))
     def line(s,a,b,sty='thin'): s.pl([a,b],sty)
     def circle(s,c,r,sty='thin',n=72):
@@ -653,7 +653,9 @@ def notes_block(sh,x,y,notes,h=2.6,title='NOTES:',width=136):
     notes=[textwrap.fill(n.replace('\n',' '),nc,subsequent_indent='     ') for n in notes]
     for i,n in enumerate(notes,1):
         sh.txt(x,yy,f"{i}.  {n}",h=h,ha='left',va='top')
-        yy-=h*1.6*(n.count('\n')+1)+1.0
+        nh=h*1.6*(n.count('\n')+1)
+        sh.anch['note'][i]=(x,yy-nh,x+_tw(f"{i}.  {n}",h),yy)
+        yy-=nh+1.0
     return yy
 
 # ---------------- drawing rule report ----------------
