@@ -163,3 +163,18 @@ def test_wire_label_anchored_on_its_terminal(tmp_path):
     rep = asm.make_assembly(spec, str(tmp_path / 't.pdf'))
     lab = [v for v in rep['balloon_views'] if v['view'].startswith('LABELS')][0]
     assert lab['hidden'] == []
+
+
+def test_projected_lines_outside_the_part_box_are_dropped():
+    """An HLR artifact line far outside the part is dropped; every real line of the part is kept."""
+    b = Box(20, 10, 5)
+    c, r, u = dwg.basis(*dwg.VIEWDIR['front'])
+    real = [np.array([[-10.0, -2.5], [10.0, -2.5]]), np.array([[0.0, 0.0], [5.0, 2.0]])]
+    spike = np.array([[3.0, 1.0], [-300.0, 400.0], [3.2, 1.1]])
+    kept, n = dwg.lines_in_box(real + [spike], b, r, u)
+    assert n == 1 and len(kept) == 2
+
+
+def test_project_keeps_every_line_of_a_normal_part():
+    vis, hid, _ = dwg.project(rounded_block(), 'front')
+    assert vis and dwg.LAST_PROJECT_STATS['outside_box'] == 0
