@@ -386,7 +386,10 @@ def make_part(spec,out_pdf,out_dxf=None,png_prefix=None):
             sh.txt(v.cx,side_pos(v,'below',tiers[(id(v),'below')]+1)+2,lbl,h=3.5,bold=True,va='top')
     info=dict(title=spec['title'],pn=spec['pn'],material=spec['material'],scale=scale_str(s),source=spec.get('source',''),rev=rev or '-',revlog=revrows,project=spec.get('project'),drawn=spec.get('drawn'))
     if spec.get('tol'): info['tol']=spec['tol']
-    frame(sh,info,1,1)
+    groups=spec.get('stage_sheets') or []      # step sheets (install steps) after the shop sheet: DRAWING-RULES 31
+    import asm as _A0
+    nst=_A0.stage_sheet_count(groups)
+    frame(sh,info,1,1+nst)
     nb=overlap_warnings(sh,rlr)
     if nb: print(f"WARNING: {nb} view/dim lines run into the rev log table on {spec['pn']}")
     spec['_revlog_src']=revsrc; spec['_view_stats']={k:getattr(v,'stats',{}) for k,v in V.items()}
@@ -394,9 +397,18 @@ def make_part(spec,out_pdf,out_dxf=None,png_prefix=None):
     notes_block(sh,14,72,notes,h=2.3,width=128)
     for dt in spec.get('details',[]):
         draw_detail(sh,V[dt['parent']],dt)
-    render([sh],out_pdf,out_dxf,png_prefix)
-    spec['_checks']=write_checks(out_pdf,spec['pn'],None,notes,info.get('tol'),
-                                 dict(tangent_lines_trimetric=len(V['iso'].tan)))
+    sheets=[sh]; log=None
+    if groups:
+        import asm as _A
+        log=_A.BalloonLog()
+        _A.add_stage_sheets(sheets,spec['stage_items'],groups,spec.get('stage_context',[]),info,1+nst,log,
+                            iso=spec.get('iso','iso'),notes=spec.get('stage_notes'))
+    render(sheets,out_pdf,out_dxf,png_prefix)
+    extra=dict(tangent_lines_trimetric=len(V['iso'].tan))
+    if log is not None:
+        want=[it['item'] for it in spec['stage_items'] if it.get('shapes') and not it.get('no_balloon')]
+        extra['not_ballooned']=[i for i in want if i not in log.ballooned]
+    spec['_checks']=write_checks(out_pdf,spec['pn'],log,notes,info.get('tol'),extra)
     return s
 
 def _detail_body(sh,pv,dt,px,py):
