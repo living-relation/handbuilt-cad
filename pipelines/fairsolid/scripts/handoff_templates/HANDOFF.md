@@ -1,12 +1,12 @@
 # Fairsolid CAD handoff (for Grok Bot)
 
 Written 2026-10-15 for Grok Bot. You have no access to our chats or tools, so everything you need is in
-this zip. Read this file first, then `RULES.md`, then `TASK-TEMPLATE.md` (Dan fills one in per job).
+this zip. Read this file first, then `RULES.md`, then `TASK-TEMPLATE.md` (the owner fills one in per job).
 `MANIFEST.md` lists every file.
 
 ## 1. What Fairsolid is
 
-Fairsolid is a private helper tool, not a product. It turns Dan's 3D scans (STL / OBJ / PLY / XYZ) into
+Fairsolid is a private helper tool, not a product. It turns the owner's 3D scans (STL / OBJ / PLY / XYZ) into
 clean groundwork for CAD:
 
 - **Cleanup and scale check**: load, repair, smooth away scan texture, confirm the size is true.
@@ -18,7 +18,7 @@ clean groundwork for CAD:
 
 Fairsolid alone does NOT make the finished machined-looking solid. **You build the final parts yourself as
 parametric build123d scripts**, using Fairsolid's numbers and the scan frame. The worked example
-(`worked-example/fuel_hanger_billet_1014/rev7/`) is exactly that: `hanger_billet.py`.
+(`worked-example/<job>/rev7/`) is exactly that: `hanger_billet.py`.
 
 Goals: final models look like perfect machined parts (straight flats, true rounds, clean sizes), scan
 texture is never carried into a model, and scan scale is locked.
@@ -52,7 +52,7 @@ uv pip install --python .venv-cad\Scripts\python.exe -r env\requirements-build12
 
 (`-e ".[test]"` installs from `fairsolid\pyproject.toml`: numpy, scipy, trimesh, pymeshlab, cadquery,
 pyransac3d, typer, rich, jinja2, networkx, manifold3d, shapely, fast-simplification, rtree 1.4.1, pytest 9.1.1.
-If you want the exact versions Dan's machine used, add
+If you want the exact versions the owner's machine used, add
 `-r ..\env\requirements-fairsolid-lock.txt` instead of relying on the loose ranges.)
 
 Rules for running (also in `RULES.md`): always use the venv; never install into the system Python; do not
@@ -99,25 +99,25 @@ runs\<job>\
         <job>.py              the build123d script: named numbers at the top, one build, exports
         <part>.step / .stl    one file per part, plus the assembly
         <job>_report.json     mass, clearances, per-part facts written by the script
-        SUMMARY.md            what changed vs the last rev, Dan's answers, checks, open items
+        SUMMARY.md            what changed vs the last rev, the owner's answers, checks, open items
         2d_bottom_view.png  2d_trimetric.png  (+ any other 2D drawings)
         rebuild.sh / checks.sh / build.log
 ```
 
 The script's header comment records the history, the measured interfaces kept from the scan, and what
-changed. `runs\fuel_hanger_billet_1014\` is the example. The newest revision is `rev7`; `rev2`..`rev6` are
+changed. `runs\<job>\` is the example. The newest revision is `rev7`; `rev2`..`rev6` are
 not in this zip (superseded).
 
 ## 4. Build a part (the worked example, verified)
 
 ```powershell
-cd worked-example\fuel_hanger_billet_1014\rev7
+cd worked-example\<job>\rev7
 ..\..\..\.venv-cad\Scripts\python.exe hanger_billet.py > build.log 2>&1
 ```
 
 Takes about 1.5 minutes. Expected last lines: `"billet_mass_g": 511.0`. `build.log` starts with
 `edge breaks: 16 edges done, 8 failed` (known and harmless: 8 optional edge breaks the kernel refuses, the same
-in Dan's copy) and `note: foot came out as 1 pieces` (means one piece, fine). It writes `hanger_*.step`,
+in the owner's copy) and `note: foot came out as 1 pieces` (means one piece, fine). It writes `hanger_*.step`,
 `hanger_*.stl` for every part and `hanger_report.json`. Output must match the copies already in the folder.
 
 How to write a new one: copy `hanger_billet.py`, change the named constants at the top (interfaces first),
@@ -125,7 +125,7 @@ rebuild, check, render. Keep numbers named; keep every part its own solid; expor
 
 ## 5. Render the 2D pictures (bottom + trimetric)
 
-Dan gets **2D renders: a bottom view and a trimetric view** (PNG), not CAD files to open.
+The owner gets **2D renders: a bottom view and a trimetric view** (PNG), not CAD files to open.
 
 Generic helper (any STEP / STL, same camera for every model):
 
@@ -138,7 +138,7 @@ Generic helper (any STEP / STL, same camera for every model):
 (about 1 minute for a few parts). Check the picture yourself: right way up, nothing missing, whole part in frame.
 Re-render whenever the model changes.
 
-Hanger example, hand-tuned drawings (dimensioned top view, sections, side view, OEM-scan overlay, bottom,
+Worked example, hand-tuned drawings (dimensioned top view, sections, side view, OEM-scan overlay, bottom,
 trimetric): from the rev folder, with `scan_canon.ply` one folder up:
 
 ```powershell
@@ -163,8 +163,8 @@ In a build123d script (from `hanger_billet.py`):
 
 ```python
 from build123d import export_step, export_stl
-export_step(part, "hanger_top_plate.step")                       # exact geometry, what Dan builds from
-export_stl(part, "hanger_top_plate.stl", tolerance=0.02, angular_tolerance=0.2)   # mesh, for printing / viewing
+export_step(part, "<part>.step")                       # exact geometry, what gets built from
+export_stl(part, "<part>.stl", tolerance=0.02, angular_tolerance=0.2)   # mesh, for printing / viewing
 ```
 
 - One file per part, plus one assembly file. Name them so the path tells what it is.
@@ -177,50 +177,50 @@ export_stl(part, "hanger_top_plate.stl", tolerance=0.02, angular_tolerance=0.2) 
 ## 7. Verify before you hand anything back
 
 1. **Each part is one valid solid:**
-   `.venv-cad\Scripts\python.exe tools\check_step.py hanger_top_plate.step hanger_foot.step ...`
+   `.venv-cad\Scripts\python.exe tools\check_step.py <part_a>.step <part_b>.step ...`
    (`OK` = 1 solid, valid; `BAD` = floating pieces or invalid. An assembly file shows several solids, that is fine;
    check the part files.)
 2. **Clearances and fit:** overlaps and minimum gaps between parts (the example script writes them to
    `hanger_report.json`: `overlap_mm3` must be 0.0 unless the summary explains it; `min_gap_mm` as designed).
-3. **Rule gates from `RULES.md`:** 3 mm live-to-live, crimp-sized holes, bend radius, PA12 wall / cavity rules,
+3. **Rule gates from `RULES.md`:** the electrical, hole, printed-part and sealing rules that apply to the job,
    2x weight load stress table, sealing faces. Show each as a small table in `SUMMARY.md`.
 4. **Manufacturing check:** the example used `handbuilt-models\tools\cnc_check.py` (sharp inside corners,
-   thin walls, flat-end-mill floors). That script is NOT in this zip (it lives in Dan's WSL project); its
+   thin walls, flat-end-mill floors). That script is NOT in this zip (it lives in a separate project); its
    results for rev 7 are in `cnc_*.txt` / `cnc_*.json`. Without it, check minimum wall by hand and list it.
 5. **Pictures:** `2d_bottom_view.png` and `2d_trimetric.png` exist, are current and look right.
 6. **Lists:** every part has its true file path and a trimetric; every buyable part has a real part number
    and live link (`RULES.md` rules 1 and 3).
 7. **Fairsolid itself** (only if you changed its code): from `fairsolid\`,
    `.venv\Scripts\python.exe tests\make_fixture.py` once (makes the test scan in `tests\data\`; use the venv's
-   Python, it needs cadquery), then `.venv\Scripts\python.exe -m pytest -q` (Fairsolid's AGENTS.md says about 8 minutes; in a fresh unzipped copy on
-   Dan's machine it had NOT finished after 17 minutes when we stopped it, so run the test files for the stage you
+   Python, it needs cadquery), then `.venv\Scripts\python.exe -m pytest -q` (Fairsolid's AGENTS.md says about 8 minutes; in a fresh unzipped copy it had NOT
+   finished after 17 minutes when we stopped it, so run the test files for the stage you
    changed rather than the whole suite). Fast example, about
    25 seconds: `.venv\Scripts\python.exe -m pytest tests\test_flat_check.py tests\test_round_check.py tests\test_pass_check.py -q`.
    KNOWN: tests that read `work\clean.ply` (for example `tests\test_primitives.py`) need a leftover file from an older
    run layout that is not in git, so they error in a fresh copy. That is not a code failure.
 
-## 8. Hand-back checklist (what Dan expects)
+## 8. Hand-back checklist (what the owner expects)
 
 - New folder `revN` (or new job folder), nothing earlier touched.
 - Script, per-part STEP + STL, report JSON, `SUMMARY.md`, the 2D PNGs.
-- `SUMMARY.md` states: what Dan asked, what you built, which of Dan's rules applied and how each was met
+- `SUMMARY.md` states: what the owner asked, what you built, which of the owner's rules applied and how each was met
   (with numbers), open questions as multiple choice (A / B / C, recommendation marked), the true file paths.
 - Plain words, short, no jargon. Lead with the answer.
 
 ## 9. Other jobs in the original `runs\` (not included, listed so you know they exist)
 
-All are Fairsolid scan runs on Dan's PC in the archived fairsolid checkout's `runs\` (moved there 2026-10-17). Each is 90 to 190 MB of scan
-and stage files, so they are not in this zip. Ask Dan if you need one.
+All are Fairsolid scan runs in the archived fairsolid checkout's `runs\` (moved there 2026-10-17). Each is 90 to 190 MB of scan
+and stage files, so they are not in this zip; request one in the task if you need it.
 
 | Run | What it is |
 |---|---|
-| `knuckle`, `knuckle_1009` | Rear knuckle scan, 3M faces. Closed part. Hand-built model attempts were v2 (best fit, median 0.55 mm) and v4 (one valid solid). |
+| `knuckle`, `knuckle_1009` | Suspension knuckle scan, 3M faces. Closed part. |
 | `bezel_1009` | Bezel scan (about 1M faces). Closed part. |
 | `dash_housing`, `dash_housing_1009` | Dash housing scan (131k faces). Closed part. |
-| `pedal_adapter` | Subaru pedal adapter. Done (hand-built parametric part). |
-| `pump_hanger_1009` | OEM fuel pump hanger scan; its canonical frame is `scan_canon.ply` of the worked example. |
-| `fuel_pump`, `fuel_pump_1009` | Fuel pump scan. |
-| `oil_catch`, `celica_catch_1009` | Reference scans (open space, `refscan`): the Audi oil catch bracket, and the engine bay around the catch can. |
+| `pedal_adapter` | Pedal adapter. Done (hand-built parametric part). |
+| `pump_hanger_1009` | The original part the worked example replaces; its canonical frame is `scan_canon.ply` there. |
+| `fuel_pump`, `fuel_pump_1009` | Pump scan. |
+| `oil_catch`, `celica_catch_1009` | Reference scans (open space, `refscan`): a bracket and the space around it. |
 | `scan0608_1009`, `current`, `diag` | Trial and diagnostic runs. |
 
 ## 10. Pitfalls we hit
@@ -228,16 +228,16 @@ and stage files, so they are not in this zip. Ask Dan if you need one.
 - Booleans on spline-heavy solids get slow or produce invalid / split solids. Prefer plain geometry (planes,
   cylinders, simple fillets). Check solid count after every join.
 - Never trust a "success" message alone: run `check_step.py` and look at the picture.
-- `rebuild.sh`, `checks.sh`, `views.sh` in the example folder were written for Dan's WSL; the commands inside show
+- `rebuild.sh`, `checks.sh`, `views.sh` in the example folder were written for the original WSL setup; the commands inside show
   the order (build, cnc_check, views) but the paths do not apply on your machine.
 - No Fusion. No throwaway files at the projects root.
 
 ## 11. Skipped on purpose (unclear or not available when this zip was made)
 
 - Knuckle, bezel and dash_housing run folders: too big (listed in section 9). No recipes for them are included.
-- Earlier hanger revisions (rev2 to rev6): superseded by rev7.
-- `cnc_check.py` and `views.py` (handbuilt-models, Dan's WSL project): not reachable when the zip was made. Their rev 7 output is included.
+- Earlier revisions of the worked example (rev2 to rev6): superseded by rev7.
+- `cnc_check.py` and `views.py` (a separate project): not reachable when the zip was made. Their rev 7 output is included.
 - A full Fairsolid test-suite result: it did not finish in our check (section 7).
-- Dan's rules with no written source in the repos (one solid, new version not overwrite, 2x weight load, 2D-render output): written in `RULES.md` from his handoff request; confirm with him if unsure.
+- The owner's rules with no written source in the repos (one solid, new version not overwrite, 2x weight load, 2D-render output): written in `RULES.md` from the handoff request; confirm with the owner if unsure.
 - Fusion files, the project's harness / wiring / CAN rules, and its other CAD models: not needed for Fairsolid jobs.
 - `scripts\batch_eval.py` from the source repo: it holds paths into the user profile.

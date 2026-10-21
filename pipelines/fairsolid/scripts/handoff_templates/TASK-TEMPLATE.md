@@ -1,6 +1,6 @@
 # TASK: <short job name>
 
-Dan fills this in for each new CAD job and gives it to Grok Bot with the reference files.
+The owner fills this in for each new CAD job and gives it to Grok Bot with the reference files.
 Copy this file to `runs\<job>_<MMDD>\TASK.md` and fill every section. Leave a line as `none` if it does not apply.
 Read `HANDOFF.md` and `RULES.md` first.
 
@@ -23,7 +23,7 @@ One or two plain sentences. What is the part for, what must it do, where does it
 | Photo | `C:\...` | e.g. shows the mounting side |
 | Drawing / datasheet | `C:\...` or link | |
 
-Dimensions Dan knows are true (mm, say if they are inches). Never rescale a scan to fit these; report a mismatch.
+Dimensions the owner knows are true (mm, say if they are inches). Never rescale a scan to fit these; report a mismatch.
 
 | Dimension | Value | How sure (measured / from datasheet / guess) |
 |---|---|---|
@@ -35,7 +35,7 @@ Interfaces that must not change (mounting holes, bolt circle, connector position
 
 ## 3. Parts, with part numbers
 
-Every purchased part must be a real, buyable part number with a live link (RULES 1). List what Dan already has.
+Every purchased part must be a real, buyable part number with a live link (RULES 1). List what the owner already has.
 
 | Part | Part number | Maker / source link | Qty | On hand? | Notes |
 |---|---|---|---|---|---|
@@ -61,7 +61,7 @@ Tick the ones this job must meet (all of `RULES.md` always applies; these are th
 - [ ] Bend radius on cables (13): cables = ____
 - [ ] Machined from: ____ (material / stock size) / Printed in: ____
 
-Anything else Dan wants that is not in `RULES.md`:
+Anything else the owner wants that is not in `RULES.md`:
 
 >
 
@@ -78,6 +78,6 @@ Anything else Dan wants that is not in `RULES.md`:
 **Hand back to:** (path / person)
 **Needed by:** (date, or "no rush")
 
-## 6. Open questions from Dan to Grok (optional)
+## 6. Open questions from the owner to Grok (optional)
 
 >

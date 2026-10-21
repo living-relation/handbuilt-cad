@@ -1,4 +1,4 @@
-"""Final images for Daniel: shaded model next to the plain grey scan, same camera."""
+"""Final images for the owner: shaded model next to the plain grey scan, same camera."""
 import numpy as np, trimesh
 from common import load_scan, render
 import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt, matplotlib.image as mpimg

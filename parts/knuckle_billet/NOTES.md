@@ -262,7 +262,7 @@
 
 ## Chunk 13: other methods for a lighter passing knuckle
 Saved: best, middle and easy (STEP, STL, renders) and MACHINING.md committed on **main** in WSL handbuilt-models. **No git remote is configured, so nothing was pushed.**
-Backup: C:\projects\_archive\knuckle_billet_final_2026-10-09.zip (31 entries, 2.94 MB).
+Backup: knuckle_billet_final_2026-10-09.zip in the owner's archive folder (31 entries, 2.94 MB).
 
 Methods considered (never loosening the loads or SF targets):
 - **a. Parameter optimisation driving the real Gmsh + CalculiX** (picked this chunk). Start with one-at-a-time sensitivities from best

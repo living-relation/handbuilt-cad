@@ -33,7 +33,6 @@ TEMPLATES = HERE / "handoff_templates"
 MAX_MB = 50
 SKIP_PARTS = {"__pycache__", ".venv", ".venv-cad", ".pytest_cache", "out", ".git", "work"}
 # DECISIONS rules that bind CAD work (see reference/ in the zip)
-RULE_NUMBERS = [38, 67, 73, 74, 76, 77, 79, 81, 82, 83, 85, 93, 94]
 SECRET_RE = re.compile(
     r"(sk-[A-Za-z0-9]{20,}|gh[pousr]_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|xox[baprs]-[A-Za-z0-9-]{10,}|"
     r"-----BEGIN [A-Z ]*PRIVATE KEY|(api[_-]?key|secret|passwd|password|bearer)\s*[:=]\s*['\"]?[A-Za-z0-9_\-]{12,})",
@@ -119,11 +118,11 @@ DESCRIBE = [
     ("fairsolid/src/*", "Fairsolid source code (pipeline, stages, CLI)."),
     ("fairsolid/tests/make_fixture.py", "Creates the test scan and nominal part in tests/data."),
     ("fairsolid/tests/*", "Fairsolid test suite (about 8 minutes in full)."),
-    ("worked-example/*/scan_canon.ply", "The OEM hanger scan in its canonical frame (rotated / moved only, never scaled); the overlay drawing reads it."),
-    ("worked-example/*/SUMMARY.md", "Rev notes: Dan's answers, what changed, 2 g stress table, checks, open items."),
+    ("worked-example/*/scan_canon.ply", "The original part's scan in its canonical frame (rotated / moved only, never scaled); the overlay drawing reads it."),
+    ("worked-example/*/SUMMARY.md", "Rev notes: the owner's answers, what changed, 2 g stress table, checks, open items."),
     ("worked-example/*/hanger_billet.py", "THE RECIPE: the build123d script (named numbers at the top) that makes every part."),
     ("worked-example/*/hanger_billet_assembly.*", "Whole billet assembly (STEP exact, STL mesh)."),
-    ("worked-example/*/hanger_with_pump_fittings.stl", "Display mesh: hanger with pump and fitting envelopes."),
+    ("worked-example/*/hanger_with_pump_fittings.stl", "Display mesh: the parts with the envelopes of what fits on them."),
     ("worked-example/*/hanger_report.json", "Script output: mass, clearances and overlaps between parts."),
     ("worked-example/*/hanger_*.step", "One part, exact geometry (what gets built from)."),
     ("worked-example/*/hanger_*.stl", "The same part as a mesh."),
@@ -131,7 +130,7 @@ DESCRIBE = [
     ("worked-example/*/cnc_*.json", "The same manufacturing check as data."),
     ("worked-example/*/2d_bottom_view.png", "Deliverable: bottom view render."),
     ("worked-example/*/2d_trimetric.png", "Deliverable: trimetric render."),
-    ("worked-example/*/2d_*.png", "Extra 2D drawing for Dan (dimensions, section, side view, scan overlay)."),
+    ("worked-example/*/2d_*.png", "Extra 2D drawing for the owner (dimensions, section, side view, scan overlay)."),
     ("worked-example/*/top_plate_ports.*", "Machinist hole drawing of the top plate."),
     ("worked-example/*/renders_2d.py", "Makes the six 2D drawings from the STLs and drawing_geom.json."),
     ("worked-example/*/port_drawing.py", "Makes the machinist hole drawing from drawing_geom.json."),
@@ -141,7 +140,7 @@ DESCRIBE = [
     ("worked-example/*/placement.json", "Result of place.py."),
     ("worked-example/*/envelope.py", "Computes the in-tank envelope used for fit checks."),
     ("worked-example/*/render.py", "Fairsolid render_pair picture (scan above, shaded result below)."),
-    ("worked-example/*/*.sh", "Dan's WSL command sequence (build, check, view); paths do not apply, the order does."),
+    ("worked-example/*/*.sh", "the owner's WSL command sequence (build, check, view); paths do not apply, the order does."),
     ("worked-example/*/build.log", "Output of the last successful build."),
 ]
 
@@ -171,7 +170,7 @@ def keep_source(rel):
     return True
 
 
-def collect(root, repo, job, date_str, workdir, runs=None, rules_file="docs/DECISIONS.md", numbers=()):
+def collect(root, repo, job, date_str, workdir, runs=None, rules_file=None, numbers=()):
     items = {}  # arcname -> source Path or bytes
 
     def add(arc, src):
@@ -204,7 +203,11 @@ def collect(root, repo, job, date_str, workdir, runs=None, rules_file="docs/DECI
     add("reference/project-DECISIONS-cad-rules.md", workdir / "rules.md")
     for src_path, arc in (("cad/README.md", "reference/project-cad-README.md"),
                           ("cad/render_trimetric.py", "reference/project-render_trimetric.py")):
-        text, _ = repo_show(repo, src_path)
+        try:
+            text, _ = repo_show(repo, src_path)
+        except SystemExit:
+            print(f"note: {src_path} not in the project repo; {arc} skipped")
+            continue
         p = workdir / Path(arc).name
         p.write_text(text, encoding="utf-8")
         add(arc, p)
@@ -258,9 +261,8 @@ def main():
                     help="folder holding the run folders (default: FAIRSOLID_RUNS, else <root>/runs)")
     ap.add_argument("--rules-repo", type=Path, default=os.environ.get("RULES_REPO") or None,
                     help="project repo checkout whose CAD rules go in the zip (default: RULES_REPO)")
-    ap.add_argument("--rules-file", default="docs/DECISIONS.md", help="decision log path inside --rules-repo")
-    ap.add_argument("--rule-numbers", default=",".join(map(str, RULE_NUMBERS)),
-                    help="comma-separated R-numbers of the CAD rules to copy (default: RULE_NUMBERS)")
+    ap.add_argument("--rules-file", required=True, help="decision log path inside --rules-repo (no default)")
+    ap.add_argument("--rule-numbers", required=True, help="comma-separated R-numbers of the CAD rules to copy (no default)")
     ap.add_argument("--out", type=Path, default=None, help="output folder (default: <root>/handoff)")
     ap.add_argument("--copy-to", type=Path, default=None)
     a = ap.parse_args()

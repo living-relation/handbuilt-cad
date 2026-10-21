@@ -1,6 +1,7 @@
 """Shared helpers: load the scan in the Fairsolid part frame, render with VTK offscreen."""
 import json, numpy as np, trimesh
-RUN = r"C:\projects\_archive\2026-10-17-fairsolid\fairsolid\runs\pedal_adapter"  # fairsolid run (archived 2026-10-17, docs/FAIRSOLID.md)
+import os
+RUN = os.path.join(os.environ.get("FAIRSOLID_RUNS", "runs"), "pedal_adapter")  # fairsolid run folder (FAIRSOLID_RUNS; older runs are archived, docs/FAIRSOLID.md)
 
 def load_scan():
     m = trimesh.load(RUN + r"\10_clean.ply", process=False)

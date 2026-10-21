@@ -21,7 +21,7 @@ On top of that, some parts get:
 | Raw scans | Creality Scan folders on the PC, OneDrive, Google Drive | Not in git; listed in `scans/INDEX.md` |
 | Simulation tools | WSL (CalculiX, Gmsh, Elmer, OpenFOAM, ParaView, `~/simvenv`) | Install script in `sim/scripts/` |
 | FreeCAD | Windows `<freecad_dir>` (`[paths] freecad_dir`, default `<Projects>\_tools\FreeCAD`) | Optional front end |
-| Older trials | `C:\projects\_scratch\scan2param-trials`, `%USERPROFILE%\agent-tools\` | Historical; not needed to use this repo |
+| Older trials | the owner's scratch folders (outside this repo) | Historical; not needed to use this repo |
 | Backups | git history | Repo work is backed up by git; the projects `_archive\` folder holds obsolete work only (owner's OK first) |
 | Agent box | A Linux machine the AI agent works on | Some heavy runs happen there and results get copied back here |
 

@@ -1,7 +1,7 @@
 # The owner's binding CAD rules
 
 These rules are the owner's. Follow all of them on every CAD job. If a job's TASK file seems to break one,
-stop and ask Dan; do not quietly work around it.
+stop and ask the owner; do not quietly work around it.
 
 Where a rule has a written source it is named ("decision log" = a numbered binding rule in the project
 repo's decision log, given to make_handoff.py with --rules-repo / --rules-file). The verbatim text of the
@@ -24,11 +24,11 @@ the nearest written evidence is named instead.
    AGENTS.md: never reuse a `runs\` folder.)
 3. **Every part is listed with its true file path and a trimetric picture.** Every model gets one row in
    the job's parts list: what it is, status / rev, the full real path of its STEP / STL, and one trimetric
-   PNG (same camera and style for all models). the owner must be able to find the file any time he builds it.
+   PNG (same camera and style for all models). The owner must be able to find the file any time they build it.
    (decision log, decision log.)
 4. **Output for the owner = 2D renders: a bottom view and a trimetric view** (PNG), shaded, plus the numbers.
    Not a link to a CAD program, not a screenshot of an unopened file. See `tools/render_views.py`.
-   (the owner, handoff request; the rev 7 hanger deliverable `2d_bottom_view.png` + `2d_trimetric.png`.)
+   (the owner, handoff request; the worked example's `2d_bottom_view.png` + `2d_trimetric.png`.)
 5. **Fusion is not used.** Models are build123d scripts. Do not create Fusion documents (the owner has a 10
    editable-document limit, decision log). Keep each job's files inside its own folder; nothing loose at the
    projects root (decision log).
@@ -50,8 +50,7 @@ the nearest written evidence is named instead.
      live parts.
 8. **Stress test = 2x the part's weight load.** Check each load-carrying part for a load of twice the weight
    it carries, applied in every direction that matters, and report peak stress, safety factor and deflection
-   in a small table. (the owner, handoff request; rev 7 hanger `SUMMARY.md` section 3: "design load = 2 x pump
-   weight = 8.7 N", safety factors 11.3 / 74 / 248.) Do not substitute a harsher or softer load without
+   in a small table. (the owner, handoff request; the worked example's `SUMMARY.md` section 3 shows the table.) Do not substitute a harsher or softer load without
    asking.
 
 ## 3. Holes, threads, sealing
@@ -59,19 +58,18 @@ the nearest written evidence is named instead.
 9. **Through-holes vs threads.**
    - Never cut a hole through a sealing face unless it is a clearance hole for a fitting that seals on it.
    - Tapped holes are blind, tapped from the side that is not a sealing face, and leave wall behind them
-     (the hanger leaves 1.8 mm to the outside face). the owner's rule on the hanger: "nothing machined through".
+     (at least 1.5 mm to the outside face). Default: nothing machined through.
    - In printed parts: no printed threads (rule 7); clearance hole + heat-set insert or captured nut.
    - Machined parts: blind pockets only unless a through feature is truly needed and the owner agreed.
-   (Hanger rev 7 `SUMMARY.md` sections 1-2; decision log.)
+   (Worked example `SUMMARY.md` sections 1-2; decision log.)
 10. **Sealing faces.** A face that seals (gasket, O-ring, sealing washer) is flat, at least as large as the
     sealing washer, Ra 1.6 or better, on BOTH sides of a pass-through, with the hole edges broken 0.3 mm
-    max and no burrs. Leave enough thickness for the fitting's grip range (hanger: 0.4 mm spot faces leave
-    7.0 mm). Say on the drawing which faces are sealing faces. (Hanger `hanger_billet.py` header and
-    `top_plate_ports.pdf`.)
+    max and no burrs. Leave enough thickness for the fitting's grip range after any spot face. Say on the drawing which
+    faces are sealing faces. (Worked example build script header and port drawing.)
 
 ## 4. Electrical
 
-11. **3 mm live-to-live clearance (decision log).** No two bare live metal parts of DIFFERENT circuits closer than
+11. **3 mm live-to-live clearance, for parts that carry current (decision log).** No two bare live metal parts of DIFFERENT circuits closer than
     3.0 mm, or put a printed barrier between them. Two live parts of ONE circuit are reported but not
     failed (decision log). Live part to plastic or to wire insulation is reported, not failed. Add a gate that
     measures every pair and fails under 3.0 mm.
@@ -95,6 +93,6 @@ the nearest written evidence is named instead.
     asks. `runs\` is not committed to git.
 17. **Never rescale a scan.** If a size or units check stops a run, report it; do not fix it with a scale
     factor. `fit --units` only picks the hole-size table.
-18. Pictures for Dan: the shaded result next to a plain grey scan render from the same angles. No heat maps
+18. Pictures for the owner: the shaded result next to a plain grey scan render from the same angles. No heat maps
     or coloured-deviation images. Still report the numbers (median, p95, % within tolerance).
 19. Do not commit memory files or `CLAUDE.local.md`. Do not delete project files unless the owner asks.
