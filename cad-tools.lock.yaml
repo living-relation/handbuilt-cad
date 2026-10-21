@@ -1,0 +1,37 @@
+# CAD / simulation tool pins for handbuilt-cad (moved here from the workstation repo's workstation.lock.yaml on 2026-10-21:
+# Daniel's rule "no CAD tools or CAD skills in the workstation repo; all CAD tools live only in handbuilt-cad").
+# Pins and pointers only: nothing listed here is copied into this repo. setup.sh / setup.ps1 and sim/SIM_TOOLS.md are what
+# install and document them; keep the versions here in step with those. "TBD" = not pinned yet (see open_items).
+schema: 1
+upstream:
+  freecad:
+    version: 1.1.4
+    url: https://github.com/FreeCAD/FreeCAD/releases/download/1.1.4/FreeCAD_1.1.4-Windows-x86_64-py311.7z
+    sha256: 4828741fc91ee37fafcdb97a1abacb18b04ba451ac4372d9ff7a7349b36f4d6d
+    size: 418088341
+    install_to: "{tools}/FreeCAD"   # [paths] freecad_dir in local.toml; skipped if it already exists
+    needs: [7zip]
+  pip_info: { build123d: 0.13.0, cadquery-ocp-novtk: 8.0.1.1.0, trimesh: 5.1.1, numpy: 2.5.3, open3d: 0.20.0, pyvista: 0.49.0 }  # info only; uv.lock wins
+  apt: { calculix-ccx: 2.21-1build1, gmsh: 4.14.0+ds1-1build4, paraview: 6.0.1+dfsg1-7, occt-misc: 7.9.2+dfsg-4 }
+  openfoam: { version: "14", repo: http://dl.openfoam.org/ubuntu, optional: true }
+  elmer: { source: TBD, sha256: TBD, optional: true }   # sim/SIM_TOOLS.md: 26.2.1 built from ElmerCSC source
+  fusion360: { manual: true }
+outside_dependencies:   # listed here only; never installed, built or copied by this repo
+  harness-design-mcp:
+    url: https://app.harness.design/mcp
+    clients: [claude, cursor]
+    enable: "Add the URL as an MCP server in Claude/Cursor, then sign in by hand."
+  fusion-mcp-addin:
+    url: http://127.0.0.1:27182/mcp
+    clients: [claude, cursor]
+    claude_desktop_extension: { id: ant.dir.gh.autodesk.fusion-mcp, version: TBD }
+    enable: "Install Fusion 360, enable Autodesk's MCP add-in (Utilities > Add-ins), optionally add the URL to Claude/Cursor."
+  blender-mcp-addon:
+    source: TBD
+    version: TBD
+    enable: "Install the upstream Blender MCP add-on in Blender (Edit > Preferences > Add-ons)."
+models_dir: "{desktop}/models"   # MODELS_DIR / [paths] models_dir; setup.sh creates it if missing; add-only afterwards
+open_items:
+  - Fusion MCP Claude Desktop extension version
+  - Blender MCP add-on source and version
+  - Elmer source
