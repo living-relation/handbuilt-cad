@@ -10,7 +10,7 @@ Models home (the only one): `[paths] models_dir` in the toolkit repo's `local.to
 
 The project's own rules (AGENTS.md, decision log, revision register) win over this skill wherever they differ.
 
-**A repo with its own CAD rule wins over the models home.** If the project repo says where its CAD is filed (e.g. st185's R67), file it there by that rule and don't publish it to the models home. The models home is for everything else.
+**A repo with its own CAD rule wins over the models home.** If the project repo says where its CAD is filed (for example a rule in its decision log), file it there by that rule and don't publish it to the models home. The models home is for everything else.
 
 ## Where it runs
 Publish straight from the user's machine into the models home, never through the agent's own computer. If that machine is offline, stop and tell the user. On Windows + WSL, write from WSL out to `/mnt/c/...`; never write through `\\wsl.localhost` paths from Windows. If a file must be staged, use a dedicated temp folder outside models (`<cad_staging>/<job>`, from `[paths] cad_staging` / `CAD_STAGING`); only that folder is ever removed.

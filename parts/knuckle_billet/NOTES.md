@@ -2,7 +2,7 @@
 
 ## 2026-10-09 chunk 1 (loads, baseline FEA, plan)
 
-- **Where this ran:** Daniel's PC (WORKSTATION) was offline the whole session, so chunk 1 ran on the agent box in `/workspace/knuckle_billet/`. The PC came back at the end of chunk 1: it was copied to `~/projects/handbuilt-models/knuckle_billet/` in WSL and committed (16f3491). The box copy stays as a backup.
+- **Where this ran:** the owner's PC (WORKSTATION) was offline the whole session, so chunk 1 ran on the agent box in `/workspace/knuckle_billet/`. The PC came back at the end of chunk 1: it was copied to `~/projects/handbuilt-models/knuckle_billet/` in WSL and committed (16f3491). The box copy stays as a backup.
 - **Solver:** CalculiX 2.23 (Debian package unpacked into `/opt/ccx`, with a `/usr/local/bin/ccx` wrapper). The PC has 2.21. Gmsh comes from the pip module 4.15 in `/workspace/kbvenv`, ParaView is pvpython 5.13 (Debian).
 - **Geometry:** `knuckle/v4b/knuckle.step` (OCC volume 934,760 mm3).
   - Gmsh could not mesh the STEP directly: "1D mesh not closed loop", then "impossible to mesh periodic surface" (lofted cast surfaces). Healing the STEP destroyed the solid.
@@ -19,7 +19,7 @@
 - **Interface check:** `check_interface.py` probes 24 checks against the STL: every hole is open and surrounded by material, the eye end faces sit at ±L/2, and the clamp faces sit at x = ±15. Iterations 1-3 pass 24/24.
 - **Junction fillets:** concave edges where arms, lugs and tongue meet the flange faces get an r6 fillet, or r4 where OCC fails, edge by edge. This covers the old braking spike near (-72,10,55) and the it1 spikes at (-26,56,82) and (-63,32,62). It's done one edge at a time, so it's only partial.
 - **Pipeline:** `run_iter.sh <stem>` runs mesh_step.py (Gmsh from the STEP, tet10 with straight-sided midnodes; curved ones gave negative Jacobians), then fea_iter.py, CalculiX, post_iter.py and summarize_iter.py, which writes `iterations.csv`. Loads and supports are the same as the baseline (LOADS.md).
-- **Renders:** `render_solid.py` makes plain shaded grey images in `renders_iter/` (no stress colours, per Daniel).
+- **Renders:** `render_solid.py` makes plain shaded grey images in `renders_iter/` (no stress colours, per the owner).
 - **it2 lesson:** the hub OD must stay > 2 x keep-out radius, and the flange must overlap the hub in z. it2 broke both rules and failed.
 - **Results by iteration (7075-T651, robust stress = 99.99th percentile, details in `iterations.csv`):**
   - **it1** (2.36 kg): worst SF is braking at 1.73. Peaks sit at sharp arm-to-flange junctions.
@@ -57,11 +57,11 @@
 - **it9** (2.32 kg): cornering 2.32 (first pass), but braking 0.87 and combined 1.21. The peak is at (-29.5,121,105), where the 48 mm-tall top arm meets the trim notch at the top-eye end face. Taller arms run into the eye end-face trim.
 - **it10:** it9 with the top arm back to 34x42 and the left arm at 34x48. That is it4's arm set on the hybrid flange.
 - **it10, best so far** (2.32 kg): cornering 2.22, combined 2.30, bump 5.5, fatigue Goodman 5.96 (fully reversed 3.68), all passing. Braking 1.84 is the one case short of 2. Its peak is the tongue's lower side edge at (-14.9,-69.1,75), just past the ring on the tongue side. Next fix: add a fill under the tongue's lower side edges where the tongue leaves the ring (like the top-side blend), or keep the full disc under the tongue root.
-- **Mass is not converging toward 1.6 kg.** Spoking the flange costs strength faster than it saves mass. To get under 1.6 kg the tongue (about 0.35 kg solid) and hub tube need rethinking (e.g. a C-section tongue with the clamp faces kept as lands), which needs Daniel's answers on the strut-bracket clamp extent.
+- **Mass is not converging toward 1.6 kg.** Spoking the flange costs strength faster than it saves mass. To get under 1.6 kg the tongue (about 0.35 kg solid) and hub tube need rethinking (e.g. a C-section tongue with the clamp faces kept as lands), which needs the owner's answers on the strut-bracket clamp extent.
 
 ## 2026-10-09 chunk 4
 
-- **Daniel's answer (strut clamp extent):** the strut clamp bracket covers only the 2 strut bolt holes (y = -147.5 and -79), down to 12 mm below the bottom bolt (the one nearer the hub). I've taken that as y ≈ -67 measured from the bolt centre, with the clamp zone running from the tongue tip (y -166) to y ≈ -67. If he meant 12 mm from the hole edge, it ends at y ≈ -60. This zone stays full solid clamp lands at x = ±15. A C-section is allowed only between the clamp zone and the flange, y ≈ -67 to the ring.
+- **The owner's answer (strut clamp extent):** the strut clamp bracket covers only the 2 strut bolt holes (y = -147.5 and -79), down to 12 mm below the bottom bolt (the one nearer the hub). I've taken that as y ≈ -67 measured from the bolt centre, with the clamp zone running from the tongue tip (y -166) to y ≈ -67. If he meant 12 mm from the hole edge, it ends at y ≈ -60. This zone stays full solid clamp lands at x = ±15. A C-section is allowed only between the clamp zone and the flange, y ≈ -67 to the ring.
 - **Braking fix, option A (it11):** keep the full r71 disc under the tongue root, |x| ≤ 30, y < 0.
 - **Braking fix, option B (it12):** a ramp under the tongue from the ring bottom out 24 mm along the tongue bottom, flared 7 mm past each side face.
 - **Results:**
@@ -82,7 +82,7 @@
   - the bore
   - every hole
   - the eye end-face zones
-  - the clamp-bracket zone (|x| > 15 for y ≤ -67, from Daniel's answer)
+  - the clamp-bracket zone (|x| > 15 for y ≤ -67, from the owner's answer)
 - **Non-design (forced solid):**
   - hub tube r ≤ 46
   - r11.5 bosses around the 4 flange bolts
@@ -262,7 +262,7 @@
 
 ## Chunk 13: other methods for a lighter passing knuckle
 Saved: best, middle and easy (STEP, STL, renders) and MACHINING.md committed on **main** in WSL handbuilt-models. **No git remote is configured, so nothing was pushed.**
-Backup: C:\projects\_archive\knuckle_billet_final_2026-10-09.zip (31 entries, 2.94 MB).
+Backup: knuckle_billet_final_2026-10-09.zip in the owner's archive folder (31 entries, 2.94 MB).
 
 Methods considered (never loosening the loads or SF targets):
 - **a. Parameter optimisation driving the real Gmsh + CalculiX** (picked this chunk). Start with one-at-a-time sensitivities from best
@@ -285,7 +285,7 @@ Results this chunk (real Gmsh + CalculiX, 5 mm mesh, one change at a time from f
   P4 outer rib 22×26: 2.310 kg, SF 1.90. P5 top-arm wall 5: 2.319 kg, SF 0.85 (braking peak at the right eye). P6 right-arm wall 5: no geometric change (that arm is too short to pocket).
   **Conclusion: best sits on a sharp optimum. Every one-parameter step that saves mass fails. The robust stress also scatters about ±5 % with the mesh, so a
   derivative-free optimiser (method a) needs a 2.1 screening margin and will find at most about 20-40 g.**
-- **full-arm** (Daniel): fa2 = easy + tongue pockets 14/12 + floor r4 → 2.426 kg, SF 2.43, fatigue 7.07 → final/full-arm. fa3 (junction r8) → 2.26.
+- **full-arm** (the owner): fa2 = easy + tongue pockets 14/12 + floor r4 → 2.426 kg, SF 2.43, fatigue 7.07 → final/full-arm. fa3 (junction r8) → 2.26.
   fa4 (deeper tongue pockets, narrower tongue patch, plate from y 0) → 2.402 kg, SF 2.27, but it leaves a 2 mm overhanging flap, so it's rejected (fix: trim the fillet prism).
 - WSL detached FEA: run_wsl.sh works, but gmsh 4.15.2 there failed HXT on P3. The box gmsh with ALG2D=1 also failed on P3, so it's a geometry problem, not a WSL problem.
 **Recommendation for next:** (e) local pads + (b) BESO. Specifically: 1) put r8-r10 pads at the two hot spots on best
@@ -293,7 +293,7 @@ Results this chunk (real Gmsh + CalculiX, 5 mm mesh, one change at a time from f
   pocket regions can deepen; 3) turn those into 2.5D pockets in build123d. (d) two-piece (bolt-on tongue) is the way to cut stock (6.5" → 4.5" plate),
   not mass. Method (a) is only worth running as a final polish with the 2.1 screening margin.
 
-## Chunk 14: pads + BESO map, then the two-piece design (Daniel's new priority)
+## Chunk 14: pads + BESO map, then the two-piece design (the owner's new priority)
 - (e) Pads on best. A `pads` option adds frustum pads, trimmed by the interface cuts.
   - pad1 (rib/keep-out cone r14→5 + tongue-edge cones r9→3): SF 1.82. pad2 (r18→6 + r12→3 cones): SF 0.96.
   - The horizontal cones at the tongue lower edges stick below the tongue (z ~60-65) and make a **new braking notch** at (-15,-72,65). Rejected.

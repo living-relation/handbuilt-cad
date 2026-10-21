@@ -56,7 +56,7 @@ else mkdir -p "$MODELS"; echo "models folder: created $MODELS"; fi
 if [ "$NO_MODELS" != 1 ] && [ -d "$MODELS" ]; then
   for n in AGENTS.md README.md; do
     if [ -e "$MODELS/$n" ]; then echo "models notes: $MODELS/$n exists, left as is"
-    else sed "s|@CLONE@|$ROOT|g" "templates/models-folder/$n" > "$MODELS/$n"; echo "models notes: added $MODELS/$n"; fi
+    else tpl=$(cat "templates/models-folder/$n"); printf '%s\n' "${tpl//@CLONE@/$ROOT}" > "$MODELS/$n"; echo "models notes: added $MODELS/$n"; fi
   done
 fi
 

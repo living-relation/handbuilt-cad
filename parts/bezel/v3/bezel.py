@@ -13,7 +13,7 @@ GAUGE_Y      = 203.07
 CENTRE_GAUGE = dict(x=79.0, d=103.4)
 SIDE_GAUGE   = dict(x=73.1, d=89.6)
 OPEN_FILLET  = 1.0
-SMALL_HOLES  = [((120.6, 134.1), 9.0), ((119.9, 271.7), 9.0)]       # confirmed real by Daniel
+SMALL_HOLES  = [((120.6, 134.1), 9.0), ((119.9, 271.7), 9.0)]       # confirmed real by the owner
 WINDOW_R     = 2.5
 # back wall + hood
 WALL_X       = (24.5, 27.0)

@@ -8,7 +8,7 @@
 
 | Where | What runs there |
 |---|---|
-| **PC, Windows** | Creality Scan, Fusion, FreeCAD, Fairsolid (`pipelines/fairsolid/` here; old runs in `C:\projects\_archive\2026-10-17-fairsolid\fairsolid\runs`, see [`docs/FAIRSOLID.md`](../FAIRSOLID.md)) |
+| **PC, Windows** | Creality Scan, Fusion, FreeCAD, Fairsolid (`pipelines/fairsolid/` here; older runs in the archived checkout, see [`docs/FAIRSOLID.md`](../FAIRSOLID.md)) |
 | **PC, WSL Ubuntu** | This repo, both Python venvs, all solvers (CalculiX, Gmsh, Elmer, OpenFOAM, ParaView) |
 | **Agent box** (Linux machine the AI agent works on) | Heavy or parallel runs (FEA iterations, topology, renders). Results are copied back into this repo; the box is not a source of truth |
 | **GitHub** | `living-relation/handbuilt-cad` (this repo, includes Fairsolid); the old `living-relation/fairsolid` repo was deleted (2026-10-21) |
@@ -39,4 +39,4 @@ Creality Scan ──Mesh.ply──► Fairsolid (pipelines/fairsolid) ──10_c
 
 ## Fairsolid link
 
-Fairsolid is used as a tool, not a library: run it (`tools/scan_helper.py` or `pipelines/fairsolid/.venv/bin/fairsolid`), then read its output files from the run folder (`[paths] fairsolid_runs` / `FAIRSOLID_RUNS`, outside git). Runs made before 2026-10-17 are in `C:\projects\_archive\2026-10-17-fairsolid\fairsolid\runs\<part>\` (WSL: `/mnt/c/projects/_archive/2026-10-17-fairsolid/fairsolid/runs/<part>/`). Part code here doesn't import Fairsolid code.
+Fairsolid is used as a tool, not a library: run it (`tools/scan_helper.py` or `pipelines/fairsolid/.venv/bin/fairsolid`), then read its output files from the run folder (`[paths] fairsolid_runs` / `FAIRSOLID_RUNS`, outside git). Runs made before 2026-10-17 are in the archived checkout's `runs/<part>/` (see `docs/FAIRSOLID.md`). Part code here doesn't import Fairsolid code.

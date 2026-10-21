@@ -137,7 +137,7 @@ def lin_val(view,p1,p2,orient):
 def auto_align_angle(solid,min_share=0.25):
     """Z rotation (deg, in (-45,45]) that squares the part's dominant vertical flat faces to the X/Y views.
     0 when already square (existing axis-aligned parts are untouched). A part modelled in a rotated frame
-    (e.g. the fuel hanger strut plane) otherwise gets oblique views: no true circles, no hole callouts, no center marks."""
+    (e.g. a part whose main plane is tilted) otherwise gets oblique views: no true circles, no hole callouts, no center marks."""
     from collections import defaultdict
     w=defaultdict(float); tot=0.0
     for f in solid.faces():

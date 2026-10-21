@@ -1,7 +1,7 @@
 """PCV breather tube, Audi OE 06H103223A (EA888 2.0T), PCV valve -> intake manifold.
 Hand-built parametric model from scan Project_26060601 (Creality, rough; one side filled in by the table)
 plus listing photos (eBay 147535844352). All mm.
-v3: ball-shaped flare (Daniel, part in hand). v2: made symmetric. Both ends are identical (photos show an O-ring pair at each end); the end
+v3: ball-shaped flare (the owner, part in hand). v2: made symmetric. Both ends are identical (photos show an O-ring pair at each end); the end
 geometry comes from the better-scanned end. Z = tube axis, z=0 at one end face.
 """
 from build123d import *

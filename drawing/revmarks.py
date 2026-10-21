@@ -15,7 +15,7 @@ Declaring what changed - `spec['rev_marks']` (a list) and/or `<part no>.REVMARKS
     {"rev": "C", "page": [x, y]}                 a page point (mm)
     optional on any: "sheet": 2 (default 1), "note_text": "free text for the record"
 
-Old triangles accumulate by default (Dan N42 = B): when Rev C comes out the Rev B and older triangles stay on the sheet. Set
+Old triangles accumulate by default (owner decision N42 = B): when Rev C comes out the Rev B and older triangles stay on the sheet. Set
 `spec['rev_marks_accumulate'] = False` (or `"accumulate": false` in the file) to show only the current letter's. Marks for a letter
 newer than the drawing's rev are ignored.
 
@@ -33,7 +33,7 @@ from shapely.strtree import STRtree
 
 import revs as R
 
-ACCUMULATE_DEFAULT = True      # Dan N42 = B (2026-10-19)
+ACCUMULATE_DEFAULT = True      # owner decision N42 = B (2026-10-19)
 TRI = 6.4                      # triangle side, mm
 GAP = 0.6                      # clear space round the triangle, mm
 FRAME = (12.0, 12.0)           # keep this far inside the sheet edge

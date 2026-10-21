@@ -30,7 +30,7 @@ for k, v in ns['EYES'].items():
     chk(f'{k} OD {v["od"]} + end faces at +/-{L/2}', np.vstack([ring(v['c'], v['axis'], (v['bore'] + v['od'])/4, [L/2 + 0.4, -L/2 - 0.4])]),
         ring(v['c'], v['axis'], (v['bore'] + v['od'])/4, [L/2 - 0.6, -L/2 + 0.6]), 0.95)
 # (chunk 18: the old x=+/-15 clamp-face check is superseded by the OEM-face check below)
-# chunk 18 (Daniel's hard rules): OEM tongue faces, ABS mount face, strut-tube keep-out + clamp bracket envelope
+# chunk 18 (the owner's hard rules): OEM tongue faces, ABS mount face, strut-tube keep-out + clamp bracket envelope
 TXo = (-13.8, 14.9)
 for yy in (-159.0, -135.0, -91.0):
     chk(f'OEM tongue faces x={TXo} at y{yy}', np.array([[TXo[1] + 0.4, yy, z] for z in (88, 100)] + [[TXo[0] - 0.4, yy, z] for z in (88, 100)]),
@@ -43,7 +43,7 @@ for yy in np.arange(-250, -39, 6.0):
 chk('strut tube keep-out (OD52 est +5, inboard of tongue, y -250..-40)', np.array(ko), np.array([[0.5, -100, 100]]), 1.0)
 env = [[x, y, z] for x in (TXo[1] + 1, TXo[1] + 6, TXo[1] + 11, TXo[0] - 1, TXo[0] - 6, TXo[0] - 11) for y in (-170, -140, -110, -80, -66, -60) for z in (86, 100, 114)]
 chk('strut clamp bracket envelope (ears beside the faces, y -171..-60, z 84-116)', np.array(env), np.array([[0.5, -100, 100]]), 1.0)
-# baseline_al (Daniel): minimum-material rules around critical features (constraints for any future optimisation; no break-through)
+# baseline_al (the owner): minimum-material rules around critical features (constraints for any future optimisation; no break-through)
 MINWALL = dict(bearing_bore=6.0, eye_boss=5.0, strut_clamp=8.0, caliper_ear=6.0, abs_boss=6.0, abs_screw=4.0, flange_bolt=4.0)
 def minwall(name, c, a, r_hole, t, s_list, frac=0.95):
     chk(f'MINWALL {name} >= {t} mm', np.zeros((0, 3)), ring(c, a, r_hole + t - 0.3, s_list, n=24), frac)

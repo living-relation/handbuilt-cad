@@ -69,7 +69,7 @@ Raw scans (private and too big; see [scans/INDEX.md](scans/INDEX.md)), STEP file
 
 ## Where the working copy lives
 
-- WSL Ubuntu: `/home/daniel/projects/handbuilt-models` (the real working copy, branch `main`).
-- From Windows: `\\wsl.localhost\Ubuntu\home\daniel\projects\handbuilt-models`; shortcut in `C:\projects\active\handbuilt-models`.
+- WSL Ubuntu: `~/projects/handbuilt-models` (the real working copy, branch `main`).
+- From Windows: `\\wsl.localhost\<distro>\home\<user>\projects\handbuilt-models`; a shortcut in the Windows projects folder.
 
 All designs are shared for reference. They are hand-built approximations of scanned parts; check every dimension and do your own engineering before machining or fitting anything to a car.

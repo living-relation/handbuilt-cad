@@ -1,4 +1,4 @@
-"""Render the two 2D pictures Dan wants for every part: a BOTTOM view and a TRIMETRIC view.
+"""Render the two 2D pictures the owner wants for every part: a BOTTOM view and a TRIMETRIC view.
 
 Same camera and style for every model, so pictures can be compared. Pure matplotlib painter's
 algorithm on a triangle mesh: no GPU, no Fusion. Needs: trimesh, numpy, matplotlib (+ build123d only

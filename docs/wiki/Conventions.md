@@ -9,7 +9,7 @@
 - **Fixed interfaces.** Derived designs (billet knuckles) keep every hole, bore, eye and mount exactly where the approved model has them, checked automatically.
 - **Safety factor target (knuckle project convention):** 2.0× on yield at the `LOADS.md` cases for its structural parts. Not a repo-wide rule; other jobs use the owner's target.
 - **Git:** the rules are in [`AGENTS.md`](../../AGENTS.md) and [`CONTRIBUTING.md`](../../CONTRIBUTING.md): branch -> PR -> review -> merge, never commit or push to `main`, never force-push or rewrite pushed history, never skip a hook. Run git in the WSL copy; a Windows clone is pull-only (`git pull --ff-only`).
-- **Backups:** git history is the backup for anything in the repo. `C:\projects\_archive` is only for obsolete work, and only with the owner's OK; no zip snapshots there before changes.
+- **Backups:** git history is the backup for anything in the repo. The projects `_archive` folder is only for obsolete work, and only with the owner's OK; no zip snapshots there before changes.
 - **STEP only:** STEP is the deliverable; STL only when a print job needs one.
 - **FEA after approval:** run strength checks (FEA) only after the owner approves the geometry, unless they ask for early tests.
 - **Minimum wall:** structural / critical features only, and never assumed: use the value the owner gave (`cnc_check.py --min-wall`, a walls config). Anything unclear is flagged for the owner.
