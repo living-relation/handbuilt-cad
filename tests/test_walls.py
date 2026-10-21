@@ -113,7 +113,7 @@ def test_missing_config_value_exit_2(tmp_path):
     assert CPW.main(["--config", str(conf)]) == 2
 
 
-# --- detection settings ported from st185 (snap, despike, sliver, graze, skin, allow boxes) ---
+# --- detection settings (snap, despike, sliver, graze, skin, allow boxes) ---
 
 def _mesh(tmp_path, shape, name):
     bd = pytest.importorskip("build123d")
@@ -150,6 +150,7 @@ def test_allow_boxes_drop_spots_and_count_them(tmp_path):
     # 30 x 20 plate, 1.0 mm thick: thin everywhere
     m = _mesh(tmp_path, bd.Pos(15, 10, 0.5) * bd.Box(30, 20, 1.0), "plate")
     assert CPW.walls(m, 1.95, 0.5)                                   # found
+    assert CPW.walls(m, 1.95, opts={"step": 0.5}) == CPW.walls(m, 1.95, 0.5)   # opts['step'] is used when step isn't given
     seen = {}
     assert CPW.walls(m, 1.95, 0.5, allow=[("plate by design", [-1, 31, -1, 21, -1, 2])], seen=seen) == []
     assert seen.get("plate by design", 0) > 0

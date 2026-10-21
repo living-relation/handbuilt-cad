@@ -6,7 +6,7 @@ min_wall = 2.0        # mm, REQUIRED: a structural / critical spot at or under t
 attach_min = 3.0      # mm, optional: features held on by less than this (A check). Leave out to skip the A check.
 step = 0.5            # mm, section spacing for the wall check
 pitch = 0.2           # mm, voxel size for the attachment check
-# Detection settings, optional (defaults shown; they came from st185's R127 sweep on real MJF parts):
+# Detection settings, optional (defaults shown; tuned on a sweep of real printed parts; see CHANGELOG.md):
 # snap = 0.0001       # mm, section segment ends closer than this are one point (0 = old rounding)
 # despike = 0.02      # mm, open + close each section by this to drop spikes / slits where cut faces meet (0 = off)
 # sliver = 0.01       # mm, drop round-off slivers along shared edges of a thin piece (0 = off)

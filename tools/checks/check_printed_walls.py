@@ -13,9 +13,9 @@ Detection (mesh based, STL or any trimesh-readable file):
      the "body". A thin piece that meets the body in ONE place only is a cantilever attached by less than attach_min; a thick
      piece that meets the main body only through thin material is attached by less than attach_min too.
 There is no default minimum wall: min_wall must be in the config (ask the user once; never assume one).
-Detection settings (step, pitch, snap, despike, sliver, graze_sections, skin, cluster_tol, min_area, min_vol) have defaults that
-came from st185's R127 sweep on real MJF parts; a config can override any of them. Projects with their own report format (st185)
-import walls() / attachments() / section() from here and keep only their project glue.
+Detection settings (step, pitch, snap, despike, sliver, graze_sections, skin, cluster_tol, min_area, min_vol) have defaults
+tuned on a sweep of real printed parts; a config can override any of them (CHANGELOG.md lists the defaults that change results).
+Projects with their own report format import walls() / attachments() / section() from here and keep only their project glue.
 
 Usage (the project's Python environment: trimesh, shapely, scipy, Pillow):
     python tools/checks/check_printed_walls.py --config path/to/walls.toml [--only PartA,PartB]
@@ -33,8 +33,8 @@ from shapely.ops import polygonize, unary_union
 STEP, PITCH = 0.5, 0.2            # mm: default section spacing (W), voxel size (A); the config can override
 MIN_AREA = 0.3                    # mm2: smaller W pieces in a section are tessellation noise on curved faces
 MIN_VOL = 2.0                     # mm3: smaller A pieces are voxel noise
-# Detection settings (config keys of the same name override them). Ported from st185's cad/check_printed_walls.py
-# (R127 sweep, 2026-10-16/17), where they were found on real MJF parts; they hold for any mesh:
+# Detection settings (config keys of the same name override them). Tuned on a sweep of real printed parts
+# (2026-10-16/17); they hold for any mesh. Set one to 0 in the config to turn it off:
 SNAP = 1e-4                       # mm: section segment ends closer than this are one point (rounding alone left rings open, and
                                   #     polygonize then dropped whole outlines from a section)
 DESPIKE = 0.02                    # mm: open + close a section by this to drop spikes / slits where two cut faces meet (0 = off)
@@ -112,10 +112,13 @@ def inside(g, b, tol=0.0):
     return all(b[2 * d] - tol <= g[2 * d] and g[2 * d + 1] <= b[2 * d + 1] + tol for d in range(3))
 
 
-def walls(m, wall, step=STEP, allow=(), seen=None, opts=None):
+def walls(m, wall, step=None, allow=(), seen=None, opts=None):
     """W: [(x0, x1, y0, y1, z0, z1, n sections)] 3-D spots thinner than wall (mm).
+    step: section spacing in mm; None = opts['step'] (default STEP).
     allow = [(key, box)]: a section piece inside a box is left out and counted in seen[key] (spots that must stay thin)."""
     o = dict(opts_from(None), **(opts or {}))
+    if step is None:
+        step = o['step']
     lo, hi = m.bounds
     pcs = []
     for axis in range(3):
