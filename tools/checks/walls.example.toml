@@ -6,6 +6,14 @@ min_wall = 2.0        # mm, REQUIRED: a structural / critical spot at or under t
 attach_min = 3.0      # mm, optional: features held on by less than this (A check). Leave out to skip the A check.
 step = 0.5            # mm, section spacing for the wall check
 pitch = 0.2           # mm, voxel size for the attachment check
+# Detection settings, optional (defaults shown; they came from st185's R127 sweep on real MJF parts):
+# snap = 0.0001       # mm, section segment ends closer than this are one point (0 = old rounding)
+# despike = 0.02      # mm, open + close each section by this to drop spikes / slits where cut faces meet (0 = off)
+# sliver = 0.01       # mm, drop round-off slivers along shared edges of a thin piece (0 = off)
+# graze_sections = 4  # a spot seen by one axis family in fewer sections = planes grazing a square edge (0 = off)
+# skin = 1.5          # mm, a thin piece must stand this far out of the body to be a cantilever (0 = off)
+# cluster_tol = 0.6   # mm, section pieces closer than this are one spot
+# min_area = 0.3      # mm2, smaller section pieces are noise;  min_vol = 2.0  # mm3, smaller voxel pieces are noise
 output = "wall_check.json"
 flags_md = "WALL-FLAGS.md"   # optional: the flag list the user reads
 

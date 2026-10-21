@@ -111,3 +111,65 @@ def test_missing_config_value_exit_2(tmp_path):
     conf = tmp_path / "w.toml"
     conf.write_text('[[parts]]\nname = "X"\n')
     assert CPW.main(["--config", str(conf)]) == 2
+
+
+# --- detection settings ported from st185 (snap, despike, sliver, graze, skin, allow boxes) ---
+
+def _mesh(tmp_path, shape, name):
+    bd = pytest.importorskip("build123d")
+    import trimesh
+    p = tmp_path / (name + ".stl")
+    bd.export_stl(shape, str(p))
+    return trimesh.load(p, force="mesh")
+
+
+def test_detection_defaults_and_overrides():
+    pytest.importorskip("trimesh"); pytest.importorskip("shapely")
+    import check_printed_walls as CPW
+    o = CPW.opts_from({})
+    assert o["snap"] == 1e-4 and o["despike"] == 0.02 and o["sliver"] == 0.01 and o["graze"] == 4 and o["skin"] == 1.5
+    o = CPW.opts_from({"skin": 0, "graze_sections": 0, "step": 1.0})
+    assert o["skin"] == 0 and o["graze"] == 0 and o["step"] == 1.0
+    assert "min_wall" not in o                                       # no wall default hides in the detection settings
+
+
+def test_section_of_a_box_is_its_rectangle(tmp_path):
+    pytest.importorskip("scipy")
+    bd = pytest.importorskip("build123d")
+    import check_printed_walls as CPW
+    m = _mesh(tmp_path, bd.Pos(10, 5, 2) * bd.Box(20, 10, 4), "box")
+    for snap, despike in ((1e-4, 0.02), (0, 0)):
+        reg = CPW.section(m, 2, 2.0, snap, despike)
+        assert abs(reg.area - 200.0) < 0.5
+
+
+def test_allow_boxes_drop_spots_and_count_them(tmp_path):
+    pytest.importorskip("scipy")
+    bd = pytest.importorskip("build123d")
+    import check_printed_walls as CPW
+    # 30 x 20 plate, 1.0 mm thick: thin everywhere
+    m = _mesh(tmp_path, bd.Pos(15, 10, 0.5) * bd.Box(30, 20, 1.0), "plate")
+    assert CPW.walls(m, 1.95, 0.5)                                   # found
+    seen = {}
+    assert CPW.walls(m, 1.95, 0.5, allow=[("plate by design", [-1, 31, -1, 21, -1, 2])], seen=seen) == []
+    assert seen.get("plate by design", 0) > 0
+
+
+def test_skin_setting_separates_cantilevers_from_sloped_skin(tmp_path):
+    pytest.importorskip("scipy"); pytest.importorskip("PIL")
+    bd = pytest.importorskip("build123d")
+    import check_printed_walls as CPW
+    block = bd.Pos(5, 5, 5) * bd.Box(10, 10, 10)
+    fin = bd.Pos(13, 5, 5) * bd.Box(6, 1.0, 6)                       # 1 mm fin standing 6 mm out of one face: a cantilever
+    m = _mesh(tmp_path, block + fin, "fin")
+    for skin in (0, 1.5):
+        st = {}
+        at = CPW.attachments(m, 3.0, 0.2, dict(skin=skin), st)
+        assert any("cantilever" in a[0] and a[2] > 12 for a in at), (skin, at)
+    stub = bd.Pos(10.5, 5, 5) * bd.Box(1.0, 1.0, 6)                  # 1 x 1 stub only ~0.5 mm proud: skin, not a cantilever
+    m2 = _mesh(tmp_path, block + stub, "stub")
+    st = {}
+    at = CPW.attachments(m2, 3.0, 0.2, dict(skin=1.5), st)
+    assert not any("cantilever" in a[0] for a in at) and st["skin"] >= 1
+    at0 = CPW.attachments(m2, 3.0, 0.2, dict(skin=0), {})
+    assert any("cantilever" in a[0] for a in at0)                    # skin = 0: the old behaviour lists it
