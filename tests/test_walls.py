@@ -174,3 +174,48 @@ def test_skin_setting_separates_cantilevers_from_sloped_skin(tmp_path):
     assert not any("cantilever" in a[0] for a in at) and st["skin"] >= 1
     at0 = CPW.attachments(m2, 3.0, 0.2, dict(skin=0), {})
     assert any("cantilever" in a[0] for a in at0)                    # skin = 0: the old behaviour lists it
+
+
+# --- synthetic thin-wall case under every detection-flag combination ---
+def _thin_and_thick(tmp_path, bd):
+    """30 x 20 x 10 block (thick) with a 1.0 mm wall standing up from it (thin, 12 mm tall)."""
+    block = bd.Pos(15, 10, 5) * bd.Box(30, 20, 10)
+    wall = bd.Pos(15, 10, 16) * bd.Box(20, 1.0, 12)
+    return _mesh(tmp_path, block + wall, "thinwall")
+
+
+@pytest.mark.parametrize("snap", [0, 1e-4])
+@pytest.mark.parametrize("despike", [0, 0.02])
+@pytest.mark.parametrize("sliver", [0, 0.01])
+@pytest.mark.parametrize("graze", [0, 4])
+def test_thin_wall_found_under_every_flag_combination(tmp_path, snap, despike, sliver, graze):
+    pytest.importorskip("scipy")
+    bd = pytest.importorskip("build123d")
+    import check_printed_walls as CPW
+    m = _thin_and_thick(tmp_path, bd)
+    o = dict(snap=snap, despike=despike, sliver=sliver, graze=graze)
+    w = CPW.walls(m, 1.95, 0.5, opts=o)
+    assert w, o                                                      # the 1.0 mm wall is found
+    assert all(g[4] >= 9.0 for g in w), (o, w)                       # every spot is on the wall (z >= 10), none in the block
+    assert any(g[2] <= 10 <= g[3] and g[5] >= 20 for g in w), (o, w)  # one spot spans the wall's height
+    assert not CPW.walls(m, 0.9, 0.5, opts=o), o                     # a 1.0 mm wall passes a 0.9 mm minimum
+
+
+def test_classify_resorts_the_report_without_detection(tmp_path, monkeypatch):
+    pytest.importorskip("scipy")
+    bd = pytest.importorskip("build123d")
+    import check_printed_walls as CPW
+    _thin_and_thick(tmp_path, bd)                                    # writes thinwall.stl next to the config
+    conf = dict(min_wall=1.95, output="wc.json", parts=[dict(name="P", file="thinwall.stl")])
+    p = tmp_path / "walls.json"
+    p.write_text(json.dumps(conf))
+    assert CPW.main(["--config", str(p)]) == 0                       # unplaced thin spot: flagged, not failed
+    r = json.loads((tmp_path / "wc.json").read_text())["parts"]["P"]
+    assert r["flag"] >= 1 and r["approved"] == 0
+    conf["parts"][0]["exempt"] = [dict(why="thin by design", approved="2026-10-21", box=[-1, 31, -1, 21, 9, 23])]
+    p.write_text(json.dumps(conf))
+    monkeypatch.setattr(CPW, "walls", lambda *a, **k: pytest.fail("--classify must not re-run detection"))
+    assert CPW.main(["--config", str(p), "--classify"]) == 0
+    r2 = json.loads((tmp_path / "wc.json").read_text())["parts"]["P"]
+    assert r2["approved"] == r["flag"] and r2["flag"] == 0
+    assert CPW.main(["--config", str(tmp_path / "missing.json"), "--classify"]) == 2

@@ -293,6 +293,18 @@ def check_part(m, cfg, part):
                 approved=sum(1 for r in rows if r[4] == 'approved')), rows
 
 
+def reclassify(r, cfg, part):
+    """Re-sort the W / A spots of one part's report entry (no detection): same shape as check_part's result."""
+    ws = [dict(at=s['at'], sections=s.get('sections', 0)) for s in r.get('walls') or []]
+    ats = [dict(kind=s.get('kind', ''), at=s['at'], vol_mm3=s.get('vol_mm3')) for s in r.get('attach') or []]
+    rows = WC.classify_spots(part, cfg, ws, ats, r.get('bounds'))
+    for (kind, a, extra, c, v, why), spot in zip(rows, ws + ats):
+        spot.update({'class': c, 'result': v, 'why': why})
+    out = dict(r, walls=ws, attach=ats, fail=sum(1 for x in rows if x[4] == 'fail'), flag=sum(1 for x in rows if x[4] == 'flag'),
+               approved=sum(1 for x in rows if x[4] == 'approved'))
+    return out, rows
+
+
 def write_flags_md(path, lines, cfg):
     with open(path, 'w', encoding='utf-8', newline='\n') as f:
         f.write('# Thin spots flagged for change or approval\n\n')
@@ -308,6 +320,8 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description='Structural-only minimum-wall check for printed / thin parts (per-project config).')
     ap.add_argument('--config', required=True, help='wall-check config (TOML or JSON); see tools/checks/walls.example.toml')
     ap.add_argument('--only', default='', help='comma-separated part names to re-check (others kept from the last report)')
+    ap.add_argument('--classify', action='store_true',
+                    help='re-sort the spots already in the output JSON after a feature / exemption change, without re-running detection')
     a = ap.parse_args(argv)
     try:
         cfg = WC.load_config(a.config)
@@ -319,11 +333,21 @@ def main(argv=None):
     res = {'rule': 'minimum wall %s mm on structural / critical features (fail); other thin spots flagged%s'
                    % (cfg['min_wall'], '; attachments >= %s mm' % cfg['attach_min'] if cfg.get('attach_min') else ''),
            'parts': {}}
-    if a.only and os.path.isfile(outp):
+    if (a.only or a.classify) and os.path.isfile(outp):
         res = json.load(open(outp))
+    elif a.classify:
+        print('--classify needs an existing report: %s' % outp)
+        return 2
     only = [x for x in a.only.split(',') if x]
     all_rows, missing = {}, []
-    for part in cfg['parts']:
+    for part in (cfg['parts'] if a.classify else ()):
+        name = part['name']
+        if (only and name not in only) or name not in res['parts']:
+            continue
+        res['parts'][name], all_rows[name] = reclassify(res['parts'][name], cfg, part)
+        r = res['parts'][name]
+        print('%s (re-sorted): %d fail, %d flagged, %d approved' % (name, r['fail'], r['flag'], r['approved']))
+    for part in (() if a.classify else cfg['parts']):
         name = part['name']
         if only and name not in only:
             continue
