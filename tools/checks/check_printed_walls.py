@@ -13,9 +13,9 @@ Detection (mesh based, STL or any trimesh-readable file):
      the "body". A thin piece that meets the body in ONE place only is a cantilever attached by less than attach_min; a thick
      piece that meets the main body only through thin material is attached by less than attach_min too.
 There is no default minimum wall: min_wall must be in the config (ask the user once; never assume one).
-Detection settings (step, pitch, snap, despike, sliver, graze_sections, skin, cluster_tol, min_area, min_vol) have defaults that
-came from st185's R127 sweep on real MJF parts; a config can override any of them. Projects with their own report format (st185)
-import walls() / attachments() / section() from here and keep only their project glue.
+Detection settings (step, pitch, snap, despike, sliver, graze_sections, skin, cluster_tol, min_area, min_vol) have defaults
+tuned on a sweep of real printed parts; a config can override any of them (CHANGELOG.md lists the defaults that change results).
+Projects with their own report format import walls() / attachments() / section() from here and keep only their project glue.
 
 Usage (the project's Python environment: trimesh, shapely, scipy, Pillow):
     python tools/checks/check_printed_walls.py --config path/to/walls.toml [--only PartA,PartB]
@@ -33,8 +33,8 @@ from shapely.ops import polygonize, unary_union
 STEP, PITCH = 0.5, 0.2            # mm: default section spacing (W), voxel size (A); the config can override
 MIN_AREA = 0.3                    # mm2: smaller W pieces in a section are tessellation noise on curved faces
 MIN_VOL = 2.0                     # mm3: smaller A pieces are voxel noise
-# Detection settings (config keys of the same name override them). Ported from st185's cad/check_printed_walls.py
-# (R127 sweep, 2026-10-16/17), where they were found on real MJF parts; they hold for any mesh:
+# Detection settings (config keys of the same name override them). Tuned on a sweep of real printed parts
+# (2026-10-16/17); they hold for any mesh. Set one to 0 in the config to turn it off:
 SNAP = 1e-4                       # mm: section segment ends closer than this are one point (rounding alone left rings open, and
                                   #     polygonize then dropped whole outlines from a section)
 DESPIKE = 0.02                    # mm: open + close a section by this to drop spikes / slits where two cut faces meet (0 = off)
@@ -112,10 +112,13 @@ def inside(g, b, tol=0.0):
     return all(b[2 * d] - tol <= g[2 * d] and g[2 * d + 1] <= b[2 * d + 1] + tol for d in range(3))
 
 
-def walls(m, wall, step=STEP, allow=(), seen=None, opts=None):
+def walls(m, wall, step=None, allow=(), seen=None, opts=None):
     """W: [(x0, x1, y0, y1, z0, z1, n sections)] 3-D spots thinner than wall (mm).
+    step: section spacing in mm; None = opts['step'] (default STEP).
     allow = [(key, box)]: a section piece inside a box is left out and counted in seen[key] (spots that must stay thin)."""
     o = dict(opts_from(None), **(opts or {}))
+    if step is None:
+        step = o['step']
     lo, hi = m.bounds
     pcs = []
     for axis in range(3):
@@ -290,6 +293,18 @@ def check_part(m, cfg, part):
                 approved=sum(1 for r in rows if r[4] == 'approved')), rows
 
 
+def reclassify(r, cfg, part):
+    """Re-sort the W / A spots of one part's report entry (no detection): same shape as check_part's result."""
+    ws = [dict(at=s['at'], sections=s.get('sections', 0)) for s in r.get('walls') or []]
+    ats = [dict(kind=s.get('kind', ''), at=s['at'], vol_mm3=s.get('vol_mm3')) for s in r.get('attach') or []]
+    rows = WC.classify_spots(part, cfg, ws, ats, r.get('bounds'))
+    for (kind, a, extra, c, v, why), spot in zip(rows, ws + ats):
+        spot.update({'class': c, 'result': v, 'why': why})
+    out = dict(r, walls=ws, attach=ats, fail=sum(1 for x in rows if x[4] == 'fail'), flag=sum(1 for x in rows if x[4] == 'flag'),
+               approved=sum(1 for x in rows if x[4] == 'approved'))
+    return out, rows
+
+
 def write_flags_md(path, lines, cfg):
     with open(path, 'w', encoding='utf-8', newline='\n') as f:
         f.write('# Thin spots flagged for change or approval\n\n')
@@ -305,6 +320,8 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description='Structural-only minimum-wall check for printed / thin parts (per-project config).')
     ap.add_argument('--config', required=True, help='wall-check config (TOML or JSON); see tools/checks/walls.example.toml')
     ap.add_argument('--only', default='', help='comma-separated part names to re-check (others kept from the last report)')
+    ap.add_argument('--classify', action='store_true',
+                    help='re-sort the spots already in the output JSON after a feature / exemption change, without re-running detection')
     a = ap.parse_args(argv)
     try:
         cfg = WC.load_config(a.config)
@@ -316,11 +333,24 @@ def main(argv=None):
     res = {'rule': 'minimum wall %s mm on structural / critical features (fail); other thin spots flagged%s'
                    % (cfg['min_wall'], '; attachments >= %s mm' % cfg['attach_min'] if cfg.get('attach_min') else ''),
            'parts': {}}
-    if a.only and os.path.isfile(outp):
+    if (a.only or a.classify) and os.path.isfile(outp):
         res = json.load(open(outp))
+    elif a.classify:
+        print('--classify needs an existing report: %s' % outp, file=sys.stderr)
+        return 2
     only = [x for x in a.only.split(',') if x]
     all_rows, missing = {}, []
-    for part in cfg['parts']:
+    for part in (cfg['parts'] if a.classify else ()):
+        name = part['name']
+        if only and name not in only:
+            continue
+        if name not in res['parts']:
+            print('warning: %s is not in the report %s; run without --classify to check it' % (name, outp), file=sys.stderr)
+            continue
+        res['parts'][name], all_rows[name] = reclassify(res['parts'][name], cfg, part)
+        r = res['parts'][name]
+        print('%s (re-sorted): %d fail, %d flagged, %d approved' % (name, r['fail'], r['flag'], r['approved']))
+    for part in (() if a.classify else cfg['parts']):
         name = part['name']
         if only and name not in only:
             continue

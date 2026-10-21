@@ -1,5 +1,5 @@
-# CAD / simulation tool pins for handbuilt-cad (moved here from the workstation repo's workstation.lock.yaml on 2026-10-21:
-# The owner's rule "no CAD tools or CAD skills in the workstation repo; all CAD tools live only in handbuilt-cad").
+# CAD / simulation tool pins for handbuilt-cad. All CAD tools are pinned here and nowhere else
+# (moved here from the workstation repo's lock file on 2026-10-21).
 # Pins and pointers only: nothing listed here is copied into this repo. setup.sh / setup.ps1 and sim/SIM_TOOLS.md are what
 # install and document them; keep the versions here in step with those. "TBD" = not pinned yet (see open_items).
 schema: 1
