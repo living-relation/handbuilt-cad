@@ -236,7 +236,7 @@ and stage files, so they are not in this zip; request one in the task if you nee
 
 - Knuckle, bezel and dash_housing run folders: too big (listed in section 9). No recipes for them are included.
 - Earlier revisions of the worked example (rev2 to rev6): superseded by rev7.
-- `cnc_check.py` and `views.py` (a separate project): not reachable when the zip was made. Their rev 7 output is included.
+- `cnc_check.py` and `views.py` (a separate project): not reachable when the zip was made. The example's latest rev output is included.
 - A full Fairsolid test-suite result: it did not finish in our check (section 7).
 - The owner's rules with no written source in the repos (one solid, new version not overwrite, 2x weight load, 2D-render output): written in `RULES.md` from the handoff request; confirm with the owner if unsure.
 - Fusion files, the project's harness / wiring / CAN rules, and its other CAD models: not needed for Fairsolid jobs.

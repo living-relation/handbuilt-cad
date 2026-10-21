@@ -29,7 +29,7 @@ Knuckle frame (from v4b): Z is the hub axis (+Z inboard, z = 0 is the outboard h
 | 2 X-axis holes 14.3 / 14.0 mm at y -147.5 / -79 (68.5 mm apart, above the hub) | **Strut / coilover clamp bolts** (strut bracket clamps the carrier, 2 bolts) | medium-high: 2 parallel bolts above the hub, matches the 2 carrier bolts in the parts list |
 | Left eye (axis X, OD 46, bore 35, len 26) and right eye (axis tilted 13.6 deg, OD 46.5, bore 35.5) at the bottom | **No.1 and No.2 lateral arms** (bushing eyes, bolt axis fore-aft) | medium-high on "lateral arms"; which eye is No.1 vs No.2 is unknown |
 | Top eye (axis ~Z, OD 52, bore 40, len 40) at the very bottom (y +138) | **Strut rod** (trailing rod, bolt axis lateral) | medium: the only eye with a lateral axis. Named "top eye" only because of the scan view. |
-| 2 ear holes 10 / 9 mm, axis Z, both at r = 105 mm from the hub axis | **Brake caliper bracket bolts** | low-medium: same radius suggests a caliper, but the hole sizes differ and the spacing (140 mm chord) is wide. Daniel to confirm. |
+| 2 ear holes 10 / 9 mm, axis Z, both at r = 105 mm from the hub axis | **Brake caliper bracket bolts** | low-medium: same radius suggests a caliper, but the hole sizes differ and the spacing (140 mm chord) is wide. the owner to confirm. |
 | 4 flange holes 10.5 mm at r ~ 58 mm | Backing plate / parking-brake (drum-in-hat) / dust shield | medium |
 | Side boss hole 17 mm, axis X, at hub height | ABS speed sensor bore (aims radially at the tone ring) | low-medium |
 
