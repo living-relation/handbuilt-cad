@@ -33,7 +33,7 @@ Then use the venv: `.venv/bin/python tools/cnc_check.py --help` (or set `CAD_PY`
 | `pipelines/fairsolid/` | scan mesh -> parametric STEP pipeline (own venv, see its README). This is Fairsolid (the old fairsolid GitHub repo was deleted on 2026-10-21), see [`docs/FAIRSOLID.md`](docs/FAIRSOLID.md) |
 | `examples/` | small generic examples |
 | `skills/` | agent skills (Claude, Cursor and bots install them from here); cnc-part-check, publish-to-models and scan-to-parametric are owned by SteveCAD (see `skills/README.md`) |
-| `bots/` | one profile per bot that works in this repo (`cad-seeker/`: profile, rules, routine) |
+| `bots/` | one profile per bot that works in this repo (role, owned skills, working rules, routine) |
 | `docs/` | wiki, tools index (`docs/TOOLS.md`), history |
 
 ## Rules in one line
