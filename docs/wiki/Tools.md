@@ -49,4 +49,4 @@ Load them with `source sim/wsl-env.sh`. Full details, smoke tests and rollback: 
 
 ## Related repo
 
-- **Fairsolid** — `pipelines/fairsolid/` (own venv: `bash setup.sh --with-fairsolid`; see its README and `docs/FAIRSOLID.md`). The old repo <https://github.com/living-relation/fairsolid> is archived.
+- **Fairsolid** — `pipelines/fairsolid/` (own venv: `bash setup.sh --with-fairsolid`; see its README and `docs/FAIRSOLID.md`). The old `living-relation/fairsolid` GitHub repo was deleted on 2026-10-21.

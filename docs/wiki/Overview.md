@@ -17,7 +17,7 @@ On top of that, some parts get:
 | Piece | Where | Notes |
 |---|---|---|
 | This repo (models, scripts, notes, docs) | PC → WSL Ubuntu `~/projects/handbuilt-cad`; GitHub `living-relation/handbuilt-cad` | The single source of truth for hand-built work |
-| Fairsolid (scan cleanup / measuring helper) | `pipelines/fairsolid/` (old runs: `C:\projects\_archive\2026-10-17-fairsolid\fairsolid\runs`) | Part of this repo since 2026-10-17; the old repo is archived |
+| Fairsolid (scan cleanup / measuring helper) | `pipelines/fairsolid/` (old runs: `C:\projects\_archive\2026-10-17-fairsolid\fairsolid\runs`) | Part of this repo since 2026-10-17; the old GitHub repo was deleted on 2026-10-21 |
 | Raw scans | Creality Scan folders on the PC, OneDrive, Google Drive | Not in git; listed in `scans/INDEX.md` |
 | Simulation tools | WSL (CalculiX, Gmsh, Elmer, OpenFOAM, ParaView, `~/simvenv`) | Install script in `sim/scripts/` |
 | FreeCAD | Windows `C:\projects\_tools\FreeCAD` | Optional front end |

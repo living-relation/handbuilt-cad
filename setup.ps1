@@ -1,6 +1,6 @@
 # handbuilt-cad setup for a Windows clone (pull-only copy). Safe to re-run.
-#   powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1 [-NoModels] [-NoVenv] [-FreeCADDir <dir>]
-param([switch]$NoModels, [switch]$NoVenv, [string]$FreeCADDir = '')
+#   powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1 [-NoModels] [-NoVenv] [-NoSkills] [-FreeCADDir <dir>]
+param([switch]$NoModels, [switch]$NoVenv, [switch]$NoSkills, [string]$FreeCADDir = '')
 $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
 Set-Location $Root
@@ -68,6 +68,13 @@ $models = if ($env:MODELS_DIR) { $env:MODELS_DIR }
 if ($NoModels) { Write-Host "models folder: $models (not created: -NoModels)" }
 elseif (Test-Path -LiteralPath $models) { Write-Host "models folder: $models (exists, left as is)" }
 else { New-Item -ItemType Directory -Path $models | Out-Null; Write-Host "models folder: created $models" }
+# 4b. ownership notes in the models folder (AGENTS.md, README.md; only added when missing)
+if (-not $NoModels) { & "$Root\scripts\models-folder-notes.ps1" -Models $models }
+
+# 4c. skills: handbuilt-cad owns its skill links. Junction skills\<name> into ~\.claude\skills and ~\.cursor\skills
+#     (a same-name folder is backed up to ~\.skills-backup first; nothing is deleted). Skip with -NoSkills.
+if ($NoSkills) { Write-Host 'skills: not linked (-NoSkills)' }
+else { & "$Root\scripts\link-skills.ps1" | ForEach-Object { Write-Host "skill $($_.Action): $($_.Path)" } }
 
 # 5. FreeCAD launcher wrappers (only into an existing FreeCAD folder you name; never overwrites)
 if ($FreeCADDir) {

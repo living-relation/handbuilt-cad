@@ -1,6 +1,6 @@
 # Fairsolid: where it lives
 
-**`pipelines/fairsolid/` in this repo is Fairsolid.** On 2026-10-17 the owner chose this copy as the one real Fairsolid. The old `living-relation/fairsolid` GitHub repo is archived (read-only, not deleted), and its local checkouts were moved to the archive folders below. Make every Fairsolid change here, through a normal handbuilt-cad PR.
+**`pipelines/fairsolid/` in this repo is Fairsolid.** On 2026-10-17 the owner chose this copy as the one real Fairsolid. The old `living-relation/fairsolid` GitHub repo (and `living-relation/fairsolid-archive`) was deleted from GitHub by the owner on 2026-10-21; it is not archived. Its local checkouts were moved to the archive folders below. Make every Fairsolid change here, through a normal handbuilt-cad PR.
 
 ## Using it
 - Build its venv (separate from the CAD `.venv`, because the two OCP builds conflict): `bash setup.sh --with-fairsolid` (runs `uv sync --frozen --extra test` in `pipelines/fairsolid/`).
@@ -12,8 +12,8 @@
 ## What moved (2026-10-17)
 | Before | Now |
 |---|---|
-| GitHub `living-relation/fairsolid` (main `df79534`) | Archived on GitHub. Its code is here, including `df79534` (the "Read first" section in `AGENTS.md`) |
-| Windows checkout `C:\projects\active\fairsolid` | `C:\projects\_archive\2026-10-17-fairsolid\fairsolid\`: the whole checkout with its `.venv`, `runs\`, `handoff\`, `out\`, `work\` and the local `surface-fit` branch (also on `living-relation/fairsolid-archive`) |
+| GitHub `living-relation/fairsolid` (main `df79534`) | Deleted on GitHub (2026-10-21). Its code is here, including `df79534` (the "Read first" section in `AGENTS.md`) |
+| Windows checkout `C:\projects\active\fairsolid` | `C:\projects\_archive\2026-10-17-fairsolid\fairsolid\`: the whole checkout with its `.venv`, `runs\`, `handoff\`, `out\`, `work\` and the local `surface-fit` branch. `living-relation/fairsolid-archive` was also deleted on 2026-10-21, so this local clone is the only copy of the git history |
 | WSL checkout `~/projects/fairsolid` | `~/archive/2026-10-17-fairsolid/fairsolid/` |
 | `handoff\tool\make_handoff.py` + templates (outside git) | `pipelines/fairsolid/scripts/` (ported; finds runs through `--runs` / `FAIRSOLID_RUNS`) |
 | Run folders, e.g. `runs\fuel_hanger_billet_1014` (st185 fuel hanger history), `runs\pedal_adapter` | Kept as history in `C:\projects\_archive\2026-10-17-fairsolid\fairsolid\runs\` (nothing deleted). st185 and `parts/pedal_adapter` read them from there |
@@ -21,4 +21,12 @@
 
 - The "uncommitted `scripts/batch_eval.py` change" in the Windows checkout was line endings only: Windows git (`core.autocrlf=true`) sees no change, and `git diff --ignore-cr-at-eol` is empty. A copy of the file plus its diff is saved in `C:\projects\_archive\2026-10-17-fairsolid\` (`batch_eval-uncommitted.patch`, `batch_eval.py.worktree`). There was nothing to port. The tracked file is identical to `pipelines/fairsolid/scripts/batch_eval.py`.
 - Known test gap: `tests/test_primitives.py` used to read `work/clean.ply`, a leftover from a manual run, so its 7 tests errored on every fresh checkout. It now builds that mesh from the fixture. 6 pass; `test_all_four_corner_holes_found` is flaky (finds 3 or 4 of the 4 corner holes from run to run) and is marked xfail (not strict) until the cylinder search is fixed.
-- Nothing was deleted. The archive folders keep everything that wasn't in git.
+- Nothing was deleted in the move. The archive folders keep everything that wasn't in git.
+
+## Not in this repo (checked 2026-10-21, after the GitHub repos were deleted)
+Compared every branch, tag and file of `C:\projects\_archive\2026-10-17-fairsolid\fairsolid` (refs `main` df79534, `surface-fit` f17786a = the old `fairsolid-archive` main; no tags, no stashes) with `pipelines/fairsolid/`:
+- **Git history:** the 59 `surface-fit` commits and the 3 `main` commits (the two lines share no merge base). Only the final files were ported. The history exists only in that local clone (and the WSL copy).
+- **`docs/session-transcripts/2026-09-05_llm-vlm-feasibility-research.jsonl`** (tracked on `surface-fit`): not ported.
+- **Wording-only differences:** every other tracked file is here, edited on purpose for this repo (generic wording instead of personal names, and no hard-coded scan paths in `scripts/batch_eval.py`). There are no code differences beyond those lines.
+- **Untracked, never in git:** `src/fairsolid/backends/` (2 files, 5 KB), `tests/data/` (`nominal.step`, `nominal.stl`, `scan.stl` 158 MB; can be regenerated with `tests/make_fixture.py`), `runs/` (1011 files, 1.9 GB), `handoff/` (9.7 MB), `out/` (21 MB), `work/` (31 MB), `CLAUDE.local.md`, `.venv/`.
+- Keep that archive until these are dealt with; it is the only copy.
