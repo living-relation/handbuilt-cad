@@ -32,12 +32,13 @@ Tests: `.venv\Scripts\python.exe -m pytest -q` (about 8 minutes). See `AGENTS.md
 
 ### Linux / WSL
 
-Fairsolid also runs on Linux and in WSL (Ubuntu). Clone it onto the Linux file system
-(for example `~/projects/fairsolid`, not `/mnt/c`) and give it its own Python 3.13 venv with
-[uv](https://docs.astral.sh/uv/). It matches the Windows pin, 3.13.12:
+Fairsolid also runs on Linux and in WSL (Ubuntu). It lives in handbuilt-cad (the old `living-relation/fairsolid`
+repo was deleted on 2026-10-21), so clone handbuilt-cad onto the Linux file system (not `/mnt/c`) and give
+`pipelines/fairsolid/` its own Python 3.13 venv with [uv](https://docs.astral.sh/uv/) (or `bash setup.sh --with-fairsolid`).
+It matches the Windows pin, 3.13.12:
 
-    git clone https://github.com/living-relation/fairsolid ~/projects/fairsolid
-    cd ~/projects/fairsolid
+    git clone https://github.com/living-relation/handbuilt-cad ~/projects/handbuilt-cad
+    cd ~/projects/handbuilt-cad/pipelines/fairsolid
     uv venv --python 3.13.12 .venv
     uv pip install --python .venv/bin/python -e ".[test]"
 

@@ -52,6 +52,29 @@ MODELS="${MODELS_DIR:-${local_models:-$desktop/models}}"
 if [ "$NO_MODELS" = 1 ]; then echo "models folder: $MODELS (not created: --no-models)";
 elif [ -d "$MODELS" ]; then echo "models folder: $MODELS (exists, left as is)";
 else mkdir -p "$MODELS"; echo "models folder: created $MODELS"; fi
+# 5b. ownership notes in the models folder (only added when missing; existing files are never touched)
+if [ "$NO_MODELS" != 1 ] && [ -d "$MODELS" ]; then
+  for n in AGENTS.md README.md; do
+    if [ -e "$MODELS/$n" ]; then echo "models notes: $MODELS/$n exists, left as is"
+    else sed "s|@CLONE@|$ROOT|g" "templates/models-folder/$n" > "$MODELS/$n"; echo "models notes: added $MODELS/$n"; fi
+  done
+fi
+
+# 6. skills: handbuilt-cad owns its skill links. Symlink skills/<name> into ~/.claude/skills and ~/.cursor/skills
+#    (a same-name entry is moved to ~/.skills-backup/<stamp>/ first; nothing is deleted). Skip with NO_SKILLS=1.
+#    On Windows, setup.ps1 does the same with junctions.
+if [ "$NO_SKILLS" != 1 ]; then
+  stamp=$(date +%Y%m%d-%H%M%S)
+  for s in "$ROOT"/skills/*/; do
+    s=${s%/}; [ -f "$s/SKILL.md" ] || continue; name=$(basename "$s")
+    for t in "$HOME/.claude/skills" "$HOME/.cursor/skills"; do
+      mkdir -p "$t"; d="$t/$name"
+      if [ -L "$d" ] && [ "$(readlink -f "$d")" = "$(readlink -f "$s")" ]; then continue; fi
+      if [ -e "$d" ] || [ -L "$d" ]; then b="$HOME/.skills-backup/$stamp/$(basename "$(dirname "$t")")"; mkdir -p "$b"; mv "$d" "$b/"; echo "skill backed up: $b/$name"; fi
+      ln -s "$s" "$d"; echo "skill linked: $d -> $s"
+    done
+  done
+fi
 
 cat <<MSG
 
