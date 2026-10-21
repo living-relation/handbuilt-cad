@@ -336,13 +336,16 @@ def main(argv=None):
     if (a.only or a.classify) and os.path.isfile(outp):
         res = json.load(open(outp))
     elif a.classify:
-        print('--classify needs an existing report: %s' % outp)
+        print('--classify needs an existing report: %s' % outp, file=sys.stderr)
         return 2
     only = [x for x in a.only.split(',') if x]
     all_rows, missing = {}, []
     for part in (cfg['parts'] if a.classify else ()):
         name = part['name']
-        if (only and name not in only) or name not in res['parts']:
+        if only and name not in only:
+            continue
+        if name not in res['parts']:
+            print('warning: %s is not in the report %s; run without --classify to check it' % (name, outp), file=sys.stderr)
             continue
         res['parts'][name], all_rows[name] = reclassify(res['parts'][name], cfg, part)
         r = res['parts'][name]

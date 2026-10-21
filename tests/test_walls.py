@@ -201,7 +201,7 @@ def test_thin_wall_found_under_every_flag_combination(tmp_path, snap, despike, s
     assert not CPW.walls(m, 0.9, 0.5, opts=o), o                     # a 1.0 mm wall passes a 0.9 mm minimum
 
 
-def test_classify_resorts_the_report_without_detection(tmp_path, monkeypatch):
+def test_classify_resorts_the_report_without_detection(tmp_path, monkeypatch, capsys):
     pytest.importorskip("scipy")
     bd = pytest.importorskip("build123d")
     import check_printed_walls as CPW
@@ -218,4 +218,13 @@ def test_classify_resorts_the_report_without_detection(tmp_path, monkeypatch):
     assert CPW.main(["--config", str(p), "--classify"]) == 0
     r2 = json.loads((tmp_path / "wc.json").read_text())["parts"]["P"]
     assert r2["approved"] == r["flag"] and r2["flag"] == 0
+    conf["parts"].append(dict(name="Q", file="thinwall.stl"))         # a part the report doesn't have
+    p.write_text(json.dumps(conf))
+    capsys.readouterr()
+    assert CPW.main(["--config", str(p), "--classify"]) == 0
+    assert "Q is not in the report" in capsys.readouterr().err
     assert CPW.main(["--config", str(tmp_path / "missing.json"), "--classify"]) == 2
+    (tmp_path / "wc.json").unlink()                                   # config fine, no report yet
+    capsys.readouterr()
+    assert CPW.main(["--config", str(p), "--classify"]) == 2
+    assert "needs an existing report" in capsys.readouterr().err
