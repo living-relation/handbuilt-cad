@@ -69,7 +69,7 @@ Anything else the owner wants that is not in `RULES.md`:
 
 - [ ] `revN\` folder with the build script (named numbers at the top)
 - [ ] One STEP + one STL per part, plus the assembly
-- [ ] `hanger_report`-style JSON (mass, clearances)
+- [ ] `<part>_report`-style JSON (mass, clearances)
 - [ ] `2d_bottom_view.png` and `2d_trimetric.png` (extra drawings: ____)
 - [ ] `SUMMARY.md`: what was built, how each rule was met with numbers, checks, open questions (A / B / C)
 - [ ] Parts list with real part numbers + links, and the true path of every model file

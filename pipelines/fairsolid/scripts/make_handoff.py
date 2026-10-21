@@ -120,18 +120,12 @@ DESCRIBE = [
     ("fairsolid/tests/*", "Fairsolid test suite (about 8 minutes in full)."),
     ("worked-example/*/scan_canon.ply", "The original part's scan in its canonical frame (rotated / moved only, never scaled); the overlay drawing reads it."),
     ("worked-example/*/SUMMARY.md", "Rev notes: the owner's answers, what changed, 2 g stress table, checks, open items."),
-    ("worked-example/*/hanger_billet.py", "THE RECIPE: the build123d script (named numbers at the top) that makes every part."),
-    ("worked-example/*/hanger_billet_assembly.*", "Whole billet assembly (STEP exact, STL mesh)."),
-    ("worked-example/*/hanger_with_pump_fittings.stl", "Display mesh: the parts with the envelopes of what fits on them."),
-    ("worked-example/*/hanger_report.json", "Script output: mass, clearances and overlaps between parts."),
-    ("worked-example/*/hanger_*.step", "One part, exact geometry (what gets built from)."),
-    ("worked-example/*/hanger_*.stl", "The same part as a mesh."),
     ("worked-example/*/cnc_*.txt", "Manufacturing check output (sharp corners, thin walls) for one part."),
     ("worked-example/*/cnc_*.json", "The same manufacturing check as data."),
     ("worked-example/*/2d_bottom_view.png", "Deliverable: bottom view render."),
     ("worked-example/*/2d_trimetric.png", "Deliverable: trimetric render."),
     ("worked-example/*/2d_*.png", "Extra 2D drawing for the owner (dimensions, section, side view, scan overlay)."),
-    ("worked-example/*/top_plate_ports.*", "Machinist hole drawing of the top plate."),
+    ("worked-example/*/*_ports.*", "Machinist hole drawing of a <part>."),
     ("worked-example/*/renders_2d.py", "Makes the six 2D drawings from the STLs and drawing_geom.json."),
     ("worked-example/*/port_drawing.py", "Makes the machinist hole drawing from drawing_geom.json."),
     ("worked-example/*/dump_geom.py", "Writes drawing_geom.json from the model numbers."),
@@ -142,6 +136,13 @@ DESCRIBE = [
     ("worked-example/*/render.py", "Fairsolid render_pair picture (scan above, shaded result below)."),
     ("worked-example/*/*.sh", "the owner's WSL command sequence (build, check, view); paths do not apply, the order does."),
     ("worked-example/*/build.log", "Output of the last successful build."),
+    # Generic <part> files, after the named helpers above (first match wins):
+    ("worked-example/*/*_assembly.*", "Whole assembly (STEP exact, STL mesh)."),
+    ("worked-example/*/*_with_*.stl", "Display mesh: the parts with the envelopes of what fits on them."),
+    ("worked-example/*/*_report.json", "Script output: mass, clearances and overlaps between parts."),
+    ("worked-example/*/*.step", "One <part>, exact geometry (what gets built from)."),
+    ("worked-example/*/*.stl", "The same <part> as a mesh."),
+    ("worked-example/*/*.py", "THE RECIPE: the <part> build123d script (named numbers at the top) that makes every part."),
 ]
 
 

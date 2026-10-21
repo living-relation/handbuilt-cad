@@ -18,7 +18,7 @@ clean groundwork for CAD:
 
 Fairsolid alone does NOT make the finished machined-looking solid. **You build the final parts yourself as
 parametric build123d scripts**, using Fairsolid's numbers and the scan frame. The worked example
-(`worked-example/<job>/rev7/`) is exactly that: `hanger_billet.py`.
+(`worked-example/<job>/rev7/`) is exactly that: `<part>.py`.
 
 Goals: final models look like perfect machined parts (straight flats, true rounds, clean sizes), scan
 texture is never carried into a model, and scan scale is locked.
@@ -112,15 +112,15 @@ not in this zip (superseded).
 
 ```powershell
 cd worked-example\<job>\rev7
-..\..\..\.venv-cad\Scripts\python.exe hanger_billet.py > build.log 2>&1
+..\..\..\.venv-cad\Scripts\python.exe <part>.py > build.log 2>&1
 ```
 
 Takes about 1.5 minutes. Expected last lines: `"billet_mass_g": 511.0`. `build.log` starts with
 `edge breaks: 16 edges done, 8 failed` (known and harmless: 8 optional edge breaks the kernel refuses, the same
-in the owner's copy) and `note: foot came out as 1 pieces` (means one piece, fine). It writes `hanger_*.step`,
-`hanger_*.stl` for every part and `hanger_report.json`. Output must match the copies already in the folder.
+in the owner's copy) and `note: foot came out as 1 pieces` (means one piece, fine). It writes `<part>_*.step`,
+`<part>_*.stl` for every part and `<part>_report.json`. Output must match the copies already in the folder.
 
-How to write a new one: copy `hanger_billet.py`, change the named constants at the top (interfaces first),
+How to write a new one: copy `<part>.py`, change the named constants at the top (interfaces first),
 rebuild, check, render. Keep numbers named; keep every part its own solid; export each part to STEP and STL.
 
 ## 5. Render the 2D pictures (bottom + trimetric)
@@ -159,7 +159,7 @@ and style the owner's other models use.
 
 ## 6. Export STEP / STL
 
-In a build123d script (from `hanger_billet.py`):
+In a build123d script (from `<part>.py`):
 
 ```python
 from build123d import export_step, export_stl
@@ -181,12 +181,12 @@ export_stl(part, "<part>.stl", tolerance=0.02, angular_tolerance=0.2)   # mesh, 
    (`OK` = 1 solid, valid; `BAD` = floating pieces or invalid. An assembly file shows several solids, that is fine;
    check the part files.)
 2. **Clearances and fit:** overlaps and minimum gaps between parts (the example script writes them to
-   `hanger_report.json`: `overlap_mm3` must be 0.0 unless the summary explains it; `min_gap_mm` as designed).
+   `<part>_report.json`: `overlap_mm3` must be 0.0 unless the summary explains it; `min_gap_mm` as designed).
 3. **Rule gates from `RULES.md`:** the electrical, hole, printed-part and sealing rules that apply to the job,
    2x weight load stress table, sealing faces. Show each as a small table in `SUMMARY.md`.
 4. **Manufacturing check:** the example used `handbuilt-models\tools\cnc_check.py` (sharp inside corners,
    thin walls, flat-end-mill floors). That script is NOT in this zip (it lives in a separate project); its
-   results for rev 7 are in `cnc_*.txt` / `cnc_*.json`. Without it, check minimum wall by hand and list it.
+   results for the latest revision are in `cnc_*.txt` / `cnc_*.json`. Without it, check minimum wall by hand and list it.
 5. **Pictures:** `2d_bottom_view.png` and `2d_trimetric.png` exist, are current and look right.
 6. **Lists:** every part has its true file path and a trimetric; every buyable part has a real part number
    and live link (`RULES.md` rules 1 and 3).
@@ -218,8 +218,8 @@ and stage files, so they are not in this zip; request one in the task if you nee
 | `bezel_1009` | Bezel scan (about 1M faces). Closed part. |
 | `dash_housing`, `dash_housing_1009` | Dash housing scan (131k faces). Closed part. |
 | `pedal_adapter` | Pedal adapter. Done (hand-built parametric part). |
-| `pump_hanger_1009` | The original part the worked example replaces; its canonical frame is `scan_canon.ply` there. |
-| `fuel_pump`, `fuel_pump_1009` | Pump scan. |
+| `<original part run>` | The original part the worked example replaces; its canonical frame is `scan_canon.ply` there. |
+| `<other part runs>` | Scans of related parts. |
 | `oil_catch`, `celica_catch_1009` | Reference scans (open space, `refscan`): a bracket and the space around it. |
 | `scan0608_1009`, `current`, `diag` | Trial and diagnostic runs. |
 

@@ -19,13 +19,13 @@ yield 503 MPa. The fatigue case is 1 g + 0.5 g lateral at 10^6 cycles, Goodman R
 | tools | 20/12/8 mm flat + 8 mm (r4) bull, 6 mm ball, drills + boring bar | 20/12 mm flat, 12 mm bull r4 (floors), r6 corners, drills + boring bar | 20/12 mm flat, 12 mm r6 bull, drills + boring bar |
 | est. complexity / cycle time | high, ~1.0 (reference) | ~0.8 | ~0.55 |
 
-"Easy" came out at 2.46 kg, below the 2.5–2.7 kg Daniel was prepared to accept, because the it11 layout is already lean. Making the arms solid and the tongue solid is what turns the arm pockets into plain profiling.
+"Easy" came out at 2.46 kg, below the 2.5–2.7 kg the owner was prepared to accept, because the it11 layout is already lean. Making the arms solid and the tongue solid is what turns the arm pockets into plain profiling.
 
 Middle (chunk 12) starts from easy and adds back only the tongue +Z pocket and shallow (6 mm) arm pockets, so it is about 65 g lighter than easy.
 Deeper pockets (13 mm, web 16 → 2.373 kg) or a 26 mm web (2.383 kg) dropped cornering to SF 1.96–1.97, so the 30 mm web is the lightest that passes.
 
 
-## Variant 4: full-arm (chunk 13, Daniel's request)
+## Variant 4: full-arm (chunk 13, the owner's request)
 Control-arm mounts at **full strength**: lateral-arm eyes, strut-rod eye and all three arms are fully solid at the easy-variant sizes
 (left 34×48, right and top 34×42, r6 long edges, no pockets), with r6 junction fillets at the arm roots (r8 was tried: OCC only gets 5 of the 7 edges and SF drops to 2.26, so r6 stays).
 All the weight saving comes from the tongue (+Z 14 mm and −Z 12 mm pockets, r4 floors) compared with easy. Hub, flange and ribs are as easy/best.

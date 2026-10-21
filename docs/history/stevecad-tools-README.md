@@ -1,9 +1,9 @@
 # stevecad-tools
-SteveCAD's CAD toolkit (moved from the box to DansPC WSL, 2026-10-16). Local git only, no remote.
+SteveCAD's CAD toolkit (moved from the box to the owner's PC, WSL, 2026-10-16). Local git only, no remote.
 
 ## Setup
 ```bash
-source /home/daniel/projects/handbuilt-models/.venv/bin/activate   # has everything in requirements.txt; do not install into it
+source ~/projects/handbuilt-models/.venv/bin/activate   # has everything in requirements.txt; do not install into it
 # or: python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 ```
 Fonts: uses DejaVu (system or matplotlib's bundled copy). Extra fonts: `STEVECAD_FONTS=/path/a.ttf:/path/b.ttf`.
@@ -25,14 +25,14 @@ Fonts: uses DejaVu (system or matplotlib's bundled copy). Extra fonts: `STEVECAD
 | `checks/intf.py` | Interference check between assembly bodies. |
 | `checks/holefix.py`, `fxlib.py`, `edgebreak.py` | Hole correction (ISO tap drills, >=1.5D thread) and fix helpers. |
 | `checks/plane_dump.py` | List planar faces by axis/level (for dimensioning). |
-| `examples/st185/` | ST185 job specs and run scripts. See NOTE.md. |
+| `examples/<project>/` | A project's job specs and run scripts. See NOTE.md. |
 | `skills/` | SteveCAD skill SKILL.md files (copies; source of truth is the workflows store). |
 
 ## Examples
 ```bash
 python render/smooth_render.py part.step out.png --view iso --edges
 python checks/mesh_check.py base.step
-ST185_WORK=~/work/st185 python examples/st185/run_one.py csb3_body
+PROJECT_WORK=~/work/<project> python examples/<project>/run_one.py <job>
 ```
 Drawing rules: see [DRAWING-RULES.md](DRAWING-RULES.md). Each model folder gets a `REVLOG.md` (one row per release) that feeds the drawing's rev log.
-Rules: STEP is the deliverable (no STL unless a print job needs it). The model drives the drawing: regenerate after every model change. Run heavy CAD on DansPC, not the box.
+Rules: STEP is the deliverable (no STL unless a print job needs it). The model drives the drawing: regenerate after every model change. Run heavy CAD on the owner's PC, not the box.
