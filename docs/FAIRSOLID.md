@@ -26,7 +26,9 @@
 ## Not in this repo (checked 2026-10-21, after the GitHub repos were deleted)
 Compared every branch, tag and file of `C:\projects\_archive\2026-10-17-fairsolid\fairsolid` (refs `main` df79534, `surface-fit` f17786a = the old `fairsolid-archive` main; no tags, no stashes) with `pipelines/fairsolid/`:
 - **Git history:** the 59 `surface-fit` commits and the 3 `main` commits (the two lines share no merge base). Only the final files were ported. The history exists only in that local clone (and the WSL copy).
-- **`docs/session-transcripts/2026-09-05_llm-vlm-feasibility-research.jsonl`** (tracked on `surface-fit`): not ported.
+- **Files that only exist in old history** (deleted upstream on purpose before the move, so not ported): the old `scan2step` package (renamed to fairsolid in a3e4e0d), `src/fairsolid/backends/` and `stages/s40_ai.py` plus `scripts/wsl_cadreasoner.py` and `scripts/wsl_infer.py` (WSL AI stage removed in 6175b8b), `docs/HOW_TO_RUN.md` and `CLAUDE.md` (merged into README/AGENTS.md), and `.claude/skills/scan2step`.
+- **No tags** and no stashes in the archive clone.
+- **`docs/session-transcripts/2026-09-05_llm-vlm-feasibility-research.jsonl`** (tracked on `surface-fit`, 11 MB research chat transcript): not ported on purpose, because it is over the 1 MB limit and is a private chat log in a public repo.
 - **Wording-only differences:** every other tracked file is here, edited on purpose for this repo (generic wording instead of personal names, and no hard-coded scan paths in `scripts/batch_eval.py`). There are no code differences beyond those lines.
-- **Untracked, never in git:** `src/fairsolid/backends/` (2 files, 5 KB), `tests/data/` (`nominal.step`, `nominal.stl`, `scan.stl` 158 MB; can be regenerated with `tests/make_fixture.py`), `runs/` (1011 files, 1.9 GB), `handoff/` (9.7 MB), `out/` (21 MB), `work/` (31 MB), `CLAUDE.local.md`, `.venv/`.
+- **Untracked, never in git:** `src/fairsolid/backends/__pycache__/` (2 stale .pyc files only; the backends code and stage 40 were removed on purpose in 2026-10-08 commit 6175b8b), `tests/data/` (`nominal.step`, `nominal.stl`, `scan.stl` 158 MB; can be regenerated with `tests/make_fixture.py`), `runs/` (1011 files, 1.9 GB), `handoff/` (9.7 MB), `out/` (21 MB), `work/` (31 MB), `CLAUDE.local.md`, `.venv/`.
 - Keep that archive until these are dealt with; it is the only copy.
