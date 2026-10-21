@@ -14,15 +14,18 @@ c13, s13, c87, s87 = math.cos(math.radians(13.6)), math.sin(math.radians(13.6)),
 EYES = {"left_eye": dict(c=(-79.15, 86.0, 83.0), axis=(1, 0, 0), od=46.0, bore=35.0, length=26.0),
         "right_eye": dict(c=(65.9, 73.9, 112.6), axis=(c13, 0, -s13), od=46.5, bore=35.5, length=26.0),
         "top_eye": dict(c=(-6.6, 138.1, 129.0), axis=(-s87, 0, c87), od=52.0, bore=40.0, length=40.0)}
-TONGUE_X = (-15.0, 15.0)   # strut-bracket clamp faces (v4b tongue measured -14.4..15.2 / -16.5..17.0)
+TONGUE_X = (-15.0, 15.0)
+TONGUE_X_OEM = (-13.8, 14.9)   # chunk 18: v4b scan median clamp faces over y -159..-67, z 85-105 (owner rule 1)
+ABS_FACE_X = 67.0              # chunk 18: v4b ABS sensor mount face (plane x = 67.0, normal +X), measured on the v4b scan   # strut-bracket clamp faces (v4b tongue measured -14.4..15.2 / -16.5..17.0)
 
 P = dict(hub_od=92.0, flange_r=71.0, flange_z=(62.0, 82.0), tongue_y=(-166.0, -40.0), tongue_z=(72.0, 116.0),
          tongue_pocket_depth=12.0, arm_w=34.0, arm_h=42.0, wall=6.0, web=6.0, edge_r=4.0, pocket_r=6.0,
          ear_boss_d=26.0, side_boss_d=32.0, keepout_r=45.0, flange_pockets=True, flange_pocket_angles=(95, 189), junction_r=6.0, ear_lug_to_flange_top=False, left_arm_h=None,
          flange_style='disc', ring_r=56.0, bolt_boss_r=11.5, floor_r=0.0, tongue_bottom_pocket=0.0, tongue_junction_r=0.0,
          left_root=(-50, 40, 76), right_root=(45, 45, 82), top_root=(-5, 55, 78), arm_left=None, arm_right=None, arm_top=None, rib_r2=(24.0, 30.0), tongue_blend=0.0, tongue_blend_len=32.0, sector_y=-12.0, hybrid_pockets=(), tongue_root_patch=0.0, tongue_under_wedge=0.0, wedge_flare=0.0,
-         layout='arms', ribs=True, frame_lt=(30.0, 36.0), frame_tr=(30.0, 36.0), strip_w=26.0, ear1_link_w=0.0, left_strut2=None, ties=(), rib_size=None, rib_end_clear=14.0, rib_inner_solid=False, ribs_left=False, left_gusset=None, blend_mode='chamfer', arm_pockets=True, rib_pockets=True, lug_pockets=True, wall_right=None, wall_top=None, pads=(), tongue_root_pocket=None)
+         layout='arms', ribs=True, frame_lt=(30.0, 36.0), frame_tr=(30.0, 36.0), strip_w=26.0, ear1_link_w=0.0, left_strut2=None, ties=(), rib_size=None, rib_end_clear=14.0, rib_inner_solid=False, ribs_left=False, left_gusset=None, blend_mode='chamfer', arm_pockets=True, rib_pockets=True, lug_pockets=True, wall_right=None, wall_top=None, pads=(), tongue_root_pocket=None, smooth_ends=False, smooth_boss_r=0.0, smooth_trim_r=0.0, abs_exact=False, eye_trim_add=6.0, strut_keepout=None, tongue_oem=False)
 if len(sys.argv) > 1 and sys.argv[1].endswith('.json'): P.update(json.load(open(sys.argv[1])))
+if P.get('tongue_oem'): TONGUE_X = TONGUE_X_OEM
 for k in ('arm_left', 'arm_right', 'arm_top'):
     if P[k] is None: P[k] = (P['arm_w'], P['left_arm_h'] or P['arm_h']) if k == 'arm_left' else (P['arm_w'], P['arm_h'])
 OUT = sys.argv[2] if len(sys.argv) > 2 else 'knuckle_billet'
@@ -43,6 +46,12 @@ def hbar(A, B, w, h, end_clear=18.0, hint=(0, 0, 1), pockets=True, wall=None):
     bar = Box(L, w, h)
     try: bar = fillet(bar.edges().filter_by(Axis.X), P['edge_r'])
     except Exception: pass
+    if P['smooth_ends']:   # chunk 16: round the member ends (half-cylinder caps) instead of flat chops
+        for xe in (-L / 2, L / 2):
+            cap = Pos(xe, 0, 0) * Cylinder(w / 2, h)
+            try: cap = fillet(cap.edges().filter_by(GeomType.CIRCLE), min(P['edge_r'], h / 4))
+            except Exception: pass
+            bar = bar + cap
     bar = pl * bar
     pl_len = L - 2 * end_clear; pw = w - 2 * (wall or P['wall']); pd = (h - P['web']) / 2
     if P['arm_pockets'] and pockets and pl_len > 2 * P['pocket_r'] + 2 and pw > 2 * P['pocket_r'] + 1 and pd > 0.5:
@@ -98,7 +107,11 @@ def build():
                 part -= Pos(r*math.cos(a), r*math.sin(a), zf1 - 10) * Rot(0, 0, ang + 90) * extrude(RectangleRounded(20, 10, 4.5), amount=11)
     # ear bosses + lugs to the hub
     for (x, y), d, (z0, z1) in EAR_HOLES:
-        part += Pos(x, y, z0) * Cylinder(P['ear_boss_d']/2, z1 - z0, align=(Align.CENTER, Align.CENTER, Align.MIN))
+        eb = Pos(x, y, z0) * Cylinder(P['ear_boss_d']/2, z1 - z0, align=(Align.CENTER, Align.CENTER, Align.MIN))
+        if P['smooth_boss_r'] > 0:
+            try: eb = fillet(eb.edges().filter_by(GeomType.CIRCLE), P['smooth_boss_r'])
+            except Exception: pass
+        part += eb
         r = math.hypot(x, y); ux, uy = x / r, y / r
         ei = 0 if x < -90 else 1
         lw = P['ear1_link_w'] if (ei == 0 and P['ear1_link_w']) else P['ear_boss_d']
@@ -108,7 +121,12 @@ def build():
             part += hbar((ux*35, uy*35, zm), (x - ux*(P['ear_boss_d']/2 + 4), y - uy*(P['ear_boss_d']/2 + 4), zm), P['ear_boss_d'], zt - z0, end_clear=60.0, pockets=P['lug_pockets'])
     # side boss (ABS?) along X
     (y, z), d, x0, x1 = X_HOLES[0]
-    part += cyl((x0, y, z), (1, 0, 0), P['side_boss_d'], x1 - x0)
+    if P['abs_exact']: x1 = ABS_FACE_X
+    sb = cyl((x0, y, z), (1, 0, 0), P['side_boss_d'], x1 - x0)
+    if P['smooth_boss_r'] > 0:
+        try: sb = fillet(sb.edges().filter_by(GeomType.CIRCLE), P['smooth_boss_r'])
+        except Exception: pass
+    part += sb
     # strut clamp tongue (solid between the clamp faces, pocketed from +Z between the bolts)
     ty0, ty1 = P['tongue_y']; tz0, tz1 = P['tongue_z']
     tg = Pos((TONGUE_X[0]+TONGUE_X[1])/2, (ty0+ty1)/2, (tz0+tz1)/2) * Box(TONGUE_X[1]-TONGUE_X[0], ty1-ty0, tz1-tz0)
@@ -227,10 +245,43 @@ def build():
         # keep the eye end faces at the v4b positions: trim anything that sticks past them inside the eye OD + 6
         for s in (1, -1):
             o = V(*v['c']) + a * s * (v['length']/2)
-            part -= Plane(origin=o, z_dir=a * s) * Cylinder(v['od']/2 + 6, 40, align=(Align.CENTER, Align.CENTER, Align.MIN))
+            part -= Plane(origin=o, z_dir=a * s) * Cylinder(v['od']/2 + P['eye_trim_add'], 40, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    if P['strut_keepout']:   # chunk 18 (owner rule 2): strut tube keep-out, tube OD 52 (est.) + 5 mm clearance, inboard of the tongue, axis ~Y
+        ko = P['strut_keepout']; r_ = ko['od'] / 2 + ko['clear']; zc_ = P['tongue_z'][1] + r_
+        part -= Pos(ko['x'], (ko['y0'] + ko['y1']) / 2, zc_) * Rot(90, 0, 0) * Cylinder(r_, ko['y1'] - ko['y0'])
     # tongue clamp faces: nothing proud of x = TONGUE_X along the clamp length
     for s, xf in ((1, TONGUE_X[1]), (-1, TONGUE_X[0])):
         part -= Pos(xf + s * 30, -117.5, 95) * Box(60, 95, 60)
+        if P['strut_keepout']:   # clamp bracket envelope continues 12 mm below the lower bolt (+5 clearance) above the flange top
+            part -= Pos(xf + s * 30, -64.0, 105.0) * Box(60, 12.0, 42.0)
+    if P['abs_exact']:   # chunk 18 (owner rule 3): ABS sensor mount face exact at x = 67.0, spot-face clearance (d 36) in front of it
+        (y_, z_), _, _, _ = X_HOLES[0]
+        part -= Pos(ABS_FACE_X + 15.0, y_, z_) * Box(30.0, 44.0, 44.0)   # flat planar spot face (no curled sliver)
+    if P['smooth_trim_r'] > 0: part = smooth_trims(part, e)
+    return part
+
+def smooth_trims(part, e):
+    """Break the edges where the eye end-face spot-face trims cut through arms/ribs (removes the feather edges), keeping the eye bore edges exact."""
+    ok = bad = 0
+    for k, v in e.items():
+        a = V(*v['axis']).normalized()
+        for sgn in (1, -1):
+            o = V(*v['c']) + a * sgn * (v['length'] / 2)
+            cand = []
+            for ed in part.edges():
+                vs = [V(*p_) for p_ in [ed.position_at(t) for t in (0.0, 0.5, 1.0)]]
+                if all(abs((p_ - o).dot(a)) < 0.05 for p_ in vs):
+                    rr = [((p_ - o) - a * (p_ - o).dot(a)).length for p_ in vs]
+                    if min(rr) > v['bore'] / 2 + 0.5: cand.append(ed.center())
+            for c_ in cand:
+                for r_ in (P['smooth_trim_r'], P['smooth_trim_r'] / 2):
+                    try:
+                        ee = [x for x in part.edges() if (x.center() - c_).length < 0.05]
+                        if not ee: break
+                        trial = fillet(ee, r_)
+                        if len(trial.solids()) == 1 and trial.is_valid: part = trial; ok += 1; break
+                    except Exception: bad += 1 if r_ < P['smooth_trim_r'] else 0
+    print('trim edge breaks', ok, 'failed', bad, flush=True)
     return part
 
 def solid_of(p):

@@ -1,0 +1,14 @@
+middle ride corner,brake,combined,fatigue
+middle bump bump
+middle droop brake
+best ride corner,brake,combined,fatigue
+best bump bump
+best droop brake
+fullarm ride corner,brake,combined,fatigue
+fullarm bump bump
+fullarm droop brake
+easy ride corner,brake,combined,fatigue
+easy bump bump
+easy droop brake
+middle mid corner,combined
+best mid corner,combined

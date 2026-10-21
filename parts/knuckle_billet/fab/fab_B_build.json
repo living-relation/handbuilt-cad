@@ -1,0 +1,148 @@
+{
+ "concept": "B",
+ "parts": {
+  "housing": {
+   "material": "4130",
+   "process": "turned 4130 bar, OD88 tube + r56 flange ring w/ 4 bolt bosses (16 thk); bore finish-machined AFTER welding"
+  },
+  "ear1_boss": {
+   "material": "4130",
+   "process": "turned 4130 boss OD24, reamed after welding"
+  },
+  "ear1_web": {
+   "material": "4130",
+   "process": "8 mm 4130 plate web, housing -> ear boss, top edge tapers into the wing"
+  },
+  "ear2_boss": {
+   "material": "4130",
+   "process": "turned 4130 boss OD24, reamed after welding"
+  },
+  "ear2_web": {
+   "material": "4130",
+   "process": "8 mm 4130 plate web, housing -> ear boss, top edge tapers into the wing"
+  },
+  "abs_boss": {
+   "material": "4130",
+   "process": "turned 4130 slug d32 (OEM ABS boss), face x=72 and 17 mm bore machined after welding"
+  },
+  "tongue": {
+   "material": "4130",
+   "process": "7 mm cheeks (OEM clamp faces x=-13.8/+14.9, faced after welding), 4 mm centre web, 4 mm caps, 5 mm end plate, 2 crush sleeves (d+10 OD)"
+  },
+  "tongue_root": {
+   "material": "4130",
+   "process": "two 6 mm side gussets + cap, tongue root -> flange ring"
+  },
+  "keel": {
+   "material": "4130",
+   "process": "8 mm 4130 keel gusset under the tongue, housing OD -> tongue bottom cap"
+  },
+  "wing": {
+   "material": "4130",
+   "process": "8 mm 4130 plate wing, laser cut, flush with the flange top (z 82)"
+  },
+  "arm_L": {
+   "material": "4130",
+   "process": "tube 1.50 x 0.120 4130 (38.1 x 3.05)"
+  },
+  "arm_R": {
+   "material": "4130",
+   "process": "tube 1.50 x 0.120"
+  },
+  "arm_T": {
+   "material": "4130",
+   "process": "tube 1.50 x 0.120 (trailing leg)"
+  },
+  "tie_LT": {
+   "material": "4130",
+   "process": "tube 1.00 x 0.095 tie"
+  },
+  "tie_TR": {
+   "material": "4130",
+   "process": "tube 1.00 x 0.095 tie"
+  },
+  "brace_L": {
+   "material": "4130",
+   "process": "tube 1.00 x 0.095 brace from wing tip"
+  },
+  "brace_R": {
+   "material": "4130",
+   "process": "tube 1.00 x 0.095 brace from wing tip"
+  },
+  "left_eye": {
+   "material": "4130",
+   "process": "turned 4130 eye OD46.0 (bushing bore 35.0 finish-bored after welding)"
+  },
+  "right_eye": {
+   "material": "4130",
+   "process": "turned 4130 eye OD46.5 (bushing bore 35.5 finish-bored after welding)"
+  },
+  "top_eye": {
+   "material": "4130",
+   "process": "turned 4130 eye OD52.0 (bushing bore 40.0 finish-bored after welding)"
+  }
+ },
+ "steel": {
+  "n_solids": 1,
+  "solid_vols": [
+   [
+    568612,
+    [
+     -6,
+     2,
+     76
+    ]
+   ]
+  ],
+  "valid": false,
+  "vol": 568612.2473527549,
+  "mass_kg": 4.463606141719126
+ },
+ "steel_joints_intersect_area_mm2": {
+  "housing+ear1_web": 448,
+  "housing+ear2_web": 370,
+  "housing+abs_boss": 752,
+  "housing+tongue": 487,
+  "housing+tongue_root": 953,
+  "housing+keel": 365,
+  "housing+wing": 6135,
+  "housing+arm_R": 13,
+  "ear1_boss+ear1_web": 250,
+  "ear1_web+wing": 136,
+  "ear2_boss+ear2_web": 314,
+  "ear2_web+tongue": 12,
+  "ear2_web+tongue_root": 70,
+  "ear2_web+wing": 143,
+  "abs_boss+wing": 437,
+  "tongue+tongue_root": 478,
+  "tongue+keel": 335,
+  "tongue+wing": 518,
+  "tongue_root+keel": 47,
+  "tongue_root+wing": 843,
+  "wing+arm_L": 550,
+  "wing+arm_R": 493,
+  "wing+arm_T": 439,
+  "wing+brace_L": 480,
+  "wing+brace_R": 316,
+  "arm_L+tie_LT": 416,
+  "arm_L+brace_L": 972,
+  "arm_L+left_eye": 1065,
+  "arm_R+tie_TR": 387,
+  "arm_R+brace_R": 999,
+  "arm_R+right_eye": 1036,
+  "arm_T+tie_LT": 713,
+  "arm_T+tie_TR": 714,
+  "arm_T+top_eye": 1400,
+  "tie_LT+tie_TR": 264,
+  "tie_LT+brace_L": 256,
+  "tie_LT+left_eye": 707,
+  "tie_LT+top_eye": 814,
+  "tie_TR+brace_R": 273,
+  "tie_TR+right_eye": 717,
+  "tie_TR+top_eye": 801,
+  "brace_L+left_eye": 680,
+  "brace_R+right_eye": 685
+ },
+ "total_mass_kg": 4.463606141719126,
+ "seconds": 21
+}

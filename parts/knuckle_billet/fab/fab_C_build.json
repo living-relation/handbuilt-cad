@@ -1,0 +1,109 @@
+{
+ "concept": "C",
+ "parts": {
+  "housing": {
+   "material": "4130",
+   "process": "turned 4130 bar, OD88 tube + r56 flange ring w/ 4 bolt bosses (16 thk); bore finish-machined AFTER welding"
+  },
+  "ear1_boss": {
+   "material": "4130",
+   "process": "turned 4130 boss OD24, reamed after welding"
+  },
+  "ear1_web": {
+   "material": "4130",
+   "process": "8 mm 4130 plate web, housing -> ear boss, top edge tapers into the wing"
+  },
+  "ear2_boss": {
+   "material": "4130",
+   "process": "turned 4130 boss OD24, reamed after welding"
+  },
+  "ear2_web": {
+   "material": "4130",
+   "process": "8 mm 4130 plate web, housing -> ear boss, top edge tapers into the wing"
+  },
+  "abs_boss": {
+   "material": "4130",
+   "process": "turned 4130 slug d32 (OEM ABS boss), face x=72 and 17 mm bore machined after welding"
+  },
+  "tongue": {
+   "material": "4130",
+   "process": "7 mm cheeks (OEM clamp faces x=-13.8/+14.9, faced after welding), 4 mm centre web, 4 mm caps, 5 mm end plate, 2 crush sleeves (d+10 OD)"
+  },
+  "tongue_root": {
+   "material": "4130",
+   "process": "two 6 mm side gussets + cap, tongue root -> flange ring"
+  },
+  "keel": {
+   "material": "4130",
+   "process": "8 mm 4130 keel gusset under the tongue, housing OD -> tongue bottom cap"
+  },
+  "wing": {
+   "material": "4130",
+   "process": "8 mm 4130 plate wing, laser cut, flush with the flange top (z 82)"
+  },
+  "carrier_7075": {
+   "material": "7075",
+   "process": "one-piece 7075-T651 lower eye carrier, 3-axis from 2.25\" plate + angle-block for the two tilted eyes; 6x M10 12.9 into the wing (M10 weld nuts / tapped 8 mm wing + backing bar)"
+  },
+  "wing_pads": {
+   "material": "4130",
+   "process": "6 weld nuts / bosses under the wing for the carrier bolts"
+  }
+ },
+ "steel": {
+  "n_solids": 1,
+  "solid_vols": [
+   [
+    421013,
+    [
+     -6,
+     -28,
+     65
+    ]
+   ]
+  ],
+  "valid": true,
+  "vol": 421013.1318012669,
+  "mass_kg": 3.304953084639945
+ },
+ "al": {
+  "n_solids": 1,
+  "solid_vols": [
+   [
+    240311,
+    [
+     -8,
+     84,
+     104
+    ]
+   ]
+  ],
+  "valid": true,
+  "vol": 240310.76586418034,
+  "mass_kg": 0.6752732520783468
+ },
+ "steel_joints_intersect_area_mm2": {
+  "housing+ear1_web": 448,
+  "housing+ear2_web": 370,
+  "housing+abs_boss": 752,
+  "housing+tongue": 487,
+  "housing+tongue_root": 953,
+  "housing+keel": 365,
+  "housing+wing": 6135,
+  "housing+wing_pads": 214,
+  "ear1_boss+ear1_web": 250,
+  "ear1_web+wing": 136,
+  "ear2_boss+ear2_web": 314,
+  "ear2_web+tongue": 12,
+  "ear2_web+tongue_root": 70,
+  "ear2_web+wing": 143,
+  "abs_boss+wing": 437,
+  "tongue+tongue_root": 478,
+  "tongue+keel": 335,
+  "tongue+wing": 518,
+  "tongue_root+keel": 47,
+  "tongue_root+wing": 843
+ },
+ "total_mass_kg": 3.980226336718292,
+ "seconds": 5
+}

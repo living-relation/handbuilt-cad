@@ -16,7 +16,7 @@ def parse(fn):
     return steps
 steps = parse(f'{D}/{STEM}.frd')
 U = [s for n, s in steps if n == 'DISP']; S = [s for n, s in steps if n == 'STRESS']
-names = list(L['cases'])
+names = __import__('os').environ.get('CASES', ','.join(L['cases'])).split(',')
 assert len(U) == len(names) and len(S) == len(names), (len(U), len(S))
 MAT = {'6061-T6': dict(E=68.9, Sy=276, Su=310, rho=2.70, Se=96.5*0.85),
        '7075-T6': dict(E=71.7, Sy=503, Su=572, rho=2.81, Se=159*0.85)}

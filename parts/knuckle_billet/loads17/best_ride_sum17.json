@@ -1,0 +1,44 @@
+{
+ "corner": {
+  "robust": 199.5,
+  "SF": 2.52,
+  "peak": 293.1,
+  "at_robust_max": [
+   -26.7,
+   56.4,
+   82.0
+  ]
+ },
+ "brake": {
+  "robust": 243.3,
+  "SF": 2.07,
+  "peak": 394.3,
+  "at_robust_max": [
+   -15.1,
+   -69.4,
+   77.0
+  ]
+ },
+ "combined": {
+  "robust": 200.7,
+  "SF": 2.51,
+  "peak": 386.7,
+  "at_robust_max": [
+   -26.7,
+   56.4,
+   82.0
+  ]
+ },
+ "fatigue": {
+  "robust": 14.9,
+  "SF": 33.76,
+  "peak": 24.0,
+  "at_robust_max": [
+   -15.1,
+   -69.4,
+   77.0
+  ],
+  "SF_goodman_R0": 14.68,
+  "SF_reversed": 9.07
+ }
+}

@@ -2,7 +2,7 @@
 
 ## 2026-10-09 chunk 1 (loads, baseline FEA, plan)
 
-- **Where this ran:** Daniel's PC (WORKSTATION) was offline the whole session, so chunk 1 ran on the agent box in `/workspace/knuckle_billet/`. The PC came back at the end of chunk 1: it was copied to `~/projects/handbuilt-models/knuckle_billet/` in WSL and committed (16f3491). The box copy stays as a backup.
+- **Where this ran:** owner's PC (WORKSTATION) was offline the whole session, so chunk 1 ran on the agent box in `/workspace/knuckle_billet/`. The PC came back at the end of chunk 1: it was copied to `~/projects/handbuilt-models/knuckle_billet/` in WSL and committed (16f3491). The box copy stays as a backup.
 - **Solver:** CalculiX 2.23 (Debian package unpacked into `/opt/ccx`, with a `/usr/local/bin/ccx` wrapper). The PC has 2.21. Gmsh comes from the pip module 4.15 in `/workspace/kbvenv`, ParaView is pvpython 5.13 (Debian).
 - **Geometry:** `knuckle/v4b/knuckle.step` (OCC volume 934,760 mm3).
   - Gmsh could not mesh the STEP directly: "1D mesh not closed loop", then "impossible to mesh periodic surface" (lofted cast surfaces). Healing the STEP destroyed the solid.
@@ -19,7 +19,7 @@
 - **Interface check:** `check_interface.py` probes 24 checks against the STL: every hole is open and surrounded by material, the eye end faces sit at ±L/2, and the clamp faces sit at x = ±15. Iterations 1-3 pass 24/24.
 - **Junction fillets:** concave edges where arms, lugs and tongue meet the flange faces get an r6 fillet, or r4 where OCC fails, edge by edge. This covers the old braking spike near (-72,10,55) and the it1 spikes at (-26,56,82) and (-63,32,62). It's done one edge at a time, so it's only partial.
 - **Pipeline:** `run_iter.sh <stem>` runs mesh_step.py (Gmsh from the STEP, tet10 with straight-sided midnodes; curved ones gave negative Jacobians), then fea_iter.py, CalculiX, post_iter.py and summarize_iter.py, which writes `iterations.csv`. Loads and supports are the same as the baseline (LOADS.md).
-- **Renders:** `render_solid.py` makes plain shaded grey images in `renders_iter/` (no stress colours, per Daniel).
+- **Renders:** `render_solid.py` makes plain shaded grey images in `renders_iter/` (no stress colours, per owner).
 - **it2 lesson:** the hub OD must stay > 2 x keep-out radius, and the flange must overlap the hub in z. it2 broke both rules and failed.
 - **Results by iteration (7075-T651, robust stress = 99.99th percentile, details in `iterations.csv`):**
   - **it1** (2.36 kg): worst SF is braking at 1.73. Peaks sit at sharp arm-to-flange junctions.
@@ -57,11 +57,11 @@
 - **it9** (2.32 kg): cornering 2.32 (first pass), but braking 0.87 and combined 1.21. The peak is at (-29.5,121,105), where the 48 mm-tall top arm meets the trim notch at the top-eye end face. Taller arms run into the eye end-face trim.
 - **it10:** it9 with the top arm back to 34x42 and the left arm at 34x48. That is it4's arm set on the hybrid flange.
 - **it10, best so far** (2.32 kg): cornering 2.22, combined 2.30, bump 5.5, fatigue Goodman 5.96 (fully reversed 3.68), all passing. Braking 1.84 is the one case short of 2. Its peak is the tongue's lower side edge at (-14.9,-69.1,75), just past the ring on the tongue side. Next fix: add a fill under the tongue's lower side edges where the tongue leaves the ring (like the top-side blend), or keep the full disc under the tongue root.
-- **Mass is not converging toward 1.6 kg.** Spoking the flange costs strength faster than it saves mass. To get under 1.6 kg the tongue (about 0.35 kg solid) and hub tube need rethinking (e.g. a C-section tongue with the clamp faces kept as lands), which needs Daniel's answers on the strut-bracket clamp extent.
+- **Mass is not converging toward 1.6 kg.** Spoking the flange costs strength faster than it saves mass. To get under 1.6 kg the tongue (about 0.35 kg solid) and hub tube need rethinking (e.g. a C-section tongue with the clamp faces kept as lands), which needs owner's answers on the strut-bracket clamp extent.
 
 ## 2026-10-09 chunk 4
 
-- **Daniel's answer (strut clamp extent):** the strut clamp bracket covers only the 2 strut bolt holes (y = -147.5 and -79), down to 12 mm below the bottom bolt (the one nearer the hub). I've taken that as y ≈ -67 measured from the bolt centre, with the clamp zone running from the tongue tip (y -166) to y ≈ -67. If he meant 12 mm from the hole edge, it ends at y ≈ -60. This zone stays full solid clamp lands at x = ±15. A C-section is allowed only between the clamp zone and the flange, y ≈ -67 to the ring.
+- **owner's answer (strut clamp extent):** the strut clamp bracket covers only the 2 strut bolt holes (y = -147.5 and -79), down to 12 mm below the bottom bolt (the one nearer the hub). I've taken that as y ≈ -67 measured from the bolt centre, with the clamp zone running from the tongue tip (y -166) to y ≈ -67. If he meant 12 mm from the hole edge, it ends at y ≈ -60. This zone stays full solid clamp lands at x = ±15. A C-section is allowed only between the clamp zone and the flange, y ≈ -67 to the ring.
 - **Braking fix, option A (it11):** keep the full r71 disc under the tongue root, |x| ≤ 30, y < 0.
 - **Braking fix, option B (it12):** a ramp under the tongue from the ring bottom out 24 mm along the tongue bottom, flared 7 mm past each side face.
 - **Results:**
@@ -82,7 +82,7 @@
   - the bore
   - every hole
   - the eye end-face zones
-  - the clamp-bracket zone (|x| > 15 for y ≤ -67, from Daniel's answer)
+  - the clamp-bracket zone (|x| > 15 for y ≤ -67, from owner's answer)
 - **Non-design (forced solid):**
   - hub tube r ≤ 46
   - r11.5 bosses around the 4 flange bolts
@@ -285,7 +285,7 @@ Results this chunk (real Gmsh + CalculiX, 5 mm mesh, one change at a time from f
   P4 outer rib 22×26: 2.310 kg, SF 1.90. P5 top-arm wall 5: 2.319 kg, SF 0.85 (braking peak at the right eye). P6 right-arm wall 5: no geometric change (that arm is too short to pocket).
   **Conclusion: best sits on a sharp optimum. Every one-parameter step that saves mass fails. The robust stress also scatters about ±5 % with the mesh, so a
   derivative-free optimiser (method a) needs a 2.1 screening margin and will find at most about 20-40 g.**
-- **full-arm** (Daniel): fa2 = easy + tongue pockets 14/12 + floor r4 → 2.426 kg, SF 2.43, fatigue 7.07 → final/full-arm. fa3 (junction r8) → 2.26.
+- **full-arm** (owner): fa2 = easy + tongue pockets 14/12 + floor r4 → 2.426 kg, SF 2.43, fatigue 7.07 → final/full-arm. fa3 (junction r8) → 2.26.
   fa4 (deeper tongue pockets, narrower tongue patch, plate from y 0) → 2.402 kg, SF 2.27, but it leaves a 2 mm overhanging flap, so it's rejected (fix: trim the fillet prism).
 - WSL detached FEA: run_wsl.sh works, but gmsh 4.15.2 there failed HXT on P3. The box gmsh with ALG2D=1 also failed on P3, so it's a geometry problem, not a WSL problem.
 **Recommendation for next:** (e) local pads + (b) BESO. Specifically: 1) put r8-r10 pads at the two hot spots on best
@@ -293,7 +293,7 @@ Results this chunk (real Gmsh + CalculiX, 5 mm mesh, one change at a time from f
   pocket regions can deepen; 3) turn those into 2.5D pockets in build123d. (d) two-piece (bolt-on tongue) is the way to cut stock (6.5" → 4.5" plate),
   not mass. Method (a) is only worth running as a final polish with the 2.1 screening margin.
 
-## Chunk 14: pads + BESO map, then the two-piece design (Daniel's new priority)
+## Chunk 14: pads + BESO map, then the two-piece design (owner's new priority)
 - (e) Pads on best. A `pads` option adds frustum pads, trimmed by the interface cuts.
   - pad1 (rib/keep-out cone r14→5 + tongue-edge cones r9→3): SF 1.82. pad2 (r18→6 + r12→3 cones): SF 0.96.
   - The horizontal cones at the tongue lower edges stick below the tongue (z ~60-65) and make a **new braking notch** at (-15,-72,65). Rejected.
@@ -320,3 +320,44 @@ Results this chunk (real Gmsh + CalculiX, 5 mm mesh, one change at a time from f
 - The tp3 re-mesh at 4.5 mm cleared the suspect 627 MPa at the left-arm root (now 261), so it was a bad mesh.
 - Joint hand calc (3× M12): no gapping (≥ 39.9 kN clamp left per bolt). Slip with bare Al is 1.06 in braking, so it **needs a µ ≥ 0.5 friction shim (SF ≥ 2.6)**. Fitted shanks are the backstop.
 - Not done: the FE contact/pretension model (planned in TWO_PIECE.md). The path to ≤ 4" plate per piece is written up in TWO_PIECE.md: it needs bolt-on eye arms (4–5 pieces).
+
+## Chunk 16: middle-smooth (continuity / edge-break pass on MIDDLE)
+
+owner's feedback: too many sharp edges, blunt ends and cut-offs in the middle of the body. Offenders found on the middle renders (and what was done):
+
+1. Flat-chopped ends on every I-beam member (arm roots at the flange, the clamp-to-eye rib ends, the ear-1 and ear-2 lug ends): **fixed**. `hbar()` now gets half-round end caps (radius = half member width, cap edges broken at edge_r) via `smooth_ends`, so every member ends in a rounded stadium instead of a flat chop.
+2. Feather / dangling edges where the eye end-face spot-face trims cut through the arms (left eye end face especially, also right eye and trailing-arm eye): **fixed where OCC allows**. `smooth_trims()` fillets edges lying on the eye end-face planes (outside the bore edge, bore kept exact): 13 broken at r2/r1, 16 refused by OCC.
+3. Stuck-on cylindrical bosses (ear-1 boss, side boss): end edges broken r2.5 (`smooth_boss_r`).
+4. Remaining sharp straight edges everywhere: global edge-break pass `edge_break.py` (r1.5 on straight edges, one by one, keep only results that stay one valid solid): 26 of 293 accepted by OCC, rest left sharp (sharp edges get a 0.5-1 mm deburr chamfer on the machine anyway).
+5. **Not fixed yet:** the 45-degree faceted hub-web/keep-out block on the left (seen from the back), the step where the tongue meets the flange top block, the chewed rib end between the left eye and the trailing-arm eye, and larger r10+ root blends (r10 per-edge junction fillets broke the solid into 17 pieces; reverted to r6). These need re-modelling (lofted/ruled transitions instead of booleans + fillets), not more fillets.
+
+Result: final/middle-smooth/ (STEP, STL, iso/back/close-up renders, before/after side by side). 1 valid solid, 24/24 interface. Mass 2.480 kg (middle 2.397 kg, +83 g, mostly the end caps).
+
+### Corrections from owner (chunk 16)
+- Part is the **RIGHT (passenger) rear** knuckle (Toyota 42304 RH). Side eyes = No.1 lateral arm 48710A RH and adjustable No.2 lateral arm 48730F RH (through-bolts 48703E, fore-aft). The 40 mm bottom eye (EYET, called "top eye"/"strut rod" in older notes) = **trailing/strut rod 48780A** (bolts 48780B), running forward. Strut bracket clamp bolts 42304D. Reference: reference/toyota_st185_rear_suspension_480442E.jpg and reference/owner_labelled_knuckle.jpg (third-party arm photos are NOT committed).
+- **Support check:** EYEL/EYER are fixed in Z only (Z = hub axis = lateral, inboard), i.e. along the lateral arms; EYET is fixed in X only (X = fore-aft), i.e. along the trailing rod. Both match the diagram, so no support change was needed and the earlier results stand. Still open: the +X sign (fore vs aft) is unconfirmed, so braking could be mirrored relative to the geometry for an RH part; add a reversed-braking case.
+
+### Chunk 16 FEA status (UNFINISHED, raw peaks only)
+- ms3 (middle-smooth, stock load point zp=+20): raw peak vM bump 713 MPa at (51.1,38.8,112.2), corner 486 at the left-arm root (-26.1,54.7,82; middle was 328 raw / 216 robust there), brake 342, combined 600. Robust (singularity-excluded) values not computed yet. Peaks rose vs middle: suspect the half-round end caps where member roots meet the flange create unfilleted re-entrant corners. middle-smooth is NOT verified; do not use until fixed (next: caps only at free ends, re-run, robust post).
+- ms3w (same solid, contact patch at zp=-60 for 9in ET-35, conservative vs derived -54): raw peaks bump 236, corner 414, brake 331, combined 537 MPa. Needs robust post and a sanity check of the moment sign before conclusions.
+- Wheel geometry: stock 15x6.5 ET39 (turbocelica.nl, alltrac.net), track 1445 mm. Hub face estimate z = 20-39 = -19 mm (outboard of knuckle face). 9in ET-35 centre at z = -54, i.e. 74 mm outboard of stock per side, track about 1593 mm. Calibration from owner (9.5in ET-20 has 3 mm strut-to-inner-rim): inner rim is W/2+ET inboard of hub face with W = rim width + 25 mm flange allowance: 9.5in gives 113.2 mm, 9in ET-35 gives 91.8 mm, so the design wheel clears the strut by about 24 mm. Hub face = strut outer surface + 3 - 113.2 mm; matching it to the Toyota estimate needs the strut tube z position (to do).
+- Travel positions (bump/ride/droop link angles, arms about 8-10 deg rising inboard at ride per photos, +/-55 mm travel assumed) not started.
+
+## HARD DESIGN RULES (owner, chunk 17 markup reference/owner_ref_3.jpg). These apply to every future variant and to the smooth remodel.
+1. **Strut clamp tongue WIDTH = OEM v4b exactly.** v4b measured the clamp faces at x -14.4..15.2 (one zone) and -16.5..17.0 (the other); the billet currently uses TONGUE_X = (-15, 15). Re-take the exact v4b face positions per zone from knuckle/v4b/knuckle.py / MEASURED.md and add the clamp face x positions to check_interface.py.
+2. **More space for the strut.** The rib/block at the tongue root on the flange top (where the clamp-to-eye rib meets the tongue base, around x -25..-5, y -45..-60, z 82-100) intrudes on the strut tube. Cut it back and add a strut-tube keep-out to the builder. Estimate: strut tube OD about 52 mm (to be confirmed from the clamp bracket), centreline over the tongue (x about 0, z about 94), axis about along -Y with the strut inclination, starting above the clamp bracket. Keep-out = tube OD/2 + 5 mm clearance (r about 31) along the tube axis, plus the bracket envelope (two ears either side of the tongue in X over the clamp zone, down to 12 mm below the lower bolt). Nothing may enter it.
+3. **ABS sensor mount = OEM exactly.** This is the 17 mm X-axis side hole at (y 0.9, z 72.5) with its boss (billet side_boss_d 32, x 38..72). The mount face position, orientation (normal along X), boss size and the hole must match v4b. Today the interface check covers only the hole; add the face plane x position, its flatness/extent (boss d) and orientation to check_interface.py (needs the v4b face x from the scan model).
+4. **No weird cuts.** Remove the odd notch/cut near the right control-arm eye (eye end-face trim notch) and the slot/notch between the lower arms near the trailing-arm eye root. Use continuous smooth shapes (lofted/filleted members, no keep-out notches showing).
+
+## Chunk 18: middle-flow (GEOMETRY ONLY; owner reviews before any stress test or optimisation)
+Per owner's new rule, no FEA or sizing loops were run on middle-flow.
+- **Checker (check_interface.py), now 27 items.** Added OEM tongue clamp faces x = -13.8 / +14.9, the median of v4b scan rays over y -159..-67, z 85-105; this supersedes the old +/-15 check. Added the ABS sensor face plane at x = 67.0 (v4b scan), normal +X, flat to r >= 14.5 around the 17 mm hole. Added the strut-tube keep-out: tube OD 52 (estimate) + 5 mm clearance, axis along Y, inboard of the tongue (centre z = 116 + 31, x 0.5), y -250..-40. Added the clamp bracket envelope: ears 11 mm beside each face, y -171..-60, z 84-116. The existing finals FAIL the new items (middle 22/27): tongue +/-15 is not OEM, the ABS face is at x 72 (5 mm proud), and stock is proud inside the bracket envelope near the tongue root.
+- **Builder (knuckle_billet.py, new params, defaults unchanged).**
+  - `tongue_oem`: TONGUE_X = (-13.8, 14.9).
+  - `abs_exact`: side boss ends at x = 67.0, plus a flat planar spot face (30x44x44 box beyond x = 67).
+  - `strut_keepout`: cylinder cut, plus the bracket envelope trimmed down to y -58 above the flange top. This removes the tongue-root block (owner rule 2).
+  - `eye_trim_add` = 1.5 instead of 6: the eye end-face spot faces are now only 1.5 mm past the eye OD, which shrinks the notch at the right control-arm eye.
+  - `arm_pockets=False`: the slot-like shallow arm pockets are gone.
+  - Plus the chunk-16 boss and trim edge breaks, and the edge_break.py pass.
+- **Variant A** (final/middle-flow): 2.448 kg, 1 valid solid, 27/27. **Variant B** (final/middle-flow/B, adds rounded member ends): 2.531 kg, 1 valid solid, 27/27.
+- **NOT done yet:** true lofted/swept arm transitions (members are still extruded H/solid bars + fillets); a continuous web between the left arm and the trailing-arm arm; and a thin curled sliver still left on the flange edge just above the ABS boss (flange rim between the flange pocket and the spot face); this needs the flange outline pulled in there.

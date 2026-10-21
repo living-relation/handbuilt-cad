@@ -21,14 +21,14 @@ sets = {
  'STRUTI': near_cyl((-2.5, -79.0, 93.7), (1, 0, 0), 14.0/2, 27.5),           # strut clamp bolt, inner/lower
  'EYEL':  eye((-79.15, 86.0, 83.0), 0.0, 'x', 35.0, 26.0),                    # lateral link (assumed No.1)
  'EYER':  eye((65.9, 73.9, 112.6), 13.6, 'x', 35.5, 26.0),                    # lateral link (assumed No.2)
- 'EYET':  eye((-6.6, 138.1, 129.0), 8.7, 'z', 40.0, 40.0),                    # strut rod (trailing)
+ 'EYET':  eye((-6.6, 138.1, 129.0), 8.7, 'z', 40.0, 40.0),                    # TRAILING ARM (owner, chunk 16); fixed in X = fore-aft = along the arm
  'EAR1':  near_cyl((-101.5, 29.0, 52.0), (0, 0, 1), 5.0, 12.0),              # assumed caliper bolt
  'EAR2':  near_cyl((-41.0, -97.0, 54.5), (0, 0, 1), 4.5, 15.5),              # assumed caliper bolt
 }
 cnt = {k: len(v) for k, v in sets.items()}; print('node sets', cnt, flush=True)
 assert all(n > 20 for n in cnt.values()), cnt
 # ---------------- write deck
-zc = 29.75; zp = 20.0; R = V['R_loaded'] * 1000            # contact patch: z = +20 mm (estimate), y = +R (down)
+zc = 29.75; zp = float(os.environ.get('ZP', '20.0')); R = V['R_loaded'] * 1000            # contact patch: z = +20 mm (estimate), y = +R (down)
 ref, rot = len(tags) + 1, len(tags) + 2
 with open(f'{D}/{STEM}.inp', 'w') as f:
     f.write('*NODE, NSET=NALL\n')
@@ -43,8 +43,18 @@ with open(f'{D}/{STEM}.inp', 'w') as f:
     f.write(f'*MATERIAL, NAME=AL\n*ELASTIC\n{E},{NU}\n*SOLID SECTION, ELSET=EALL, MATERIAL=AL\n')
     f.write(f'*RIGID BODY, NSET=SEAT, REF NODE={ref}, ROT NODE={rot}\n')     # bearing outer race: stiff steel ring
     # supports: strut clamp = rigid (coilover strut + solid top mount); links/strut rod = two-force members (solid joints)
-    f.write('*BOUNDARY\nSTRUTO,1,3\nSTRUTI,1,3\nEYEL,3,3\nEYER,3,3\nEYET,1,1\n')
-    for name, c in L['cases'].items():
+    # chunk 17: suspension position (POS env) rotates each two-force link about its inboard pivot.
+    # lateral arms: direction eye->inboard pivot = (0, -sin a, cos a) (rising inboard by a, -Y up); trailing rod: eye->front pivot = (cos b, -sin b, 0) (+X forward)
+    POS = os.environ.get('POS', 'legacy')
+    ang = dict(legacy=(0.0, 0.0), bump=(0.0, -7.0), mid=(5.0, -3.5), ride=(9.0, 0.0), droop=(17.0, 7.0))[POS]
+    a, b = math.radians(ang[0]), math.radians(ang[1])
+    dl = (0.0, -math.sin(a), math.cos(a)); dr = (math.cos(b), -math.sin(b), 0.0)
+    for nm in ('EYEL', 'EYER'):
+        f.write(f'*TRANSFORM, NSET={nm}, TYPE=R\n{dl[0]:.6f},{dl[1]:.6f},{dl[2]:.6f},1.0,0.0,0.0\n')
+    f.write(f'*TRANSFORM, NSET=EYET, TYPE=R\n{dr[0]:.6f},{dr[1]:.6f},{dr[2]:.6f},0.0,0.0,1.0\n')
+    f.write('*BOUNDARY\nSTRUTO,1,3\nSTRUTI,1,3\nEYEL,1,1\nEYER,1,1\nEYET,1,1\n')
+    CASES = os.environ.get('CASES', ','.join(L['cases'])).split(',')
+    for name, c in [(k, L['cases'][k]) for k in CASES]:
         F = np.array([-c['Fx'], -c['Fz'], c['Fy']])          # on tyre from ground: braking -X, up = -Y, cornering inboard = +Z
         r = np.array([0.0, R, zp - zc]); Mo = np.cross(r, F)   # N*mm about hub centre
         Mz = Mo[2]; Mo[2] = 0.0                                # brake torque goes rotor -> caliper, not through the bearing

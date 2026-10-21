@@ -1,0 +1,139 @@
+{
+ "concept": "A",
+ "parts": {
+  "housing": {
+   "material": "4130",
+   "process": "turned 4130 bar, OD88 tube + r56 flange ring w/ 4 bolt bosses (16 thk); bore finish-machined AFTER welding"
+  },
+  "ear1_boss": {
+   "material": "4130",
+   "process": "turned 4130 boss OD24, reamed after welding"
+  },
+  "ear1_web": {
+   "material": "4130",
+   "process": "8 mm 4130 plate web, housing -> ear boss, top edge tapers into the wing"
+  },
+  "ear2_boss": {
+   "material": "4130",
+   "process": "turned 4130 boss OD24, reamed after welding"
+  },
+  "ear2_web": {
+   "material": "4130",
+   "process": "8 mm 4130 plate web, housing -> ear boss, top edge tapers into the wing"
+  },
+  "abs_boss": {
+   "material": "4130",
+   "process": "turned 4130 slug d32 (OEM ABS boss), face x=72 and 17 mm bore machined after welding"
+  },
+  "tongue": {
+   "material": "4130",
+   "process": "7 mm cheeks (OEM clamp faces x=-13.8/+14.9, faced after welding), 4 mm centre web, 4 mm caps, 5 mm end plate, 2 crush sleeves (d+10 OD)"
+  },
+  "tongue_root": {
+   "material": "4130",
+   "process": "two 6 mm side gussets + cap, tongue root -> flange ring"
+  },
+  "keel": {
+   "material": "4130",
+   "process": "8 mm 4130 keel gusset under the tongue, housing OD -> tongue bottom cap"
+  },
+  "wing": {
+   "material": "4130",
+   "process": "6 mm 4130 bottom closing plate of the box upright"
+  },
+  "arm_L": {
+   "material": "4130",
+   "process": "closed box 30x52x3 4130 sheet (2 press-braked channels seam-welded)"
+  },
+  "arm_R": {
+   "material": "4130",
+   "process": "closed box 30x48x3"
+  },
+  "arm_T": {
+   "material": "4130",
+   "process": "closed box 34x48x3 (trailing-arm leg)"
+  },
+  "tie_LT": {
+   "material": "4130",
+   "process": "closed box 24x36x2.5 tie, L eye -> trailing eye"
+  },
+  "tie_TR": {
+   "material": "4130",
+   "process": "closed box 24x36x2.5 tie, trailing eye -> R eye"
+  },
+  "gusset_LR": {
+   "material": "4130",
+   "process": "4 mm centre shear web under the hub (driveshaft side clear)"
+  },
+  "left_eye": {
+   "material": "4130",
+   "process": "turned 4130 eye OD46.0 (bushing bore 35.0 finish-bored after welding)"
+  },
+  "right_eye": {
+   "material": "4130",
+   "process": "turned 4130 eye OD46.5 (bushing bore 35.5 finish-bored after welding)"
+  },
+  "top_eye": {
+   "material": "4130",
+   "process": "turned 4130 eye OD52.0 (bushing bore 40.0 finish-bored after welding)"
+  }
+ },
+ "steel": {
+  "n_solids": 1,
+  "solid_vols": [
+   [
+    589336,
+    [
+     -7,
+     7,
+     77
+    ]
+   ]
+  ],
+  "valid": true,
+  "vol": 589335.8009481389,
+  "mass_kg": 4.62628603744289
+ },
+ "steel_joints_intersect_area_mm2": {
+  "housing+ear1_web": 448,
+  "housing+ear2_web": 370,
+  "housing+abs_boss": 752,
+  "housing+tongue": 487,
+  "housing+tongue_root": 953,
+  "housing+keel": 365,
+  "housing+wing": 5926,
+  "housing+arm_R": 9,
+  "ear1_boss+ear1_web": 250,
+  "ear1_web+wing": 99,
+  "ear2_boss+ear2_web": 314,
+  "ear2_web+tongue": 12,
+  "ear2_web+tongue_root": 70,
+  "ear2_web+wing": 114,
+  "abs_boss+wing": 382,
+  "tongue+tongue_root": 478,
+  "tongue+keel": 335,
+  "tongue+wing": 377,
+  "tongue_root+keel": 47,
+  "tongue_root+wing": 737,
+  "wing+arm_L": 401,
+  "wing+arm_R": 485,
+  "wing+arm_T": 530,
+  "wing+gusset_LR": 88,
+  "arm_L+tie_LT": 615,
+  "arm_L+left_eye": 1215,
+  "arm_R+tie_TR": 529,
+  "arm_R+right_eye": 1103,
+  "arm_T+tie_LT": 1162,
+  "arm_T+tie_TR": 1179,
+  "arm_T+gusset_LR": 348,
+  "arm_T+top_eye": 1721,
+  "tie_LT+tie_TR": 445,
+  "tie_LT+left_eye": 969,
+  "tie_LT+top_eye": 1185,
+  "tie_TR+right_eye": 1008,
+  "tie_TR+top_eye": 1173,
+  "gusset_LR+top_eye": 8
+ },
+ "total_mass_kg": 4.62628603744289,
+ "seconds": 7
+}
