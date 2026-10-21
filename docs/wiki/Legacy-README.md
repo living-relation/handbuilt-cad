@@ -35,7 +35,7 @@ cd ~/projects/handbuilt-models/pcv_adapter
 ../.venv/bin/python pcv_adapter.py      # writes pcv_adapter.step and .stl next to the script
 ```
 
-Same thing for `pedal_adapter/pedal_adapter.py` (writes to the current folder) and `knuckle/v4/knuckle.py` (run from inside `knuckle/v4`). To change a size, edit the named value at the top of the script and run it again. The STEP files open in Fusion as normal solids (open them from `\\wsl.localhost\Ubuntu\home\daniel\projects\handbuilt-models\...`).
+Same thing for `pedal_adapter/pedal_adapter.py` (writes to the current folder) and `knuckle/v4/knuckle.py` (run from inside `knuckle/v4`). To change a size, edit the named value at the top of the script and run it again. The STEP files open in Fusion as normal solids (open them from `\\wsl.localhost\<distro>\home\<user>\projects\handbuilt-models\...`).
 
 If the venv is missing: `bash sim-tools/scripts/setup_venv_wsl.sh` (uses `uv`, Python 3.13).
 
