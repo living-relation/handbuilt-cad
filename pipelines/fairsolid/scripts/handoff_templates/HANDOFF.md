@@ -149,13 +149,13 @@ trimetric): from the rev folder, with `scan_canon.ply` one folder up:
 
 Fairsolid's own "grey scan above, shaded result below" picture (use it when showing a scan result):
 `render_pair` in `fairsolid\src\fairsolid\stages\s40_refscan.py` (see `worked-example\...\rev7\render.py`; its
-paths assume it is run from a folder that has `runs\fuel_hanger_billet_1014\rev7`). For a part result: tessellate the
+paths assume it is run from a folder that has the example job's `runs\<job>\rev7`). For a part result: tessellate the
 STEP with cadquery, move `10_clean.ply` into the part frame (`Frame.load("20_frame.json").to_canonical`), and
 draw both with `render_pair`. No heat maps or coloured-deviation images.
 
-`reference\st185-render_trimetric.py` is the ST185 repo's headless trimetric renderer (OCP + VTK; it expects
-Dan's WSL setup, so use `tools\render_views.py` instead unless you have VTK). It is there to show the camera
-and style Dan's other models use.
+`reference\project-render_trimetric.py` is the project repo's headless trimetric renderer (OCP + VTK; it expects
+the owner's WSL setup, so use `tools\render_views.py` instead unless you have VTK). It is there to show the camera
+and style the owner's other models use.
 
 ## 6. Export STEP / STL
 
@@ -209,7 +209,7 @@ export_stl(part, "hanger_top_plate.stl", tolerance=0.02, angular_tolerance=0.2) 
 
 ## 9. Other jobs in the original `runs\` (not included, listed so you know they exist)
 
-All are Fairsolid scan runs on Dan's PC under `C:\projects\_archive\2026-10-17-fairsolid\fairsolid\runs\` (moved there 2026-10-17). Each is 90 to 190 MB of scan
+All are Fairsolid scan runs on Dan's PC in the archived fairsolid checkout's `runs\` (moved there 2026-10-17). Each is 90 to 190 MB of scan
 and stage files, so they are not in this zip. Ask Dan if you need one.
 
 | Run | What it is |
@@ -230,7 +230,7 @@ and stage files, so they are not in this zip. Ask Dan if you need one.
 - Never trust a "success" message alone: run `check_step.py` and look at the picture.
 - `rebuild.sh`, `checks.sh`, `views.sh` in the example folder were written for Dan's WSL; the commands inside show
   the order (build, cnc_check, views) but the paths do not apply on your machine.
-- No Fusion. No throwaway files at the `C:\projects` root.
+- No Fusion. No throwaway files at the projects root.
 
 ## 11. Skipped on purpose (unclear or not available when this zip was made)
 
@@ -239,5 +239,5 @@ and stage files, so they are not in this zip. Ask Dan if you need one.
 - `cnc_check.py` and `views.py` (handbuilt-models, Dan's WSL project): not reachable when the zip was made. Their rev 7 output is included.
 - A full Fairsolid test-suite result: it did not finish in our check (section 7).
 - Dan's rules with no written source in the repos (one solid, new version not overwrite, 2x weight load, 2D-render output): written in `RULES.md` from his handoff request; confirm with him if unsure.
-- Fusion files, ST185 harness / wiring / CAN rules, and the other ST185 CAD models: not needed for Fairsolid jobs.
+- Fusion files, the project's harness / wiring / CAN rules, and its other CAD models: not needed for Fairsolid jobs.
 - `scripts\batch_eval.py` from the source repo: it holds paths into the user profile.

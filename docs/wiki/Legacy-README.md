@@ -11,8 +11,8 @@ Clean CAD solids built by hand from Daniel's 3D scans: the scan is measured in P
 - **From Windows:** `\\wsl.localhost\Ubuntu\home\daniel\projects\handbuilt-models`. `C:\projects\active\handbuilt-models` holds a shortcut and a README pointing here (Windows wouldn't allow a real folder link without admin or Developer Mode).
 - **Build:** use the WSL venv `.venv` (Python 3.13, build123d 0.13.0, trimesh, numpy, scipy, matplotlib, rtree).
 - **Simulate:** `source sim-tools/wsl-env.sh` (OpenFOAM and `~/simvenv`), see `sim-tools/SIM_TOOLS.md`.
-- **FreeCAD:** stays on Windows at `C:\projects\_tools\FreeCAD` (`FreeCAD.bat`, `ccx_wsl.bat`, `gmsh_wsl.bat`).
-- **Windows copy before the move:** `C:\projects\_archive\2026-10-09-handbuilt-models-windows-copy`; zip backup `C:\projects\_archive\2026-10-09-handbuilt-models-before-wsl.zip`.
+- **FreeCAD:** stays on Windows at `<freecad_dir>` (`FreeCAD.bat`, `ccx_wsl.bat`, `gmsh_wsl.bat`).
+- **Windows copy before the move:** kept in the owner's archive folder (a copy and a zip backup from 2026-10-09).
 
 ## Folders
 

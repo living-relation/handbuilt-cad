@@ -1,7 +1,7 @@
 """Build the self-contained Fairsolid handoff zip for Grok Bot.
 
-  python pipelines/fairsolid/scripts/make_handoff.py --date 2026-10-15 [--job fuel_hanger_billet_1014]
-         [--runs DIR] [--root <handbuilt-cad>/pipelines/fairsolid] [--st185 <st185 checkout> (or ST185_REPO)]
+  python pipelines/fairsolid/scripts/make_handoff.py --job <job> --rules-repo <project checkout> [--rules-file PATH]
+         [--date 2026-10-15] [--runs DIR] [--root <handbuilt-cad>/pipelines/fairsolid]
          [--out DIR] [--copy-to DIR]
 
 Ported on 2026-10-17 from the old fairsolid checkout (handoff/tool/, outside git) into handbuilt-cad.
@@ -10,8 +10,9 @@ Run it with any Python 3.9+ (standard library only). It collects:
   * the docs and tools in scripts/handoff_templates/ (HANDOFF, RULES, TASK-TEMPLATE, tools/, env/)
   * the Fairsolid source (git-tracked src, tests/*.py, recipes, plan doc, pyproject, README, AGENTS)
   * the newest revN folder of one finished job from the runs folder: --runs, else FAIRSOLID_RUNS, else
-    <root>/runs (runs before 2026-10-17: C:\\projects\\_archive\\2026-10-17-fairsolid\\fairsolid\\runs)
-  * Dan's CAD rules and the CAD index from the ST185 repo's origin/main (git show)
+    <root>/runs (older runs: the archived fairsolid checkout, see docs/FAIRSOLID.md)
+  * the owner's CAD rules (numbered "- **R<n>**" lines of --rules-file) and the CAD index from the project repo's
+    origin/main (git show)
 and writes MANIFEST.md, then the zip. It refuses to write a zip that is over the size limit or that
 contains anything that looks like a secret or a path from the user profile.
 The zip is never committed (handoff/ is git-ignored).
@@ -64,52 +65,51 @@ def newest_rev(job_dir):
     return max(revs)[1]
 
 
-def st185_show(st185, path):
+def repo_show(repo, path):
     for ref in ("origin/main", "HEAD"):
         try:
-            return run(["git", "show", f"{ref}:{path}"], cwd=st185), ref
+            return run(["git", "show", f"{ref}:{path}"], cwd=repo), ref
         except RuntimeError:
             continue
-    raise SystemExit(f"cannot read {path} from {st185}")
+    raise SystemExit(f"cannot read {path} from {repo}")
 
 
-def rules_excerpt(st185):
-    text, ref = st185_show(st185, "docs/harness/redesign/DECISIONS.md")
-    sha = run(["git", "rev-parse", "--short", ref], cwd=st185).strip()
+def rules_excerpt(repo, rules_file, numbers):
+    text, ref = repo_show(repo, rules_file)
+    sha = run(["git", "rev-parse", "--short", ref], cwd=repo).strip()
     lines = text.splitlines()
     out = [
-        "# ST185 DECISIONS: the CAD-related binding rules, verbatim",
+        "# Project decision log: the CAD-related binding rules, verbatim",
         "",
-        f"Excerpt of `docs/harness/redesign/DECISIONS.md` section \"Binding rules from Daniel\" in the "
-        f"st185-link-ecu-config repo, from `{ref}` at commit `{sha}`. Only the lines that bind CAD work are kept "
-        f"(R{', R'.join(map(str, RULE_NUMBERS))}). Wire / harness / CAN rules are left out. "
-        "The text is Dan's; nothing is paraphrased below this line.",
+        f"Excerpt of `{rules_file}` in the project repo, from `{ref}` at commit `{sha}`. Only the lines that bind CAD "
+        f"work are kept (R{', R'.join(map(str, numbers))}). "
+        "The text is the owner's; nothing is paraphrased below this line.",
         "",
     ]
     found = set()
     for line in lines:
         m = re.match(r"- \*\*R(\d+)\*\*", line)
-        if m and int(m.group(1)) in RULE_NUMBERS:
+        if m and int(m.group(1)) in numbers:
             out += [line, ""]
             found.add(int(m.group(1)))
-    missing = set(RULE_NUMBERS) - found
+    missing = set(numbers) - found
     if missing:
-        raise SystemExit(f"rules not found in DECISIONS.md: {sorted(missing)}")
+        raise SystemExit(f"rules not found in {rules_file}: {sorted(missing)}")
     return "\n".join(out)
 
 
 DESCRIBE = [
     ("HANDOFF.md", "Start here: what Fairsolid is, install, run, runs layout, render, export, verify."),
-    ("RULES.md", "Dan's binding CAD rules, numbered, with the source of each."),
-    ("TASK-TEMPLATE.md", "Blank job form Dan fills in for each new CAD job."),
+    ("RULES.md", "The owner's binding CAD rules, numbered, with the source of each."),
+    ("TASK-TEMPLATE.md", "Blank job form the owner fills in for each new CAD job."),
     ("MANIFEST.md", "This file: every file in the zip and why it is there."),
     ("env/requirements-fairsolid-lock.txt", "Exact package versions of the Fairsolid venv (Python 3.13)."),
     ("env/requirements-build123d-lock.txt", "Exact package versions of the build123d venv that built and rendered the example (Python 3.13)."),
     ("tools/check_step.py", "Checks each STEP: one solid, valid, volume, bounding box (no floating pieces)."),
     ("tools/render_views.py", "Renders the 2D bottom view and trimetric view PNGs from STEP / STL files."),
-    ("reference/st185-DECISIONS-cad-rules.md", "Verbatim text of Dan's CAD rules from the ST185 repo (R-numbers used in RULES.md)."),
-    ("reference/st185-cad-README.md", "The ST185 CAD index: how models, trimetrics and 'selected for build' are recorded."),
-    ("reference/st185-render_trimetric.py", "ST185's headless trimetric renderer: shows Dan's camera and style (needs OCP + VTK)."),
+    ("reference/project-DECISIONS-cad-rules.md", "Verbatim text of the owner's CAD rules from the project repo's decision log."),
+    ("reference/project-cad-README.md", "The project's CAD index: how models, trimetrics and 'selected for build' are recorded."),
+    ("reference/project-render_trimetric.py", "The project's headless trimetric renderer: shows the camera and style (needs OCP + VTK)."),
     ("fairsolid/pyproject.toml", "Fairsolid package definition: Python >=3.13, dependencies, `fairsolid` command."),
     ("fairsolid/README.md", "What Fairsolid does and its commands."),
     ("fairsolid/AGENTS.md", "Fairsolid working rules for AI assistants."),
@@ -171,7 +171,7 @@ def keep_source(rel):
     return True
 
 
-def collect(root, st185, job, date_str, workdir, runs=None):
+def collect(root, repo, job, date_str, workdir, runs=None, rules_file="docs/DECISIONS.md", numbers=()):
     items = {}  # arcname -> source Path or bytes
 
     def add(arc, src):
@@ -199,12 +199,12 @@ def collect(root, st185, job, date_str, workdir, runs=None):
         if f.is_file() and not (SKIP_PARTS & set(f.relative_to(rev).parts)):
             add(f"worked-example/{job}/{rev.name}/{f.relative_to(rev).as_posix()}", f)
 
-    # ST185 references (from origin/main)
-    (workdir / "rules.md").write_text(rules_excerpt(st185), encoding="utf-8")
-    add("reference/st185-DECISIONS-cad-rules.md", workdir / "rules.md")
-    for src_path, arc in (("cad/README.md", "reference/st185-cad-README.md"),
-                          ("cad/render_trimetric.py", "reference/st185-render_trimetric.py")):
-        text, _ = st185_show(st185, src_path)
+    # project references (from origin/main)
+    (workdir / "rules.md").write_text(rules_excerpt(repo, rules_file, numbers), encoding="utf-8")
+    add("reference/project-DECISIONS-cad-rules.md", workdir / "rules.md")
+    for src_path, arc in (("cad/README.md", "reference/project-cad-README.md"),
+                          ("cad/render_trimetric.py", "reference/project-render_trimetric.py")):
+        text, _ = repo_show(repo, src_path)
         p = workdir / Path(arc).name
         p.write_text(text, encoding="utf-8")
         add(arc, p)
@@ -252,18 +252,22 @@ def check_clean(items):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--date", default=date.today().isoformat())
-    ap.add_argument("--job", default="fuel_hanger_billet_1014")
+    ap.add_argument("--job", required=True, help="run folder name of the finished job to include")
     ap.add_argument("--root", type=Path, default=None, help="fairsolid folder (default: <main checkout>/pipelines/fairsolid)")
     ap.add_argument("--runs", type=Path, default=os.environ.get("FAIRSOLID_RUNS") or None,
                     help="folder holding the run folders (default: FAIRSOLID_RUNS, else <root>/runs)")
-    ap.add_argument("--st185", type=Path, default=os.environ.get("ST185_REPO") or None,
-                    help="st185-link-ecu-config checkout (default: ST185_REPO); its rules go in the zip")
+    ap.add_argument("--rules-repo", type=Path, default=os.environ.get("RULES_REPO") or None,
+                    help="project repo checkout whose CAD rules go in the zip (default: RULES_REPO)")
+    ap.add_argument("--rules-file", default="docs/DECISIONS.md", help="decision log path inside --rules-repo")
+    ap.add_argument("--rule-numbers", default=",".join(map(str, RULE_NUMBERS)),
+                    help="comma-separated R-numbers of the CAD rules to copy (default: RULE_NUMBERS)")
     ap.add_argument("--out", type=Path, default=None, help="output folder (default: <root>/handoff)")
     ap.add_argument("--copy-to", type=Path, default=None)
     a = ap.parse_args()
 
-    if a.st185 is None:
-        raise SystemExit("set --st185 or ST185_REPO to an st185-link-ecu-config checkout (no machine path is assumed)")
+    if a.rules_repo is None:
+        raise SystemExit("set --rules-repo or RULES_REPO to the project checkout (no machine path is assumed)")
+    numbers = [int(x) for x in a.rule_numbers.split(",") if x.strip()]
     root = (a.root or main_checkout(HERE)).resolve()
     out = (a.out or root / "handoff").resolve()
     out.mkdir(parents=True, exist_ok=True)
@@ -274,7 +278,7 @@ def main():
         shutil.rmtree(work)
     work.mkdir()
     try:
-        items, rev_name = collect(root, a.st185, a.job, a.date, work, a.runs)
+        items, rev_name = collect(root, a.rules_repo, a.job, a.date, work, a.runs, a.rules_file, numbers)
         items["MANIFEST.md"] = work / "MANIFEST.md"
         (work / "MANIFEST.md").write_text(manifest(items, a.date, a.job, rev_name), encoding="utf-8")
         problems = check_clean(items)

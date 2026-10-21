@@ -42,7 +42,7 @@ Load them with `source sim/wsl-env.sh`. Full details, smoke tests and rollback: 
 
 ## Windows side
 
-- **FreeCAD 1.1.4** portable at `C:\projects\_tools\FreeCAD` (`FreeCAD.bat`; `ccx_wsl.bat` / `gmsh_wsl.bat` wrappers let it use the WSL solvers).
+- **FreeCAD 1.1.4** portable at `<freecad_dir>` (`[paths] freecad_dir`) (`FreeCAD.bat`; `ccx_wsl.bat` / `gmsh_wsl.bat` wrappers let it use the WSL solvers).
 - **Fusion** opens the STEP files.
 - **Ollama** with `qwen2.5-coder:14b` is available locally for helper/coding tasks (optional; nothing in this repo requires it).
 - **Creality Scan** for scanning.
