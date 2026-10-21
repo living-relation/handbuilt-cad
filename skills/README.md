@@ -9,14 +9,13 @@ Agent skills for CAD work. Claude, Cursor and bots install them from here
 | publish-to-models | SteveCAD |
 | scan-to-parametric | SteveCAD |
 | toolkit-patch-handoff | Grok Bot |
-| cad-drawing | SteveCAD (draft) |
-| blend-fillet | SteveCAD (draft) |
-| quick-fea | SteveCAD (draft) |
-| sim-stack | SteveCAD (draft) |
+| cad-drawing | SteveCAD |
+| blend-fillet | SteveCAD |
+| sim-stack | SteveCAD |
 
 The first four are the generic versions (paths come from `local.toml`, no project examples), taken from stevecad-tools `7688e33`.
 
-The four marked (draft) were drafted by Grok Bot from the repo code and docs; SteveCAD owns them and will refine them.
+cad-drawing, blend-fillet and sim-stack were drafted by Grok Bot and refined by SteveCAD. sim-stack covers both the quick single-load-case check (`tools/quick_fea.py`, formerly the quick-fea skill) and full studies.
 
 Every CAD skill follows the repo rules on capped sections (AGENTS.md rule 15) and lettered revs (rule 16).
 
