@@ -21,21 +21,12 @@ Creality Scan ──Mesh.ply──► Fairsolid (pipelines/fairsolid) ──10_c
                                                                                                         ▼
                                                                                          <part>.step / .stl ──► Fusion / FreeCAD
                                                                                                         │
-                                       knuckle_billet: mesh_*.py (gmsh) ─► fea_*.py (writes .inp) ─► ccx ─► post_*.py (.frd → SF, PNG, JSON)
-                                                       topo_simp*.py / topo_stress.py (nlopt + pypardiso) ─► topo/ ─► knuckle_billet.py rebuild
+                                       structural part: mesh (gmsh) -> CalculiX deck (.inp) -> ccx -> post (.frd -> SF, PNG, JSON), all in ~/cad-parts/<job>/runs/<stamp>/
 ```
 
-## Script relationships (knuckle_billet)
+## Part scripts
 
-- `loads.py` → writes `loads.json` (load cases used by every FEA script).
-- `knuckle_billet.py` reads a `params.json`, builds the solid, writes STEP/STL + `*_build.json`; `check_interface.py` checks the 24 fixed features against `knuckle/feature_check/`.
-- `mesh_step.py` / `mesh_stl.py` / `remesh.py` → Gmsh tet mesh (`*_mesh.npz`).
-- `fea_iter.py` / `fea_v4b.py` → CalculiX deck (`*.inp`) per load case; `run_iter.sh` / `run_wsl.sh` run `ccx` and the post step.
-- `post_iter.py` / `post_v4b.py` → safety factors (`fea_summary.json`), `.vtu`; `render_pv.py` / `render_solid.py` → pictures.
-- `summarize_iter.py` → `iterations.csv`.
-- `topo_simp.py`, `topo_simp_v2.py`, `topo_stress.py`, `topo_connect.py`, `topo_post.py`, `beso_map.py` → topology studies in `topo/`.
-- `two_piece.py` + `joint_check.py` → two-piece version and bolted-joint hand check.
-- `wall_check.py` → minimum wall / tool access for machining.
+Part build scripts live in the parts home (`~/cad-parts/<job>/src/`), not in this repo. A typical structural part has a build script that reads a `params.json` and writes STEP + `*_build.json`, a loads script, mesh / FEA / post scripts, and an interface check. Their working outputs go to `~/cad-parts/<job>/runs/<stamp>/`; finished results are published to the models folder.
 
 ## Fairsolid link
 

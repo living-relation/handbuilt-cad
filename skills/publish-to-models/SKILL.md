@@ -15,6 +15,9 @@ The project's own rules (AGENTS.md, decision log, revision register) win over th
 ## Where it runs
 Publish straight from the user's machine into the models home, never through the agent's own computer. If that machine is offline, stop and tell the user. On Windows + WSL, write from WSL out to `/mnt/c/...`; never write through `\\wsl.localhost` paths from Windows. If a file must be staged, use a dedicated temp folder outside models (`<cad_staging>/<job>`, from `[paths] cad_staging` / `CAD_STAGING`); only that folder is ever removed.
 
+## Sources and runs
+Part build scripts live in the parts home (`HBCAD_PARTS_HOME`, default `~/cad-parts/<job>/src/`); copy the ones that built this rev into the rev's `src/`. Working outputs live in `~/cad-parts/<job>/runs/<stamp>/` and are not published, except the finished deliverables (final STEP, drawings, review views, final strength summary, SUMMARY.md). After a successful publish the run's regenerable outputs may be deleted; costly ones go to `~/cad-parts/_archive/<job>/`.
+
 ## Files others add are expected
 Drawings, PDFs, photos or notes dropped into a job or rev folder are legitimate. Never delete, move, rename, overwrite or flag a file this run didn't write, and leave them out of checks.
 

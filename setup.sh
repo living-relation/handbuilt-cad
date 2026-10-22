@@ -60,6 +60,16 @@ if [ "$NO_MODELS" != 1 ] && [ -d "$MODELS" ]; then
   done
 fi
 
+# 5c. part-scripts home (WSL/Linux only). Order: $HBCAD_PARTS_HOME, then [paths] parts_home in local.toml, then ~/cad-parts.
+#     Creates <home>/, <home>/_archive/ and the owner AGENTS.md only when missing; existing files are never touched.
+local_parts=$(sed -nE "s/^[[:space:]]*parts_home[[:space:]]*=[[:space:]]*['\"]([^'\"]*)['\"].*/\1/p" local.toml 2>/dev/null | head -1)
+PARTS="${HBCAD_PARTS_HOME:-${local_parts:-$HOME/cad-parts}}"
+for d in "$PARTS" "$PARTS/_archive"; do
+  if [ -d "$d" ]; then echo "parts home: $d (exists, left as is)"; else mkdir -p "$d"; echo "parts home: created $d"; fi
+done
+if [ -e "$PARTS/AGENTS.md" ]; then echo "parts home: $PARTS/AGENTS.md exists, left as is"
+else cp templates/parts-home/AGENTS.md "$PARTS/AGENTS.md"; echo "parts home: added $PARTS/AGENTS.md"; fi
+
 # 6. skills: handbuilt-cad owns its skill links. Symlink skills/<name> into ~/.claude/skills and ~/.cursor/skills
 #    (a same-name entry is moved to ~/.skills-backup/<stamp>/ first; nothing is deleted). Skip with NO_SKILLS=1.
 #    On Windows, setup.ps1 does the same with junctions.
@@ -82,5 +92,6 @@ Done. Add these to your shell profile if you want them (setup does not edit dotf
   export CAD_HOME="$ROOT"
   export CAD_PY="$ROOT/.venv/bin/python"
   export MODELS_DIR="$MODELS"
+  export HBCAD_PARTS_HOME="$PARTS"   # part build scripts and run outputs (tools/paths.py)
   export FAIRSOLID_HOME="$ROOT/pipelines/fairsolid"   # optional: scan_helper falls back to it (docs/FAIRSOLID.md)
 MSG

@@ -68,6 +68,8 @@ $models = if ($env:MODELS_DIR) { $env:MODELS_DIR }
 if ($NoModels) { Write-Host "models folder: $models (not created: -NoModels)" }
 elseif (Test-Path -LiteralPath $models) { Write-Host "models folder: $models (exists, left as is)" }
 else { New-Item -ItemType Directory -Path $models | Out-Null; Write-Host "models folder: created $models" }
+# Part build scripts and their run outputs live in WSL/Linux (~/cad-parts, HBCAD_PARTS_HOME); setup.sh in WSL creates that folder.
+Write-Host "parts home: created by setup.sh in WSL (~/cad-parts), not on Windows"
 # 4b. ownership notes in the models folder (AGENTS.md, README.md; only added when missing)
 if (-not $NoModels) { & "$Root\scripts\models-folder-notes.ps1" -Models $models }
 
