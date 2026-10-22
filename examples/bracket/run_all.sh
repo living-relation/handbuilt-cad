@@ -11,6 +11,12 @@ echo "== 5. interactive viewer";            "$PY" "$R/tools/viewer.py" bracket.s
 # FEA demo only: in a real job, run FEA only after the owner approves the geometry (unless they ask for early tests).
 echo "== 6. strength check (500 N push on the top of the upright, base bottom held)"
 # quick_fea refuses to write inside a git repo, so the results go outside it (override with FEA_OUT).
-FEA_OUT="${FEA_OUT:-$(mktemp -d)/bracket_fea}"
+# With no FEA_OUT, a temp folder is used and removed on exit (the summary is printed first); a given FEA_OUT is kept.
+if [ -z "${FEA_OUT:-}" ]; then FEA_TMP=$(mktemp -d); trap 'rm -rf "$FEA_TMP"' EXIT; FEA_OUT="$FEA_TMP/bracket_fea"; fi
 "$SIMPY" "$R/tools/quick_fea.py" bracket.step --fix z:min --load z:max --force 500,0,0 --yield 276 --size 2.5 --out "$FEA_OUT"
-echo "== done. Look at bracket_views.png and bracket_cnc.txt, open bracket_viewer.html, read $FEA_OUT/summary.json and MACHINING.md"
+if [ -n "${FEA_TMP:-}" ]; then echo "== strength summary (temp folder, removed on exit; set FEA_OUT to keep it):"; cat "$FEA_OUT/summary.json"; echo; fi
+if [ -n "${FEA_TMP:-}" ]; then
+  echo "== done. Look at bracket_views.png and bracket_cnc.txt, open bracket_viewer.html, read MACHINING.md"
+else
+  echo "== done. Look at bracket_views.png and bracket_cnc.txt, open bracket_viewer.html, read $FEA_OUT/summary.json and MACHINING.md"
+fi

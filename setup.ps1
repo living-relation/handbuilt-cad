@@ -1,6 +1,6 @@
 # handbuilt-cad setup for a Windows clone (pull-only copy). Safe to re-run.
-#   powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1 [-NoModels] [-NoVenv] [-NoSkills] [-FreeCADDir <dir>]
-param([switch]$NoModels, [switch]$NoVenv, [switch]$NoSkills, [string]$FreeCADDir = '')
+#   powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1 [-NoModels] [-NoVenv] [-LinkSkills] [-FreeCADDir <dir>]
+param([switch]$NoModels, [switch]$NoVenv, [switch]$LinkSkills, [string]$FreeCADDir = '')
 $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
 Set-Location $Root
@@ -73,9 +73,9 @@ Write-Host "parts home: created by setup.sh in WSL (~/cad-parts), not on Windows
 # 4b. folder notes (models folder and parts home) have one writer, tools/folder_notes.py, run by setup.sh step 5d in WSL.
 if (-not $NoModels) { Write-Host "models notes: added by 'bash setup.sh' in WSL (tools/folder_notes.py), not on Windows" }
 
-# 4c. skills: handbuilt-cad owns its skill links. Junction skills\<name> into ~\.claude\skills and ~\.cursor\skills
-#     (a same-name folder is backed up to ~\.skills-backup first; nothing is deleted). Skip with -NoSkills.
-if ($NoSkills) { Write-Host 'skills: not linked (-NoSkills)' }
+# 4c. skills: off by default. Only with -LinkSkills: junction skills\<name> into ~\.claude\skills and ~\.cursor\skills
+#     (a same-name folder is backed up to ~\.skills-backup first; nothing is deleted).
+if (-not $LinkSkills) { Write-Host 'skills: not linked (opt in with -LinkSkills)' }
 else { & "$Root\scripts\link-skills.ps1" | ForEach-Object { Write-Host "skill $($_.Action): $($_.Path)" } }
 
 # 5. FreeCAD launcher wrappers (only into an existing FreeCAD folder you name; never overwrites)

@@ -71,9 +71,10 @@ def test_show_hides_personal_paths():
 def test_run_then_check_agree_models_root(tmp_path):
     ph, md = layout(tmp_path)
     (md / "README.md").unlink(); (ph / "AGENTS.md").unlink()
-    fn.run(ph, md, clone=Path("/clone"))
+    fn.run(ph, md)
     assert fn.missing(ph, md) == []
-    assert "/clone" in (md / "AGENTS.md").read_text() and (ph / "AGENTS.md").exists()
+    a = (md / "AGENTS.md").read_text()
+    assert "https://github.com/living-relation/handbuilt-cad" in a and "@CLONE@" not in a and (ph / "AGENTS.md").exists()
 
 
 def test_wsl_only_no_models(tmp_path):
@@ -116,10 +117,58 @@ def test_setup_5d_models_path_with_space(tmp_path):
     ph, r = _run_5d(tmp_path, sys.executable, md)
     assert r.returncode == 0, r.stderr
     assert (md / "README.md").exists() and (md / "x_0101" / "README.md").exists()
-    assert (ph / "AGENTS.md").exists() and "my clone" in (md / "AGENTS.md").read_text()
+    assert (ph / "AGENTS.md").exists() and "my clone" not in (md / "AGENTS.md").read_text()
 
 
 def test_setup_5d_failure_propagates(tmp_path):
     md = tmp_path / "m"; md.mkdir()
     _, r = _run_5d(tmp_path, "sh -c 'exit 3' x", md)
     assert r.returncode == 3
+
+
+def test_strictly_add_only_every_note(tmp_path):
+    """Every note that already exists, including the parts-home and models-root AGENTS.md, is left byte for byte."""
+    ph, md = layout(tmp_path)
+    fn.run(ph, md)
+    notes = [p for p in tmp_path.rglob("*.md")]
+    assert len(notes) >= 9
+    for p in notes:
+        p.write_text("user edit " + p.name)
+    before = {p: (p.read_text(), p.stat().st_mtime_ns) for p in notes}
+    log = fn.run(ph, md)
+    assert not any(l.startswith("added") for l in log)
+    assert before == {p: (p.read_text(), p.stat().st_mtime_ns) for p in notes}
+
+
+def test_write_new_never_overwrites_link_or_race(tmp_path, monkeypatch):
+    target = tmp_path / "real.md"; target.write_text("keep")
+    link = tmp_path / "README.md"; link.symlink_to(tmp_path / "gone.md")  # dangling link counts as present
+    assert fn.write_new(link, "x", False, []) is False and not (tmp_path / "gone.md").exists()
+    late = tmp_path / "late" / "README.md"
+    real_exists = Path.exists
+    monkeypatch.setattr(Path, "exists", lambda self: False if self == late else real_exists(self))
+    late.parent.mkdir(); late.write_text("appeared meanwhile")
+    log = []
+    assert fn.write_new(late, "x", False, log) is False
+    assert late.read_text() == "appeared meanwhile" and log[0].startswith("kept")
+
+
+def test_notes_say_who_uses_and_what_breaks(tmp_path):
+    ph, md = layout(tmp_path)
+    for p in [ph / "AGENTS.md", md / "README.md"]:
+        p.unlink()
+    fn.run(ph, md)
+    notes = [ph / "AGENTS.md", ph / "_archive" / "README.md", ph / "a_part_0101" / "README.md",
+             ph / "a_part_0101" / "src" / "README.md", ph / "a_part_0101" / "runs" / "README.md",
+             md / "AGENTS.md", md / "README.md", md / "a_part_0101" / "README.md"]
+    for p in notes:
+        s = p.read_text()
+        assert "Used by" in s, p
+        assert re.search(r"Deleting, moving or renaming|Deleting or moving", s), p
+        assert "https://github.com/living-relation/handbuilt-cad" in s, p
+        assert "@CLONE@" not in s and "local clone" not in s, p
+
+
+def test_no_clone_option():
+    assert "--clone" not in (ROOT / "tools" / "folder_notes.py").read_text()
+    assert "--clone" not in (ROOT / "setup.sh").read_text()

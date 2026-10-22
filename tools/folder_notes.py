@@ -1,6 +1,6 @@
-"""Owner notes (README.md) for every folder the handbuilt-cad layout uses. Add-only: an existing README.md is never touched.
+"""Owner notes (README.md) for every folder the handbuilt-cad layout uses. Strictly add-only: a note is written only when missing, never overwritten.
 
-    .venv/bin/python tools/folder_notes.py [--parts-home DIR] [--models DIR | --no-models] [--clone DIR] [--quiet] [--dry-run | --check]
+    .venv/bin/python tools/folder_notes.py [--parts-home DIR] [--models DIR | --no-models] [--quiet] [--dry-run | --check]
 
 --check writes nothing: it lists every layout folder with neither README.md nor AGENTS.md and exits 1 if any (CAD Seeker uses it).
 run() writes a note for every folder --check looks at, so a run followed by --check always passes. With no models folder
@@ -9,7 +9,7 @@ Folders whose names lack the <name>_<MMDD> suffix are not treated as jobs; they 
 
 Writes (this is the only writer of these notes):
   <parts_home>/AGENTS.md                     owner note (templates/parts-home/AGENTS.md)
-  <models>/AGENTS.md, <models>/README.md     owner notes (templates/models-folder/, @CLONE@ = --clone, default this clone)
+  <models>/AGENTS.md, <models>/README.md     owner notes (templates/models-folder/)
 and, from templates/notes/*.md:
   <parts_home>/<job>/README.md               the job: src/, runs/, paired models folder
   <parts_home>/_archive/README.md            what is archived and why
@@ -37,10 +37,16 @@ def tpl(name, **kw):
 
 
 def write_new(p: Path, text, dry, log):
-    if p.exists():
+    """Write p only if nothing is there (file, folder or link). Never overwrites, even if p appears meanwhile."""
+    if p.exists() or p.is_symlink():
         log.append(f"kept   {p}"); return False
     if not dry:
-        p.parent.mkdir(parents=True, exist_ok=True); p.write_text(text)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            with open(p, "x") as fh:  # exclusive create: fails instead of overwriting
+                fh.write(text)
+        except FileExistsError:
+            log.append(f"kept   {p}"); return False
     log.append(f"added  {p}"); return True
 
 
@@ -103,7 +109,7 @@ def revs(job_dir: Path):
     return sorted(rs, key=lambda d: d.name)
 
 
-def run(parts_home: Path, models: Path | None, dry=False, clone: Path | None = None, warn=_stderr):
+def run(parts_home: Path, models: Path | None, dry=False, warn=_stderr):
     log = []
     if parts_home.is_dir():
         write_new(parts_home / "AGENTS.md", (ROOT / "templates" / "parts-home" / "AGENTS.md").read_text(), dry, log)
@@ -115,7 +121,7 @@ def run(parts_home: Path, models: Path | None, dry=False, clone: Path | None = N
             write_new(job / "runs" / "README.md", tpl("runs.md", job=job.name), dry, log)
     if models and models.is_dir():
         for n in ("AGENTS.md", "README.md"):
-            text = (ROOT / "templates" / "models-folder" / n).read_text().replace("@CLONE@", str(clone or ROOT))
+            text = (ROOT / "templates" / "models-folder" / n).read_text()
             write_new(models / n, text, dry, log)
         for job in jobs(models, warn):
             rl = "\n".join(f"- `{r.name}`: {rev_line(r)}" for r in revs(job)) or "- (no rev folders yet)"
@@ -148,7 +154,6 @@ def missing(parts_home: Path, models: Path | None, warn=None):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--parts-home"); ap.add_argument("--models"); ap.add_argument("--no-models", action="store_true", help="parts home only")
-    ap.add_argument("--clone", help="clone path written into the models-folder notes (default: this clone)")
     ap.add_argument("--quiet", action="store_true", help="print only the summary line and warnings")
     ap.add_argument("--dry-run", action="store_true"); ap.add_argument("--check", action="store_true")
     a = ap.parse_args()
@@ -165,7 +170,7 @@ def main():
         miss = missing(ph, md, _stderr)
         print("\n".join(f"missing note: {d}" for d in miss) or "every layout folder has a README.md or AGENTS.md")
         sys.exit(1 if miss else 0)
-    log = run(ph, md, a.dry_run, Path(a.clone) if a.clone else None)
+    log = run(ph, md, a.dry_run)
     if not a.quiet:
         print("\n".join(log))
     print("folder notes: " + f"{sum(l.startswith('added') for l in log)} added, {sum(l.startswith('kept') for l in log)} kept")

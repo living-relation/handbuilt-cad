@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-22: setup no longer links skills by default; folder notes say who uses each folder
+- `setup.sh` and `setup.ps1` no longer link `skills/` into `~/.claude/skills` and `~/.cursor/skills` unless asked: use `bash setup.sh --link-skills` (or `LINK_SKILLS=1`) or `setup.ps1 -LinkSkills`. `NO_SKILLS` and `-NoSkills` are gone. Existing links are left alone.
+- Folder notes now say which tool uses the folder and that deleting or moving it breaks things, and name the repo and its GitHub link instead of a local clone path. `folder_notes.py --clone` is removed. Notes are strictly add-only (exclusive create).
+- `setup.sh` reads `parts_home` and `models_dir` only from the `[paths]` section of `local.toml`, like `tools/paths.py`.
+
 ## 2026-10-21: wall checker (`tools/checks/check_printed_walls.py`, #18)
 New detection defaults that can change results for existing configs. Each one is a config key; set it to 0 to turn it off:
 - `snap = 1e-4` mm: section segment ends closer than this are joined (fixes outlines dropped from a section).
