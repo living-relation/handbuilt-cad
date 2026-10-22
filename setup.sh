@@ -52,26 +52,22 @@ MODELS="${MODELS_DIR:-${local_models:-$desktop/models}}"
 if [ "$NO_MODELS" = 1 ]; then echo "models folder: $MODELS (not created: --no-models)";
 elif [ -d "$MODELS" ]; then echo "models folder: $MODELS (exists, left as is)";
 else mkdir -p "$MODELS"; echo "models folder: created $MODELS"; fi
-# 5b. ownership notes in the models folder (only added when missing; existing files are never touched)
-if [ "$NO_MODELS" != 1 ] && [ -d "$MODELS" ]; then
-  for n in AGENTS.md README.md; do
-    if [ -e "$MODELS/$n" ]; then echo "models notes: $MODELS/$n exists, left as is"
-    else tpl=$(cat "templates/models-folder/$n"); printf '%s\n' "${tpl//@CLONE@/$ROOT}" > "$MODELS/$n"; echo "models notes: added $MODELS/$n"; fi
-  done
-fi
+# 5b. ownership notes in the models folder: written by tools/folder_notes.py in step 5d (single writer).
 
 # 5c. part-scripts home (WSL/Linux only). Order: $HBCAD_PARTS_HOME, then [paths] parts_home in local.toml, then ~/cad-parts.
-#     Creates <home>/, <home>/_archive/ and the owner AGENTS.md only when missing; existing files are never touched.
+#     Creates <home>/ and <home>/_archive/ only when missing; step 5d adds the owner notes.
 local_parts=$(sed -nE "s/^[[:space:]]*parts_home[[:space:]]*=[[:space:]]*['\"]([^'\"]*)['\"].*/\1/p" local.toml 2>/dev/null | head -1)
 PARTS="${HBCAD_PARTS_HOME:-${local_parts:-$HOME/cad-parts}}"
 for d in "$PARTS" "$PARTS/_archive"; do
   if [ -d "$d" ]; then echo "parts home: $d (exists, left as is)"; else mkdir -p "$d"; echo "parts home: created $d"; fi
 done
-if [ -e "$PARTS/AGENTS.md" ]; then echo "parts home: $PARTS/AGENTS.md exists, left as is"
-else cp templates/parts-home/AGENTS.md "$PARTS/AGENTS.md"; echo "parts home: added $PARTS/AGENTS.md"; fi
 
-# 5d. owner notes (README.md) in every layout folder: parts home, _archive, each job/src/runs, each models job. Add-only.
-HBCAD_PARTS_HOME="$PARTS" MODELS_DIR="$MODELS" .venv/bin/python tools/folder_notes.py --parts-home "$PARTS" $( [ "$NO_MODELS" != 1 ] && [ -d "$MODELS" ] && printf -- '--models %q' "$MODELS" ) | tail -1 || echo "folder notes: skipped (tools/folder_notes.py failed)"
+# 5d. owner notes in every layout folder: parts home (AGENTS.md), _archive, each job/src/runs, the models folder
+#     (AGENTS.md, README.md) and each models job. Add-only. A failure stops setup with folder_notes.py's exit status.
+fn_args=(--quiet --parts-home "$PARTS")
+if [ "$NO_MODELS" != 1 ] && [ -d "$MODELS" ]; then fn_args+=(--models "$MODELS" --clone "$ROOT"); else fn_args+=(--no-models); fi
+HBCAD_PARTS_HOME="$PARTS" .venv/bin/python tools/folder_notes.py "${fn_args[@]}"
+# end 5d
 
 # 6. skills: handbuilt-cad owns its skill links. Symlink skills/<name> into ~/.claude/skills and ~/.cursor/skills
 #    (a same-name entry is moved to ~/.skills-backup/<stamp>/ first; nothing is deleted). Skip with NO_SKILLS=1.

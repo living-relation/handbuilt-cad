@@ -17,8 +17,14 @@ def _local(key, toml=None):
     p = Path(toml) if toml else ROOT / "local.toml"
     if not p.exists():
         return ""
+    section = ""
     for line in p.read_text().splitlines():
-        m = re.match(r"\s*" + key + r"\s*=\s*['\"]([^'\"]*)['\"]", line)
+        h = re.match(r"\s*\[([^\]]*)\]", line)
+        if h:
+            section = h.group(1).strip(); continue
+        if section != "paths":
+            continue
+        m = re.match(r"\s*" + re.escape(key) + r"\s*=\s*['\"]([^'\"]*)['\"]", line)
         if m:
             return m.group(1)
     return ""
@@ -37,7 +43,10 @@ def in_git(p) -> bool:
     q = Path(p)
     while not q.exists():
         q = q.parent
-    r = subprocess.run(["git", "-C", str(q), "rev-parse", "--is-inside-work-tree"], capture_output=True, text=True)
+    try:
+        r = subprocess.run(["git", "-C", str(q), "rev-parse", "--is-inside-work-tree"], capture_output=True, text=True)
+    except OSError:  # git not installed: fall back to looking for a .git entry
+        return any((d / ".git").exists() for d in (q.resolve(), *q.resolve().parents))
     return r.returncode == 0 and r.stdout.strip() == "true"
 
 

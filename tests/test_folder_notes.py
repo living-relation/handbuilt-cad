@@ -1,4 +1,4 @@
-import re
+import os, re
 import sys
 from pathlib import Path
 
@@ -24,7 +24,7 @@ def test_adds_every_note_then_idempotent(tmp_path):
     ph, md = layout(tmp_path)
     assert fn.missing(ph, md)
     log = fn.run(ph, md)
-    assert sum(l.startswith("added") for l in log) == 6
+    assert sum(l.startswith("added") for l in log) == 7  # incl. the models-root AGENTS.md
     assert fn.missing(ph, md) == []
     before = {p: p.read_text() for p in tmp_path.rglob("README.md")}
     log2 = fn.run(ph, md)
@@ -66,3 +66,60 @@ def test_show_hides_personal_paths():
     assert fn.show(os.path.expanduser("~/cad-parts/x_0101")) == "~/cad-parts/x_0101"
     assert fn.show("/mnt/c/Users/someone/OneDrive/Desktop/models/x_0101") == "<Desktop>/models/x_0101"
     assert fn.rev_line.__doc__
+
+
+def test_run_then_check_agree_models_root(tmp_path):
+    ph, md = layout(tmp_path)
+    (md / "README.md").unlink(); (ph / "AGENTS.md").unlink()
+    fn.run(ph, md, clone=Path("/clone"))
+    assert fn.missing(ph, md) == []
+    assert "/clone" in (md / "AGENTS.md").read_text() and (ph / "AGENTS.md").exists()
+
+
+def test_wsl_only_no_models(tmp_path):
+    ph = tmp_path / "cad-parts"; (ph / "j_0101" / "src").mkdir(parents=True)
+    fn.run(ph, None)
+    assert fn.missing(ph, None) == []
+
+
+def test_non_job_folders_warn(tmp_path):
+    ph, md = layout(tmp_path)
+    (ph / "scratchpad").mkdir(); (md / "loose").mkdir(); (ph / "_private").mkdir()
+    warns = []
+    fn.run(ph, md, warn=warns.append)
+    assert any("scratchpad" in w for w in warns) and any("loose" in w for w in warns)
+    assert not any("_private" in w for w in warns)
+    assert not (ph / "scratchpad" / "README.md").exists()
+
+
+def test_templates_mode_644():
+    import stat
+    for t in (ROOT / "templates").rglob("*.md"):
+        assert not t.stat().st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH), t
+
+
+def _setup_5d():
+    s = (ROOT / "setup.sh").read_text()
+    return s[s.index("# 5d."):s.index("# end 5d")]
+
+
+def _run_5d(tmp_path, python, models):
+    import subprocess
+    ph = tmp_path / "parts home"; ph.mkdir()
+    block = "set -euo pipefail\n" + _setup_5d().replace(".venv/bin/python", python)
+    env = dict(os.environ, PARTS=str(ph), MODELS=str(models), ROOT=str(tmp_path / "my clone"), NO_MODELS="0")
+    return ph, subprocess.run(["bash", "-c", block], cwd=ROOT, env=env, capture_output=True, text=True)
+
+
+def test_setup_5d_models_path_with_space(tmp_path):
+    md = tmp_path / "Desktop" / "3D Models"; (md / "x_0101").mkdir(parents=True)
+    ph, r = _run_5d(tmp_path, sys.executable, md)
+    assert r.returncode == 0, r.stderr
+    assert (md / "README.md").exists() and (md / "x_0101" / "README.md").exists()
+    assert (ph / "AGENTS.md").exists() and "my clone" in (md / "AGENTS.md").read_text()
+
+
+def test_setup_5d_failure_propagates(tmp_path):
+    md = tmp_path / "m"; md.mkdir()
+    _, r = _run_5d(tmp_path, "sh -c 'exit 3' x", md)
+    assert r.returncode == 3

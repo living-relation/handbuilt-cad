@@ -35,10 +35,17 @@ CLAUDE.local.md
 *.zip
 *.7z
 # Part build scripts live in the parts home (~/cad-parts, HBCAD_PARTS_HOME), never in this repo
-parts/
-*.inp
-*.dat
-*.msh
+/parts/
+# Solver decks and results (CalculiX/Elmer) from example and sim runs; the sim/smoke reference files are tracked
+/examples/**/*.inp
+/examples/**/*.dat
+/examples/**/*.msh
+/sim/**/*.inp
+/sim/**/*.dat
+/sim/**/*.msh
+!/sim/smoke/**/*.inp
+!/sim/smoke/**/*.dat
+!/sim/smoke/**/*.msh
 # Run outputs
 runs/
 out/

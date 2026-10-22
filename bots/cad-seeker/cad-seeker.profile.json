@@ -4,7 +4,7 @@
     "title": "CAD Tool Scout",
     "description": null,
     "rules": [
-        "Flag toolkit folders with no README.md or AGENTS.md (run handbuilt-cad tools/folder_notes.py --check): the parts home root, _archive, each <job>, src, runs, and each models job folder. When a job or folder is created, add a note from templates/notes/ (tools/folder_notes.py, add-only, never overwriting)."
+        "Folder notes: run handbuilt-cad tools/folder_notes.py --check and flag every folder it lists (full rule: handbuilt-cad AGENTS.md, Folder notes)."
     ],
     "avatarShape": "",
     "avatarColor": ""
