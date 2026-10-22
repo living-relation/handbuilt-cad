@@ -47,7 +47,7 @@ cd handbuilt-cad
 bash setup.sh
 ```
 
-On Windows, `setup.ps1` also runs this WSL step for you (`wsl -d Ubuntu`, in `~/handbuilt-cad`, cloned if missing), passing `-NoModels` and `-LinkSkills` through as `--no-models` and `--link-skills`; it stops with a clear error if WSL or Ubuntu is missing, and `-NoWsl` skips it. `setup.sh` does everything (see [Setup](Setup.md) for what it installs). It asks for your password once if it needs to install programs. It takes about **5-15 minutes** the first time.
+On Windows, `setup.ps1` also runs this WSL step for you (`wsl -d Ubuntu`) in your existing WSL clone, never a duplicate: the first that exists of `-WslClone`, `[paths] wsl_clone` in `local.toml`, `~/projects/handbuilt-cad`, `~/handbuilt-cad`. Only if none exists does it clone into `~/projects/handbuilt-cad` (or `-WslClone`). It prints which clone it used and its commit, and warns (without pulling) if that differs from the Windows clone. It passes `-NoModels` and `-LinkSkills` through as `--no-models` and `--link-skills`, stops with a clear error if WSL or Ubuntu is missing, and `-NoWsl` skips it. `setup.sh` does everything (see [Setup](Setup.md) for what it installs). It asks for your password once if it needs to install programs. It takes about **5-15 minutes** the first time.
 
 **You should see** green `[ok]` lines at the end, like:
 
@@ -82,4 +82,4 @@ To see the files from Windows: in the Ubuntu window type `explorer.exe .` (with 
 | Very slow when working in `/mnt/c/...` | Keep the folder in your Linux home (`~/handbuilt-cad`), as above. |
 | Using a Mac | Not tested. Use a Linux virtual machine, or install Docker/Ubuntu. |
 
-To update later: `cd ~/handbuilt-cad && git pull && bash setup.sh`.
+To update later: `cd ~/projects/handbuilt-cad && git pull && bash setup.sh`.

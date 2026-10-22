@@ -70,3 +70,22 @@ def test_ps1_runs_wsl_half():
               "wsl.exe not found", "not found (have:", "$LASTEXITCODE -ne 0"):
         assert s in ps1, s
     assert ps1.index("if ($NoWsl)") < ps1.index("wsl.exe -d $WslDistro")
+
+
+def test_ps1_reuses_existing_wsl_clone_no_duplicate():
+    ps1 = (ROOT / "setup.ps1").read_text()
+    assert "[string]$WslClone = ''" in ps1
+    order = ["$WslClone, $lc, '~/projects/handbuilt-cad', '~/handbuilt-cad'"]
+    assert order[0] in ps1
+    assert "else { '~/projects/handbuilt-cad' }" in ps1
+    assert "using existing clone" in ps1 and "no clone found, cloning into" in ps1
+    assert ps1.index("using existing clone") < ps1.index("git clone $url")
+    assert "wsl_clone" in ps1 and "$sec -eq 'paths'" in ps1
+    inst = (ROOT / "docs" / "wiki" / "Install.md").read_text()
+    assert "~/projects/handbuilt-cad" in inst and "in `~/handbuilt-cad`, cloned if missing" not in inst
+
+
+def test_ps1_reports_wsl_clone_commit_and_warns():
+    ps1 = (ROOT / "setup.ps1").read_text()
+    assert "at commit" in ps1 and "WARNING: WSL clone is at" in ps1 and "git pull --ff-only)" in ps1
+    assert "cd `\"`$c`\"" in ps1  # clone path quoted in bash

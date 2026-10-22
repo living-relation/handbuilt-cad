@@ -2,6 +2,7 @@
 # Every value can also come from the environment variable named in the comment.
 
 [paths]
+# wsl_clone = "~/projects/handbuilt-cad"   # setup.ps1: WSL clone to run setup.sh in (default: first existing of ~/projects/handbuilt-cad, ~/handbuilt-cad)
 models_dir = ""        # MODELS_DIR; empty = <Desktop>/models (OneDrive Desktop if OneDrive keeps one). Windows paths: use single quotes
 cad_staging = ""       # CAD_STAGING; scratch output for renders/reports (outside the repo)
 freecad_dir = ""       # FREECAD_DIR; folder that holds bin/freecadcmd(.exe)

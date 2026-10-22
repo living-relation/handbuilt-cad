@@ -1,7 +1,7 @@
 # handbuilt-cad setup for a Windows clone (pull-only copy). Safe to re-run.
-#   powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1 [-NoModels] [-NoVenv] [-LinkSkills] [-NoWsl] [-WslDistro Ubuntu] [-WslClone ~/handbuilt-cad] [-FreeCADDir <dir>]
+#   powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1 [-NoModels] [-NoVenv] [-LinkSkills] [-NoWsl] [-WslDistro Ubuntu] [-WslClone <wsl path>] [-FreeCADDir <dir>]
 #   Also runs the WSL half (setup.sh) in a WSL clone, so this one command does the whole install. -NoWsl skips it.
-param([switch]$NoModels, [switch]$NoVenv, [switch]$LinkSkills, [switch]$NoWsl, [string]$WslDistro = 'Ubuntu', [string]$WslClone = '~/handbuilt-cad', [string]$FreeCADDir = '')
+param([switch]$NoModels, [switch]$NoVenv, [switch]$LinkSkills, [switch]$NoWsl, [string]$WslDistro = 'Ubuntu', [string]$WslClone = '', [string]$FreeCADDir = '')
 $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
 Set-Location $Root
@@ -86,8 +86,9 @@ if ($FreeCADDir) {
     if (Test-Path $dst) { Write-Host "skip $dst (exists)" } else { Copy-Item $b.FullName $dst; Write-Host "added $dst" }
   }
 }
-# 6. WSL half: run setup.sh in the WSL clone ($WslClone, cloned from GitHub only if missing; an existing clone is
-#    left as is) with the matching flags (-NoModels -> --no-models, -LinkSkills -> --link-skills). This creates
+# 6. WSL half: run setup.sh in an existing WSL clone, never a duplicate. First existing clone of: -WslClone,
+#    [paths] wsl_clone in local.toml, ~/projects/handbuilt-cad, ~/handbuilt-cad. Only if none exists, clone from GitHub
+#    into -WslClone, else ~/projects/handbuilt-cad. An existing clone is left as is. Prints the clone used, with the matching flags (-NoModels -> --no-models, -LinkSkills -> --link-skills). This creates
 #    ~/cad-parts and writes the folder notes. Skip with -NoWsl. Fails clearly if WSL or the distro is missing.
 if ($NoWsl) { Write-Host "WSL setup: skipped (-NoWsl). Run 'bash setup.sh' in your WSL clone yourself." }
 else {
@@ -99,8 +100,21 @@ else {
   if ($LinkSkills) { $shArgs += '--link-skills' }
   $url = 'https://github.com/living-relation/handbuilt-cad'
   $envPrefix = if ($env:MODELS_DIR) { "MODELS_DIR=`"`$(wslpath -u '$($env:MODELS_DIR)')`" " } else { '' }
-  $cmd = "set -e; c=$WslClone; [ -d `"`$c/.git`" ] || git clone $url `"`$c`"; cd `"`$c`"; ${envPrefix}bash setup.sh $($shArgs -join ' ')"
-  Write-Host "WSL setup: wsl -d $WslDistro bash -lc in $WslClone (setup.sh $($shArgs -join ' '))"
+  $lc = ''
+  foreach ($line in (Get-Content "$Root\local.toml" -ErrorAction SilentlyContinue)) {
+    if ($line -match '^\s*\[([^\]]*)\]') { $sec = $Matches[1].Trim(); continue }
+    if ($sec -eq 'paths' -and $line -match "^\s*wsl_clone\s*=\s*['`"]([^'`"]*)['`"]") { $lc = $Matches[1]; break }
+  }
+  $cands = @($WslClone, $lc, '~/projects/handbuilt-cad', '~/handbuilt-cad') | Where-Object { $_ }
+  $newClone = if ($WslClone) { $WslClone } else { '~/projects/handbuilt-cad' }
+  $q = { param($x) if ($x -like '~/*') { '"$HOME/' + $x.Substring(2) + '"' } else { "'" + $x + "'" } }
+  $winHead = (& git -C $Root rev-parse HEAD 2>$null) -as [string]
+  $cmd = "set -e; c=; for x in $(($cands | ForEach-Object { & $q $_ }) -join ' '); do if [ -d `"`$x/.git`" ]; then c=`$x; break; fi; done; " +
+         "if [ -n `"`$c`" ]; then echo `"WSL setup: using existing clone `$c`"; else c=$(& $q $newClone); echo `"WSL setup: no clone found, cloning into `$c`"; mkdir -p `"`$(dirname `"`$c`")`"; git clone $url `"`$c`"; fi; " +
+         "h=`$(git -C `"`$c`" rev-parse HEAD); echo `"WSL setup: clone `$c at commit `$h`"; " +
+         "if [ -n '$winHead' ] && [ `"`$h`" != '$winHead' ]; then echo `"WARNING: WSL clone is at `$h but this Windows clone is at $winHead (not pulled; update it yourself with git pull --ff-only)`"; fi; " +
+         "cd `"`$c`"; ${envPrefix}bash setup.sh $($shArgs -join ' ')"
+  Write-Host "WSL setup: wsl -d $WslDistro (setup.sh $($shArgs -join ' '))"
   & wsl.exe -d $WslDistro -- bash -lc $cmd
   if ($LASTEXITCODE -ne 0) { throw "WSL setup: setup.sh failed in $WslDistro (exit $LASTEXITCODE). Fix the error above and re-run, or use -NoWsl." }
 }

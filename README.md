@@ -16,7 +16,7 @@ bash setup.sh            # pinned uv + Python, .venv from uv.lock, gitleaks, git
 **Windows (pull-only copy, optional):**
 ```powershell
 git clone <repo-url> <projects>\active\handbuilt-cad
-powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1   # Windows + the WSL half (setup.sh in ~/handbuilt-cad); -NoWsl skips WSL, -NoModels / -LinkSkills pass through
+powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1   # Windows + the WSL half (setup.sh in your existing WSL clone); -NoWsl skips WSL, -NoModels / -LinkSkills pass through
 ```
 Both clones get the same `.gitattributes` (LF in the repo, CRLF only for .bat/.ps1), so a
 Windows clone and a WSL clone of the same commit show no fake changes.

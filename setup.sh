@@ -88,8 +88,9 @@ HBCAD_PARTS_HOME="$PARTS" .venv/bin/python tools/folder_notes.py "${fn_args[@]}"
 # 6. skills: off by default. Only with --link-skills (or LINK_SKILLS=1): symlink skills/<name> into ~/.claude/skills
 #    and ~/.cursor/skills (a same-name entry is moved to ~/.skills-backup/<stamp>/ first; nothing is deleted).
 #    On Windows, setup.ps1 -LinkSkills does the same with junctions.
-if [ "$LINK_SKILLS" != 1 ]; then echo "skills: not linked (opt in with --link-skills)"; fi
-if [ "$LINK_SKILLS" = 1 ]; then
+if [ "$LINK_SKILLS" != 1 ]; then
+  echo "skills: not linked (opt in with --link-skills)"
+else
   stamp=$(date +%Y%m%d-%H%M%S)
   for s in "$ROOT"/skills/*/; do
     s=${s%/}; [ -f "$s/SKILL.md" ] || continue; name=$(basename "$s")
