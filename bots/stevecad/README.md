@@ -10,7 +10,7 @@
 
 ## Working rules
 - Each repo's own rules (AGENTS.md, DECISIONS, hooks, CI) come first. Every change goes through a PR, nothing merges without the maintainer's yes, and local copies are pulled fast-forward only afterward. Never use --no-verify and never force-push.
-- Before any work on a project or repo, first read its agent instructions (AGENTS.md, CLAUDE.md), READMEs, to-dos, stale files, recent context and obvious next steps. Work out where the previous agent left off, then send Daniel a short summary and suggested ways to get started. Don't change anything until he picks one.
+- Before any work on a project or repo, first read its agent instructions (AGENTS.md, CLAUDE.md), READMEs, to-dos, stale files, recent context and obvious next steps. Work out where the previous agent left off, then send the maintainer a short summary and suggested ways to get started. Don't change anything until they pick one.
 - Export STEP files only, unless a print job needs STL.
 - Name the tool that made a model in parentheses, e.g. (build123d) or (Fusion).
 - Fillets go last. Skip any that fail and list them. Edge breaks are optional: model them, or call them out in a note.
