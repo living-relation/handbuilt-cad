@@ -1,6 +1,7 @@
 # handbuilt-cad setup for a Windows clone (pull-only copy). Safe to re-run.
-#   powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1 [-NoModels] [-NoVenv] [-NoSkills] [-FreeCADDir <dir>]
-param([switch]$NoModels, [switch]$NoVenv, [switch]$NoSkills, [string]$FreeCADDir = '')
+#   powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1 [-NoModels] [-NoVenv] [-LinkSkills] [-NoWsl] [-WslDistro Ubuntu] [-WslClone <wsl path>] [-FreeCADDir <dir>]
+#   Also runs the WSL half (setup.sh) in a WSL clone, so this one command does the whole install. -NoWsl skips it.
+param([switch]$NoModels, [switch]$NoVenv, [switch]$LinkSkills, [switch]$NoWsl, [string]$WslDistro = 'Ubuntu', [string]$WslClone = '', [string]$FreeCADDir = '')
 $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
 Set-Location $Root
@@ -69,13 +70,13 @@ if ($NoModels) { Write-Host "models folder: $models (not created: -NoModels)" }
 elseif (Test-Path -LiteralPath $models) { Write-Host "models folder: $models (exists, left as is)" }
 else { New-Item -ItemType Directory -Path $models | Out-Null; Write-Host "models folder: created $models" }
 # Part build scripts and their run outputs live in WSL/Linux (~/cad-parts, HBCAD_PARTS_HOME); setup.sh in WSL creates that folder.
-Write-Host "parts home: created by setup.sh in WSL (~/cad-parts), not on Windows"
+Write-Host "parts home: created by setup.sh in WSL (~/cad-parts, step 6 below), not on Windows"
 # 4b. folder notes (models folder and parts home) have one writer, tools/folder_notes.py, run by setup.sh step 5d in WSL.
-if (-not $NoModels) { Write-Host "models notes: added by 'bash setup.sh' in WSL (tools/folder_notes.py), not on Windows" }
+if (-not $NoModels) { Write-Host "models notes: added by setup.sh in WSL (tools/folder_notes.py, step 6 below), not on Windows" }
 
-# 4c. skills: handbuilt-cad owns its skill links. Junction skills\<name> into ~\.claude\skills and ~\.cursor\skills
-#     (a same-name folder is backed up to ~\.skills-backup first; nothing is deleted). Skip with -NoSkills.
-if ($NoSkills) { Write-Host 'skills: not linked (-NoSkills)' }
+# 4c. skills: off by default. Only with -LinkSkills: junction skills\<name> into ~\.claude\skills and ~\.cursor\skills
+#     (a same-name folder is backed up to ~\.skills-backup first; nothing is deleted).
+if (-not $LinkSkills) { Write-Host 'skills: not linked (opt in with -LinkSkills)' }
 else { & "$Root\scripts\link-skills.ps1" | ForEach-Object { Write-Host "skill $($_.Action): $($_.Path)" } }
 
 # 5. FreeCAD launcher wrappers (only into an existing FreeCAD folder you name; never overwrites)
@@ -84,5 +85,37 @@ if ($FreeCADDir) {
     $dst = Join-Path $FreeCADDir $b.Name
     if (Test-Path $dst) { Write-Host "skip $dst (exists)" } else { Copy-Item $b.FullName $dst; Write-Host "added $dst" }
   }
+}
+# 6. WSL half: run setup.sh in an existing WSL clone, never a duplicate. First existing clone of: -WslClone,
+#    [paths] wsl_clone in local.toml, ~/projects/handbuilt-cad, ~/handbuilt-cad. Only if none exists, clone from GitHub
+#    into -WslClone, else ~/projects/handbuilt-cad. An existing clone is left as is. Prints the clone used, with the matching flags (-NoModels -> --no-models, -LinkSkills -> --link-skills). This creates
+#    ~/cad-parts and writes the folder notes. Skip with -NoWsl. Fails clearly if WSL or the distro is missing.
+if ($NoWsl) { Write-Host "WSL setup: skipped (-NoWsl). Run 'bash setup.sh' in your WSL clone yourself." }
+else {
+  if (-not (Get-Command wsl.exe -ErrorAction SilentlyContinue)) { throw "WSL setup: wsl.exe not found. Install WSL ('wsl --install -d $WslDistro'), or re-run with -NoWsl." }
+  $distros = (& wsl.exe --list --quiet 2>$null) -replace "`0", '' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+  if ($distros -notcontains $WslDistro) { throw "WSL setup: distro '$WslDistro' not found (have: $($distros -join ', ')). Install it ('wsl --install -d $WslDistro'), pass -WslDistro <name>, or re-run with -NoWsl." }
+  $shArgs = @()
+  if ($NoModels) { $shArgs += '--no-models' }
+  if ($LinkSkills) { $shArgs += '--link-skills' }
+  $url = 'https://github.com/living-relation/handbuilt-cad'
+  $envPrefix = if ($env:MODELS_DIR) { "MODELS_DIR=`"`$(wslpath -u '$($env:MODELS_DIR)')`" " } else { '' }
+  $lc = ''
+  foreach ($line in (Get-Content "$Root\local.toml" -ErrorAction SilentlyContinue)) {
+    if ($line -match '^\s*\[([^\]]*)\]') { $sec = $Matches[1].Trim(); continue }
+    if ($sec -eq 'paths' -and $line -match "^\s*wsl_clone\s*=\s*['`"]([^'`"]*)['`"]") { $lc = $Matches[1]; break }
+  }
+  $cands = @($WslClone, $lc, '~/projects/handbuilt-cad', '~/handbuilt-cad') | Where-Object { $_ }
+  $newClone = if ($WslClone) { $WslClone } else { '~/projects/handbuilt-cad' }
+  $q = { param($x) if ($x -like '~/*') { '"$HOME/' + $x.Substring(2) + '"' } else { "'" + $x + "'" } }
+  $winHead = (& git -C $Root rev-parse HEAD 2>$null) -as [string]
+  $cmd = "set -e; c=; for x in $(($cands | ForEach-Object { & $q $_ }) -join ' '); do if [ -d `"`$x/.git`" ]; then c=`$x; break; fi; done; " +
+         "if [ -n `"`$c`" ]; then echo `"WSL setup: using existing clone `$c`"; else c=$(& $q $newClone); echo `"WSL setup: no clone found, cloning into `$c`"; mkdir -p `"`$(dirname `"`$c`")`"; git clone $url `"`$c`"; fi; " +
+         "h=`$(git -C `"`$c`" rev-parse HEAD); echo `"WSL setup: clone `$c at commit `$h`"; " +
+         "if [ -n '$winHead' ] && [ `"`$h`" != '$winHead' ]; then echo `"WARNING: WSL clone is at `$h but this Windows clone is at $winHead (not pulled; update it yourself with git pull --ff-only)`"; fi; " +
+         "cd `"`$c`"; ${envPrefix}bash setup.sh $($shArgs -join ' ')"
+  Write-Host "WSL setup: wsl -d $WslDistro (setup.sh $($shArgs -join ' '))"
+  & wsl.exe -d $WslDistro -- bash -lc $cmd
+  if ($LASTEXITCODE -ne 0) { throw "WSL setup: setup.sh failed in $WslDistro (exit $LASTEXITCODE). Fix the error above and re-run, or use -NoWsl." }
 }
 Write-Host "Optional: setx MODELS_DIR `"$models`"  (setup does not change user env vars)"

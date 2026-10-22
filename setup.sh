@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # handbuilt-cad setup for WSL/Linux. Safe to re-run. Touches only this repo, ~/.cache/uv,
 # uv's Python store, and (unless --no-models) creates <Desktop>/models if it is missing.
-#   bash setup.sh [--no-models] [--with-fairsolid] [--sim]
+#   bash setup.sh [--no-models] [--with-fairsolid] [--sim] [--link-skills]
 set -euo pipefail
 cd "$(dirname "$0")"
 ROOT=$PWD
 UV_VERSION=0.13.0
 UV_SHA=1468ebd5a5541121837c5a2817b9972ba6090fa6caa3d142620850a47fb75154  # uv-x86_64-unknown-linux-gnu.tar.gz
-NO_MODELS=0; WITH_FS=0; SIM=0
-for a in "$@"; do case $a in --no-models) NO_MODELS=1;; --with-fairsolid) WITH_FS=1;; --sim) SIM=1;; *) echo "unknown option $a"; exit 2;; esac; done
+NO_MODELS=0; WITH_FS=0; SIM=0; LINK_SKILLS=${LINK_SKILLS:-0}
+for a in "$@"; do case $a in --no-models) NO_MODELS=1;; --with-fairsolid) WITH_FS=1;; --sim) SIM=1;; --link-skills) LINK_SKILLS=1;; *) echo "unknown option $a"; exit 2;; esac; done
 
 # 1. pinned uv (use the one on PATH if it is the pinned version, else fetch into .tools/)
 UV=$(command -v uv || true)
@@ -38,6 +38,22 @@ git config core.hooksPath .githooks
 # 4. local settings
 [ -f local.toml ] || cp local.toml.example local.toml
 
+# toml_paths KEY: KEY's quoted value from the [paths] section of local.toml only (same rule as tools/paths.py).
+toml_paths() {
+  awk -v k="$1" -v sq="'" -v dq='"' '
+    /^[[:space:]]*\[/ { s=$0; sub(/^[[:space:]]*\[/, "", s); sub(/\].*/, "", s); gsub(/[[:space:]]/, "", s); next }
+    s == "paths" {
+      l=$0; sub(/^[[:space:]]*/, "", l)
+      if (substr(l, 1, length(k)) != k) next
+      l=substr(l, length(k)+1); sub(/^[[:space:]]*/, "", l)
+      if (substr(l, 1, 1) != "=") next
+      l=substr(l, 2); sub(/^[[:space:]]*/, "", l); q=substr(l, 1, 1)
+      if (q != sq && q != dq) next
+      l=substr(l, 2); i=index(l, q); if (i) { print substr(l, 1, i-1); exit }
+    }' local.toml 2>/dev/null || true
+}
+# end toml_paths
+
 # 5. models folder. Order: $MODELS_DIR, then [paths] models_dir in local.toml, then <Desktop>/models.
 #    On WSL, <Desktop> is the Windows OneDrive Desktop when OneDrive keeps one, else the Desktop known folder.
 desktop=""
@@ -46,7 +62,7 @@ if command -v powershell.exe >/dev/null 2>&1; then
   [ -n "$win" ] && desktop=$(wslpath -u "$win")
 fi
 [ -z "$desktop" ] && desktop=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")
-local_models=$(sed -nE "s/^[[:space:]]*models_dir[[:space:]]*=[[:space:]]*['\"]([^'\"]*)['\"].*/\1/p" local.toml 2>/dev/null | head -1)
+local_models=$(toml_paths models_dir)
 case "$local_models" in [A-Za-z]:\\*|[A-Za-z]:/*) command -v wslpath >/dev/null 2>&1 && local_models=$(wslpath -u "$local_models");; esac
 MODELS="${MODELS_DIR:-${local_models:-$desktop/models}}"
 if [ "$NO_MODELS" = 1 ]; then echo "models folder: $MODELS (not created: --no-models)";
@@ -56,7 +72,7 @@ else mkdir -p "$MODELS"; echo "models folder: created $MODELS"; fi
 
 # 5c. part-scripts home (WSL/Linux only). Order: $HBCAD_PARTS_HOME, then [paths] parts_home in local.toml, then ~/cad-parts.
 #     Creates <home>/ and <home>/_archive/ only when missing; step 5d adds the owner notes.
-local_parts=$(sed -nE "s/^[[:space:]]*parts_home[[:space:]]*=[[:space:]]*['\"]([^'\"]*)['\"].*/\1/p" local.toml 2>/dev/null | head -1)
+local_parts=$(toml_paths parts_home)
 PARTS="${HBCAD_PARTS_HOME:-${local_parts:-$HOME/cad-parts}}"
 for d in "$PARTS" "$PARTS/_archive"; do
   if [ -d "$d" ]; then echo "parts home: $d (exists, left as is)"; else mkdir -p "$d"; echo "parts home: created $d"; fi
@@ -65,14 +81,16 @@ done
 # 5d. owner notes in every layout folder: parts home (AGENTS.md), _archive, each job/src/runs, the models folder
 #     (AGENTS.md, README.md) and each models job. Add-only. A failure stops setup with folder_notes.py's exit status.
 fn_args=(--quiet --parts-home "$PARTS")
-if [ "$NO_MODELS" != 1 ] && [ -d "$MODELS" ]; then fn_args+=(--models "$MODELS" --clone "$ROOT"); else fn_args+=(--no-models); fi
+if [ "$NO_MODELS" != 1 ] && [ -d "$MODELS" ]; then fn_args+=(--models "$MODELS"); else fn_args+=(--no-models); fi
 HBCAD_PARTS_HOME="$PARTS" .venv/bin/python tools/folder_notes.py "${fn_args[@]}"
 # end 5d
 
-# 6. skills: handbuilt-cad owns its skill links. Symlink skills/<name> into ~/.claude/skills and ~/.cursor/skills
-#    (a same-name entry is moved to ~/.skills-backup/<stamp>/ first; nothing is deleted). Skip with NO_SKILLS=1.
-#    On Windows, setup.ps1 does the same with junctions.
-if [ "$NO_SKILLS" != 1 ]; then
+# 6. skills: off by default. Only with --link-skills (or LINK_SKILLS=1): symlink skills/<name> into ~/.claude/skills
+#    and ~/.cursor/skills (a same-name entry is moved to ~/.skills-backup/<stamp>/ first; nothing is deleted).
+#    On Windows, setup.ps1 -LinkSkills does the same with junctions.
+if [ "$LINK_SKILLS" != 1 ]; then
+  echo "skills: not linked (opt in with --link-skills)"
+else
   stamp=$(date +%Y%m%d-%H%M%S)
   for s in "$ROOT"/skills/*/; do
     s=${s%/}; [ -f "$s/SKILL.md" ] || continue; name=$(basename "$s")
@@ -84,6 +102,7 @@ if [ "$NO_SKILLS" != 1 ]; then
     done
   done
 fi
+# end 6
 
 cat <<MSG
 

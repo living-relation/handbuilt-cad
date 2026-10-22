@@ -1,6 +1,9 @@
 # cad-parts (owner: handbuilt-cad)
 
-Created by handbuilt-cad setup. Do not move or rename; tools find it through HBCAD_PARTS_HOME.
+Created by handbuilt-cad (https://github.com/living-relation/handbuilt-cad) setup.
+
+Used by: handbuilt-cad's tools (`tools/paths.py`, `quick_fea.py --job`, `folder_notes.py`) and its `publish-to-models` skill. They find it through HBCAD_PARTS_HOME.
+Deleting, moving or renaming this folder breaks those tools and loses the part build scripts kept here.
 
 - `<job>/src/` : part build scripts, inputs, params, interface JSON, notes (the editable source of each part). Job names match the models folder.
 - `<job>/runs/<YYYYMMDD-HHMM>/` : working outputs (meshes, solver files, iteration STEPs, topo .npz, renders, interim JSON). Disposable.

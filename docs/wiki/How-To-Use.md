@@ -84,7 +84,7 @@ The report ends with the run time and peak memory. On a large part (330 mm knuck
 $SIM_VENV/bin/python ../../tools/quick_fea.py bracket.step --fix z:min --load z:max --force 500,0,0 --yield 276 --out /tmp/bracket_fea
 ```
 This holds the bottom of the base still (`z:min`), pushes the top of the upright sideways with 500 N (`z:max`, force X=500), and uses 6061-T6 aluminium (yield 276 MPa). You should see something like
-`peak stress ~60 MPa -> safety factor ~4 vs yield 276 MPa`. Results are in `bracket_fea/` (`summary.json`, and `result.vtu` to open in ParaView). In a real job, run this only after the owner approves the geometry.
+`peak stress ~60 MPa -> safety factor ~4 vs yield 276 MPa`. Results are in `/tmp/bracket_fea/` (`summary.json`, and `result.vtu` to open in ParaView). In a real job, run this only after the owner approves the geometry.
 
 ```bash
 ../../.venv/bin/python ../../tools/views.py bracket.step --six --name "Sample bracket"
