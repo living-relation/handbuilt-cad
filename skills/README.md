@@ -1,7 +1,7 @@
 # skills/
 
 Agent skills for CAD work. Claude, Cursor and bots install them from here
-(`sync-skills.ps1 -From <this repo>\skills -From <workstation repo>\skills`).
+(opt-in: `setup.ps1 -LinkSkills` or `bash setup.sh --link-skills`, see below).
 
 | Skill | Owner |
 |---|---|
@@ -23,4 +23,4 @@ Changes go through a PR reviewed by the owner.
 
 ## Installing
 
-handbuilt-cad's setup owns the skill links, and linking is off by default. Opt in with `setup.ps1 -LinkSkills`, which junctions each `skills\<name>` into `~\.claude\skills` and `~\.cursor\skills` (`scripts\link-skills.ps1`), or `bash setup.sh --link-skills` (or `LINK_SKILLS=1`), which symlinks them into the WSL `~/.claude/skills` and `~/.cursor/skills`. A same-name folder is backed up to `~/.skills-backup` first; nothing is deleted. No other repo installs these skills.
+handbuilt-cad's setup owns the skill links, and linking is off by default. Opt in with `setup.ps1 -LinkSkills`, which junctions each `skills\<name>` into `~\.claude\skills` and `~\.cursor\skills` (`scripts\link-skills.ps1`), or `bash setup.sh --link-skills` (or `LINK_SKILLS=1`), which symlinks them into the WSL `~/.claude/skills` and `~/.cursor/skills`. A same-name folder is backed up to `~/.skills-backup` first. Re-running it also removes links it made whose skill was renamed or removed (the link only); nothing else is deleted. No other repo installs these skills.

@@ -36,7 +36,7 @@ def test_toml_paths_matches_paths_py(tmp_path):
 
 
 def _run_step6(tmp_path, link):
-    home = tmp_path / "home"; home.mkdir()
+    home = tmp_path / "home"; home.mkdir(exist_ok=True)
     root = tmp_path / "clone"; (root / "skills" / "demo").mkdir(parents=True)
     (root / "skills" / "demo" / "SKILL.md").write_text("x")
     env = dict(os.environ, HOME=str(home), ROOT=str(root), LINK_SKILLS=link)
@@ -56,6 +56,32 @@ def test_skills_linked_with_opt_in(tmp_path):
     home, _ = _run_step6(tmp_path, "1")
     for t in (".claude", ".cursor"):
         assert (home / t / "skills" / "demo").is_symlink()
+
+
+def test_dead_skill_links_pruned_only_when_ours(tmp_path):
+    home = tmp_path / "home"
+    root = tmp_path / "clone"
+    other = tmp_path / "other"; (other / "keep").mkdir(parents=True)
+    for t in (".claude", ".cursor"):
+        d = home / t / "skills"; d.mkdir(parents=True)
+        (d / "gone").symlink_to(root / "skills" / "gone")      # ours, dead
+        (d / "elsewhere").symlink_to(other / "missing")        # not ours, dead
+        (d / "keep").symlink_to(other / "keep")                # not ours
+        (d / "real").mkdir()                                   # real folder
+    _, out = _run_step6(tmp_path, "1")
+    for t in (".claude", ".cursor"):
+        d = home / t / "skills"
+        assert not (d / "gone").is_symlink() and not (d / "gone").exists()
+        assert (d / "elsewhere").is_symlink() and (d / "keep").is_symlink() and (d / "real").is_dir()
+        assert (d / "demo").is_symlink()
+    assert "skill link pruned" in out
+
+
+def test_ps1_link_skills_prunes_only_dead_links_into_from():
+    ps1 = (ROOT / "scripts" / "link-skills.ps1").read_text()
+    assert "[IO.Directory]::Delete($item.FullName, $false)" in ps1  # link only, never recursive
+    assert "StartsWith($_, [StringComparison]::OrdinalIgnoreCase)" in ps1 and "'SKILL.md'" in ps1
+    assert "'would-prune'" in ps1 and "Remove-Item" not in ps1
 
 
 def test_setup_sh_flag_and_ps1_opt_in():
