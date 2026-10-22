@@ -62,3 +62,11 @@ def test_setup_sh_flag_and_ps1_opt_in():
     assert "--link-skills) LINK_SKILLS=1" in SETUP and "NO_SKILLS" not in SETUP
     ps1 = (ROOT / "setup.ps1").read_text()
     assert "[switch]$LinkSkills" in ps1 and "if (-not $LinkSkills)" in ps1 and "NoSkills" not in ps1
+
+
+def test_ps1_runs_wsl_half():
+    ps1 = (ROOT / "setup.ps1").read_text()
+    for s in ("[switch]$NoWsl", "wsl.exe -d $WslDistro", "bash setup.sh", "'--no-models'", "'--link-skills'",
+              "wsl.exe not found", "not found (have:", "$LASTEXITCODE -ne 0"):
+        assert s in ps1, s
+    assert ps1.index("if ($NoWsl)") < ps1.index("wsl.exe -d $WslDistro")

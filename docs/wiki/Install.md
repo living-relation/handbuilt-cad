@@ -47,7 +47,7 @@ cd handbuilt-cad
 bash setup.sh
 ```
 
-`setup.sh` does everything (see [Setup](Setup.md) for what it installs). It asks for your password once if it needs to install programs. It takes about **5-15 minutes** the first time.
+On Windows, `setup.ps1` also runs this WSL step for you (`wsl -d Ubuntu`, in `~/handbuilt-cad`, cloned if missing), passing `-NoModels` and `-LinkSkills` through as `--no-models` and `--link-skills`; it stops with a clear error if WSL or Ubuntu is missing, and `-NoWsl` skips it. `setup.sh` does everything (see [Setup](Setup.md) for what it installs). It asks for your password once if it needs to install programs. It takes about **5-15 minutes** the first time.
 
 **You should see** green `[ok]` lines at the end, like:
 
