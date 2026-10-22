@@ -48,7 +48,8 @@ Drawings, PDFs, photos or notes dropped into a job or rev folder are legitimate.
 5. Copy, confirm each file landed (cloud-synced online-only or locked files can fail; let them download, retry if locked), then SHA-256 check every copied file; on Windows + WSL re-check the hashes from Windows, since sync clients can lag. Stop on any mismatch.
 6. Copy vs move. From a live project folder always copy. Move only when the user asks; then remove only manifest sources whose hash matched. A source in a git repo is removed with a normal commit via safe-repo-preflight.
 7. Old revs are add-only: a missing SUMMARY.md or MANIFEST may be added, nothing existing is changed. Real changes go in a new rev.
-8. Report the rev path, the files and the check result.
+8. Folder notes: run `.venv/bin/python tools/folder_notes.py` (add-only) so a new job folder, and its parts-home `<job>/`, `src/` and `runs/`, each get a README.md from `templates/notes/`. Never edit an existing README.
+9. Report the rev path, the files and the check result.
 
 ## Notes
 - Other tools find "the part" through SUMMARY/MANIFEST, never "whatever's in the folder".
