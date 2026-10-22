@@ -6,7 +6,7 @@ description: >-
   handbuilt-cad drawing engine (drawing/part.py, drawing/asm.py). Runs on the
   user's machine.
 ---
-The project's own rules win over this skill (e.g. st185's R67 for where its CAD and drawings live). The repo's CAD and drawing rules are `AGENTS.md` "CAD and drawing rules" and `drawing/DRAWING-RULES.md`; this skill only says how to run the engine and what to look at. Model checks are cnc-part-check; filing is publish-to-models.
+A project's own rules win over this skill, including where it files its CAD and drawings. The repo's CAD and drawing rules are `AGENTS.md` "CAD and drawing rules" and `drawing/DRAWING-RULES.md`; this skill only says how to run the engine and what to look at. Model checks are cnc-part-check; filing is publish-to-models.
 
 ## Where it runs
 - WSL or Linux on the user's machine, with the handbuilt-cad venv (`[python] cad_py` in `local.toml`, empty = the repo's `.venv`). Shared venvs are read-only for agents.
@@ -16,7 +16,7 @@ The project's own rules win over this skill (e.g. st185's R67 for where its CAD 
 ## Inputs
 - A STEP that passed cnc-part-check. The model drives the drawing: redline the drawing, change the model, then regenerate. Never make a drawing differ from its model.
 - A spec dict per part. Required: `file`, `pn`, `title`, `material`, `process`. Common: `views`, `iso`, `scale`, `dims`, `ordinates`, `holes`/`threads`, `section`, `details`, `notes`, `center_marks`. `project` and `drawn` come from the spec, then `DRAWING_PROJECT` / `DRAWING_DRAWN`, then `local.toml` `[drawing]`.
-- `<part no>.REVLOG.md` beside the model (template `drawing/templates/REVLOG.md`); the engine draws it as the Rev log table at the top right of sheet 1. Letters come from `drawing/revs.py` only. Initials come from `~/.drawing-initials` / `DRAWING_INITIALS`; if missing, ask the user for the requester's initials (AGENTS.md rule 17).
+- `<part no>.REVLOG.md` beside the model (template `drawing/templates/REVLOG.md`); the engine draws it as the Rev log table at the top right of sheet 1. Letters come from `drawing/revs.py` only. Initials come from `~/.drawing-initials` / `DRAWING_INITIALS`; if missing, ask the user for the requester's initials (AGENTS.md "Initials, never agent names").
 - Notes the model can't carry: skipped fillets from the build report, edge breaks left out of the model (BREAK SHARP EDGES note), approved thin spots if the drawing should show them.
 
 ## Steps
@@ -28,8 +28,8 @@ The project's own rules win over this skill (e.g. st185's R67 for where its CAD 
    - title block filled; rev letter, Rev log and revision triangles match the model's rev;
    - skipped-fillet and edge-break notes present where needed.
 3. Fix problems in the spec (or the model, via the redline order), regenerate, re-check. Don't hand-edit the PDF/DXF.
-4. Report: the files and an image of each sheet, the tool in parentheses after the part (e.g. "FH-103 Rev F (build123d)"). Don't narrate what the user can see on the sheet; raise only real problems, one decision at a time, each with an image and clickable choices (inside st185: its own open-items rule instead).
-5. After approval, file it: publish-to-models (`drawings/` in the rev folder), or the project repo's own rule and a PR.
+4. Report: the files and an image of each sheet, the tool in parentheses after the part (e.g. "FH-103 Rev F (build123d)"). Raise only real problems. Report and ask as cnc-part-check "Asking the user" says.
+5. After approval, file it: publish-to-models (`drawings/` in the rev folder), or the project's own filing rule and a PR.
 
 ## Notes
 - Tests: `tests/test_revs.py`, `tests/test_drawing_settings.py`, `tests/test_sections.py`.
