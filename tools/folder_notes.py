@@ -2,7 +2,7 @@
 
     .venv/bin/python tools/folder_notes.py [--parts-home DIR] [--models DIR | --no-models] [--quiet] [--dry-run | --check]
 
---check writes nothing: it lists every layout folder with neither README.md nor AGENTS.md and exits 1 if any (CAD Seeker uses it).
+--check writes nothing: it lists every layout folder with neither README.md nor AGENTS.md and exits 1 if any.
 run() writes a note for every folder --check looks at, so a run followed by --check always passes. With no models folder
 (--no-models, MODELS_DIR unset, or the folder missing) only the parts home is written and checked.
 Folders whose names lack the <name>_<MMDD> suffix are not treated as jobs; they are reported as warnings, never silently skipped.

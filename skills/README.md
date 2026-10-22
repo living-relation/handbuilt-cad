@@ -3,23 +3,21 @@
 Agent skills for CAD work. Claude, Cursor and bots install them from here
 (opt-in: `setup.ps1 -LinkSkills` or `bash setup.sh --link-skills`, see below).
 
-| Skill | Owner |
-|---|---|
-| cnc-part-check | SteveCAD |
-| publish-to-models | SteveCAD |
-| scan-to-parametric | SteveCAD |
-| toolkit-patch-handoff | Grok Bot |
-| cad-drawing | SteveCAD |
-| blend-fillet | SteveCAD |
-| sim-stack | SteveCAD |
+- cnc-part-check
+- publish-to-models
+- scan-to-parametric
+- toolkit-patch-handoff
+- cad-drawing
+- blend-fillet
+- sim-stack
 
 The first four are the generic versions (paths come from `local.toml`, no project examples), taken from stevecad-tools `7688e33`.
 
-cad-drawing, blend-fillet and sim-stack were drafted by Grok Bot and refined by SteveCAD. sim-stack covers both the quick single-load-case check (`tools/quick_fea.py`, formerly the quick-fea skill) and full studies.
+sim-stack covers both the quick single-load-case check (`tools/quick_fea.py`, formerly the quick-fea skill) and full studies.
 
 Every CAD skill follows the repo rules on capped sections (AGENTS.md "Capped sections only") and lettered revs ("Rev folders are lettered").
 
-Changes go through a PR reviewed by the owner.
+Changes go through a PR reviewed by the maintainer.
 
 ## Installing
 
