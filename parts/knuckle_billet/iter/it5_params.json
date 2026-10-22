@@ -1,4 +1,0 @@
-{"hub_od": 92.0, "flange_r": 71.0, "flange_z": [62.0, 82.0], "arm_w": 34.0, "arm_h": 42.0, "wall": 6.0, "web": 6.0, "tongue_pocket_depth": 14.0, "junction_r": 6.0, "ear_lug_to_flange_top": true,
- "flange_style": "spoked", "ring_r": 56.0, "bolt_boss_r": 11.5, "floor_r": 3.0, "tongue_bottom_pocket": 12.0, "tongue_junction_r": 8.0,
- "left_root": [-41, 32, 76], "right_root": [37, 37, 82], "top_root": [-5, 52, 78],
- "arm_left": [34, 44], "arm_right": [28, 36], "arm_top": [34, 46], "rib_r2": [20, 26]}

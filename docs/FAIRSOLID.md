@@ -16,7 +16,7 @@
 | Windows checkout | A local archive folder (the owner's archive): the whole checkout with its `.venv`, `runs\`, `handoff\`, `out\`, `work\` and the local `surface-fit` branch. `living-relation/fairsolid-archive` was also deleted on 2026-10-21 |
 | WSL checkout `~/projects/fairsolid` | `~/archive/2026-10-17-fairsolid/fairsolid/` |
 | `handoff\tool\make_handoff.py` + templates (outside git) | `pipelines/fairsolid/scripts/` (ported; finds runs through `--runs` / `FAIRSOLID_RUNS`) |
-| Run folders (older jobs, e.g. `runs\pedal_adapter`) | Kept as history in the archived checkout's `runs\` (nothing deleted); `parts/pedal_adapter` and other projects read them from there |
+| Run folders (older jobs, e.g. `runs\pedal_adapter`) | Kept as history in the archived checkout's `runs\` (nothing deleted); part scripts in the parts home read them from there |
 | `handoff\fairsolid-grok-handoff-2026-10-15.zip` | The archived checkout's `handoff\` |
 
 - The "uncommitted `scripts/batch_eval.py` change" in the Windows checkout was line endings only: Windows git (`core.autocrlf=true`) sees no change, and `git diff --ignore-cr-at-eol` is empty. A copy of the file plus its diff is saved next to the archived checkout (`batch_eval-uncommitted.patch`, `batch_eval.py.worktree`). There was nothing to port. The tracked file is identical to `pipelines/fairsolid/scripts/batch_eval.py`.

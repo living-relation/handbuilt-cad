@@ -6,7 +6,7 @@ and reported (never dropped silently). A result only counts when it is one valid
     .venv/bin/python tools/chamfer_batch.py in.step out.step [--size 0.8] [--min-angle 25] [--time 600]
 
 Writes out.step and out.step.chamfer.json (size, chamfered count, skipped edge mid-points).
-Ported from handbuilt-models knuckle_billet/baseline_al (2026-10-11).
+Typical use: a finished part in ~/cad-parts/<job>/runs/<stamp>/ (working outputs stay in that runs folder, tools/paths.py).
 """
 import argparse, json, math, os, sys, time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
