@@ -9,7 +9,6 @@ Agent skills for CAD work. Claude, Cursor and bots install them from here
 | publish-to-models | SteveCAD |
 | scan-to-parametric | SteveCAD |
 | toolkit-patch-handoff | Grok Bot |
-| primary-source-spec-check | SteveCAD |
 | cad-drawing | SteveCAD |
 | blend-fillet | SteveCAD |
 | sim-stack | SteveCAD |

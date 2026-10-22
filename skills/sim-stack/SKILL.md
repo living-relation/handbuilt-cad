@@ -21,7 +21,7 @@ The project's own rules win over this skill. Versions, smoke tests and solver co
 - The sim venv and system packages are shared and read-only for agents: no installs, upgrades or rollback scripts without the user's yes.
 
 ## Inputs (once per job, saved in SUMMARY.md)
-- Load and boundary cases, material data, acceptance limit and safety factor. Look up material properties and bought-part ratings yourself from primary sources and cite them from the datasheet or the maker's own page (primary-source-spec-check); ask the user only for what no source settles (loads, limit, safety factor). Never assume a safety factor.
+- Load and boundary cases, material data, acceptance limit and safety factor. Look up material properties and bought-part ratings yourself from primary sources and cite them from the datasheet or the maker's own page (the primary-source-spec-check skill, from the workstation skills); ask the user only for what no source settles (loads, limit, safety factor). Never assume a safety factor.
 
 ## Quick check
 ```bash
@@ -30,7 +30,7 @@ $SIM_VENV/bin/python tools/quick_fea.py part.step --job <job> --fix x:min --load
 ```
 - `--fix` / `--load`: `AXIS:min`, `AXIS:max` or `AXIS:VALUE` (nodes within `--tol` mm of that plane). `--force`: total N as X,Y,Z spread over the load nodes.
 - Material defaults are 6061-T6; always pass the real material.
-- Output: `--job <job>` writes deck, results, `summary.json` and `result.vtu` to `<parts_home>/<job>/runs/<stamp>/`; `--out <dir>` (wins over `--job`) picks another folder. It refuses any folder inside a git repo.
+- Output: `--job <job>` writes deck, results, `summary.json` and `result.vtu` to `<parts_home>/<job>/runs/<stamp>/<part>_fea/`; `--out <dir>` (wins over `--job`) picks another folder. It refuses any folder inside a git repo.
 
 ## Full study
 1. Mesh the approved STEP with Gmsh; record mesh size and element type.
