@@ -108,7 +108,7 @@ def round_edges(solid, radii=(4.0, 3.0, 2.0, 1.5), select=None, name="", log=pri
             s = solid.fillet(r, es)
             if s.is_valid and len(s.solids()) == 1: return s.solids()[0], r
         except Exception: pass
-    for c in chamfers:          # fallback (Daniel): break the outside edges with a small 45 deg chamfer instead
+    for c in chamfers:          # fallback (the owner): break the outside edges with a small 45 deg chamfer instead
         try:
             s = solid.chamfer(c, None, es)
             if s.is_valid and len(s.solids()) == 1: log("  %s: fillet failed -> chamfer %.1f x 45" % (name, c)); return s.solids()[0], "ch%.1f" % c

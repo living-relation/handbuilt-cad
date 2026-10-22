@@ -1,6 +1,6 @@
 @echo off
 rem Runs gmsh inside WSL Ubuntu from the current Windows folder. Windows paths in arguments are converted.
-rem Working copy used by FreeCAD: C:\projects\_tools\FreeCAD\gmsh_wsl.bat (this repo copy is the reference).
+rem Working copy used by FreeCAD: %FREECAD_DIR%\gmsh_wsl.bat (this repo copy is the reference).
 setlocal enabledelayedexpansion
 set ARGS=
 for %%A in (%*) do (

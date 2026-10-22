@@ -1,12 +1,12 @@
 # Hand-built parametric parts - running notes
 
-Started 2026-10-09. Tools: build123d 0.13 (scratch venv C:\projects\_scratch\pedal-parametric\.venv on the PC;
+Started 2026-10-09. Tools: build123d 0.13 (scratch venv <projects>\_scratch\pedal-parametric\.venv on the PC;
 the same versions were used on the agent box for the heavy work). Scale is never changed. Only rigid moves are used.
 Fairsolid: no code changes so far. The checkout stays on main.
 
 ## Step 1 - scan list (%USERPROFILE%\agent-tools\scan-list.txt)
 - Searched C:\project_3D_scans (the Creality save folder), Creality AppData projects, OneDrive (Desktop, Documents),
-  Downloads, C:\projects (not shipping), and other C:\ folders. C: is the only drive. Google Drive was skipped (photos and CAD only).
+  Downloads, <projects> (not shipping), and other C:\ folders. C: is the only drive. Google Drive was skipped (photos and CAD only).
 - 5323 hits went down to 485 after dropping compiled ESP32 `.c.obj` files.
 - The automatic "CAD export" label is NOT reliable for Creality `Mesh.ply` / exported scan STLs. Decimated scans have large flat
   facets. Judged by hand, anything with more than about 100k triangles from a Creality project is a scan.
@@ -22,7 +22,7 @@ Real scans by part (the final mesh, then the raw passes):
 | pump hanger | ...\Mesh.ply, 1.93M (= ...\3D Scans\pump hanger.stl) | 2 | closed part |
 | pedal adapter | ...\Mesh.ply, 1.35M (= Desktop\3D Models\subaru pedal scan.stl) | 3 | DONE (pedal-parametric) |
 | Audi oil catch bracket | CrealityScan 4 ...\Mesh.ply, 669k (= ccs catch can audi.stl = Downloads\catch\catch.obj/.ply/.stl) and Documents\Creality Scan\Audi Catch Can Bracket.obj, 214k | 3 | open space (DONE via Fairsolid refscan) |
-| Project_26060601 (and _1, a copy) | small part 23x57x30 mm, Mesh.ply 354k/301k | 1 (duplicate) | unknown small part, check with Daniel |
+| Project_26060601 (and _1, a copy) | small part 23x57x30 mm, Mesh.ply 354k/301k | 1 (duplicate) | unknown small part, check with the owner |
 
 Copies in Fairsolid runs, the _scratch trials, rollback folders, agent-tools and C:\Temp are working copies of the scans above. They are not new scans.
 
@@ -56,9 +56,9 @@ Grippin-Body (.stl/.obj/.3mf), modified clamp (main / cad mouse stand), gear_sel
   top-arm root (up to 19 mm). No fillets yet. STEP on the box is 247 MB (heavy spline faces); the PC job writes v4\knuckle.step.
   NEXT: loft the back web along Y from a few smoothed sections instead of the three-view block; split the flange halves front/back;
   fillets after that. Renders: /workspace/handbuilt/knuckle/renders_v4/.
-- 08:58 PC job started: v3 STEP/STL -> C:\projects\_scratch\handbuilt\knuckle\v3\knuckle.step (log v3\step_job.log / .err, pid 10664). Expect about 1-2 min.
+- 08:58 PC job started: v3 STEP/STL -> <projects>\_scratch\handbuilt\knuckle\v3\knuckle.step (log v3\step_job.log / .err, pid 10664). Expect about 1-2 min.
 - 09:03 v3 STEP job finished OK on the PC: v3\knuckle.step (65 MB) + .stl. Same 4-solid geometry as the box build. v2 remains the best knuckle.
-- PC job started for v4 STEP/STL -> C:\projects\_scratch\handbuilt\knuckle\v4\knuckle.step (log v4\step_job.log/.err, pid 25240); about 2 min; expect a very large STEP (about 250 MB).
+- PC job started for v4 STEP/STL -> <projects>\_scratch\handbuilt\knuckle\v4\knuckle.step (log v4\step_job.log/.err, pid 25240); about 2 min; expect a very large STEP (about 250 MB).
 - 09:07 v5 started in knuckle\v5 (from v4): back web as loft, flange halves split front/back, lighter outlines for a smaller STEP.
 - 09:07 v5: back web loft = 7 Y-stations (12 mm apart), ruled, simplified outlines -> valid, 193k mm3 (v4 block 271k). Full build running.
 - 09:10 v5: whole-web loft would not join the top arm (bad booleans). Now web = loft (z 38-80, sloped part) + three-view block (z 76-100, where the arms start). Building.
@@ -70,8 +70,8 @@ Grippin-Body (.stl/.obj/.3mf), modified clamp (main / cad mouse stand), gear_sel
   then join that group to the web/flange once; or move to a plain-geometry model (planes, cylinders, simple fillets) for the cast body.
 - v5 fit check ran out of memory on the box (27 MB STL); no fit numbers or renders for v5.
 
-## 2026-10-09 16:20 ET - knuckle v4 feature check (new home: C:\projects\active\handbuilt-models\)
-- Older history is in C:\projects\_scratch\handbuilt\NOTES.md (left untouched).
+## 2026-10-09 16:20 ET - knuckle v4 feature check (new home: <projects>\active\handbuilt-models\)
+- Older history is in <projects>\_scratch\handbuilt\NOTES.md (left untouched).
 - Feature check done: knuckle\feature_check\feature_table.md (+ overlay_top/right/iso/bottom.png, feature_check.py).
   Hub OD, all 6 bore steps, the 4 flange bolt holes, the 2 ear holes, the side boss hole, the 3 eye bores/ODs and the eye end faces all within about 1 mm and 1 deg (most within 0.3 mm).
   Real error: the 2 lower-arm X holes (the shock/link mount) were 2.2 and 3.8 mm off in z. Re-fitted: outer y-147.5 z96.2 d14.3, inner y-79.0 z93.7 d14.0.
@@ -100,7 +100,7 @@ Grippin-Body (.stl/.obj/.3mf), modified clamp (main / cad mouse stand), gear_sel
   underside ribs between the gauges, turn-signal arrow windows, exact clip shapes. Check: is the nose boss a light-sensor/trip button? Are the d9 holes real?
 
 ## 2026-10-09 17:30-17:45 ET - bezel v3 (bezel/v3/, v2 kept)
-- Daniel: the two d9 holes are real (kept); the round d27 boss on the back wall is removed (wall left flat there).
+- The owner: the two d9 holes are real (kept); the round d27 boss on the back wall is removed (wall left flat there).
 - Added, each joined one at a time with a valid + 1-solid check (all passed, see bezel_build.log):
   back wall lowered in the middle to the scan profile (z about 15-17, dipping to 4-8 around y 180-260), 2 hood posts behind it;
   front rim bead (1.5 thick) on the plate edge, z about 5.5 in the middle rising to about 12-13 at y 40/360 and into sloped end walls (z 35 at the back, about 13 by x 88);

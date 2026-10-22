@@ -52,13 +52,22 @@ MODELS="${MODELS_DIR:-${local_models:-$desktop/models}}"
 if [ "$NO_MODELS" = 1 ]; then echo "models folder: $MODELS (not created: --no-models)";
 elif [ -d "$MODELS" ]; then echo "models folder: $MODELS (exists, left as is)";
 else mkdir -p "$MODELS"; echo "models folder: created $MODELS"; fi
-# 5b. ownership notes in the models folder (only added when missing; existing files are never touched)
-if [ "$NO_MODELS" != 1 ] && [ -d "$MODELS" ]; then
-  for n in AGENTS.md README.md; do
-    if [ -e "$MODELS/$n" ]; then echo "models notes: $MODELS/$n exists, left as is"
-    else sed "s|@CLONE@|$ROOT|g" "templates/models-folder/$n" > "$MODELS/$n"; echo "models notes: added $MODELS/$n"; fi
-  done
-fi
+# 5b. ownership notes in the models folder: written by tools/folder_notes.py in step 5d (single writer).
+
+# 5c. part-scripts home (WSL/Linux only). Order: $HBCAD_PARTS_HOME, then [paths] parts_home in local.toml, then ~/cad-parts.
+#     Creates <home>/ and <home>/_archive/ only when missing; step 5d adds the owner notes.
+local_parts=$(sed -nE "s/^[[:space:]]*parts_home[[:space:]]*=[[:space:]]*['\"]([^'\"]*)['\"].*/\1/p" local.toml 2>/dev/null | head -1)
+PARTS="${HBCAD_PARTS_HOME:-${local_parts:-$HOME/cad-parts}}"
+for d in "$PARTS" "$PARTS/_archive"; do
+  if [ -d "$d" ]; then echo "parts home: $d (exists, left as is)"; else mkdir -p "$d"; echo "parts home: created $d"; fi
+done
+
+# 5d. owner notes in every layout folder: parts home (AGENTS.md), _archive, each job/src/runs, the models folder
+#     (AGENTS.md, README.md) and each models job. Add-only. A failure stops setup with folder_notes.py's exit status.
+fn_args=(--quiet --parts-home "$PARTS")
+if [ "$NO_MODELS" != 1 ] && [ -d "$MODELS" ]; then fn_args+=(--models "$MODELS" --clone "$ROOT"); else fn_args+=(--no-models); fi
+HBCAD_PARTS_HOME="$PARTS" .venv/bin/python tools/folder_notes.py "${fn_args[@]}"
+# end 5d
 
 # 6. skills: handbuilt-cad owns its skill links. Symlink skills/<name> into ~/.claude/skills and ~/.cursor/skills
 #    (a same-name entry is moved to ~/.skills-backup/<stamp>/ first; nothing is deleted). Skip with NO_SKILLS=1.
@@ -82,5 +91,6 @@ Done. Add these to your shell profile if you want them (setup does not edit dotf
   export CAD_HOME="$ROOT"
   export CAD_PY="$ROOT/.venv/bin/python"
   export MODELS_DIR="$MODELS"
+  export HBCAD_PARTS_HOME="$PARTS"   # part build scripts and run outputs (tools/paths.py)
   export FAIRSOLID_HOME="$ROOT/pipelines/fairsolid"   # optional: scan_helper falls back to it (docs/FAIRSOLID.md)
 MSG

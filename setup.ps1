@@ -68,8 +68,10 @@ $models = if ($env:MODELS_DIR) { $env:MODELS_DIR }
 if ($NoModels) { Write-Host "models folder: $models (not created: -NoModels)" }
 elseif (Test-Path -LiteralPath $models) { Write-Host "models folder: $models (exists, left as is)" }
 else { New-Item -ItemType Directory -Path $models | Out-Null; Write-Host "models folder: created $models" }
-# 4b. ownership notes in the models folder (AGENTS.md, README.md; only added when missing)
-if (-not $NoModels) { & "$Root\scripts\models-folder-notes.ps1" -Models $models }
+# Part build scripts and their run outputs live in WSL/Linux (~/cad-parts, HBCAD_PARTS_HOME); setup.sh in WSL creates that folder.
+Write-Host "parts home: created by setup.sh in WSL (~/cad-parts), not on Windows"
+# 4b. folder notes (models folder and parts home) have one writer, tools/folder_notes.py, run by setup.sh step 5d in WSL.
+if (-not $NoModels) { Write-Host "models notes: added by 'bash setup.sh' in WSL (tools/folder_notes.py), not on Windows" }
 
 # 4c. skills: handbuilt-cad owns its skill links. Junction skills\<name> into ~\.claude\skills and ~\.cursor\skills
 #     (a same-name folder is backed up to ~\.skills-backup first; nothing is deleted). Skip with -NoSkills.

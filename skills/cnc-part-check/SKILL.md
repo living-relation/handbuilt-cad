@@ -32,7 +32,7 @@ Use what the user already gave (brief, BOM, existing SUMMARY.md). Ask only for w
 
 ## Asking the user
 - Look it up first. For bought parts, mating parts and standards, find the maker's drawings, datasheets and specs yourself (primary sources) and cite them. Ask only what those can't answer, and mark a value TBD only if no source settles it (primary-source-spec-check).
-- Inside st185, its rules win: R119 (open questions go in its OPEN-ITEMS "Needs Dan" list, no pickers) and R40 (look up maker drawings and specs yourself before asking).
+- Inside a project repo with its own rules (an AGENTS.md or a decision log), those rules win: for example, open questions go in its open-items list instead of pickers, and maker drawings and specs are looked up before asking.
 - Everywhere else: one decision at a time, each with an image and clickable choices (the user's preference).
 
 ## Which files to check

@@ -81,7 +81,7 @@ Two extra options for big or curved parts:
 The report ends with the run time and peak memory. On a large part (330 mm knuckle) lower `wall_samples` / `reach_samples` or `ray_chunk` if memory is tight.
 
 ```bash
-$SIM_VENV/bin/python ../../tools/quick_fea.py bracket.step --fix z:min --load z:max --force 500,0,0 --yield 276
+$SIM_VENV/bin/python ../../tools/quick_fea.py bracket.step --fix z:min --load z:max --force 500,0,0 --yield 276 --out /tmp/bracket_fea
 ```
 This holds the bottom of the base still (`z:min`), pushes the top of the upright sideways with 500 N (`z:max`, force X=500), and uses 6061-T6 aluminium (yield 276 MPa). You should see something like
 `peak stress ~60 MPa -> safety factor ~4 vs yield 276 MPa`. Results are in `bracket_fea/` (`summary.json`, and `result.vtu` to open in ParaView). In a real job, run this only after the owner approves the geometry.
@@ -115,9 +115,9 @@ You should see `fused: valid True, solids 1, added ... vs expected ... -> PASS` 
 ## Make your own part
 
 ```bash
-mkdir -p parts/my_part && cp examples/bracket/{bracket.py,spec.json,run_all.sh} parts/my_part/
+mkdir -p "${HBCAD_PARTS_HOME:-$HOME/cad-parts}/my_part_<MMDD>/src" && cp examples/bracket/{bracket.py,spec.json,run_all.sh} "${HBCAD_PARTS_HOME:-$HOME/cad-parts}/my_part_<MMDD>/src/"
 ```
-Rename things, change the shape and sizes, and update `spec.json` with the holes that must line up with the mating parts. The `parts/` folder is ignored by git, so your own designs stay on your computer unless you choose to share them.
+Rename things, change the shape and sizes, and update `spec.json` with the holes that must line up with the mating parts. Part scripts live in the parts home (`~/cad-parts/<job>/src`, made by `setup.sh`), outside every git repo, so your designs stay on your computer. Working outputs go to `~/cad-parts/<job>/runs/<stamp>/`; finished results are published to the models folder with `publish-to-models`.
 
 ## Tool cheat-sheet
 
@@ -155,7 +155,7 @@ Units everywhere: **millimetres, newtons, MPa, degrees, kilograms**.
 If you're an AI helping someone with this repo:
 
 1. Read `README.md`, this page, and [Conventions](Conventions.md). Run `bash setup.sh --check` before anything else.
-2. New parts go in a new folder (for example `parts/<name>/`), copied from `examples/bracket/`. Keep every size as a named number at the top.
+2. New parts go in a new folder (`~/cad-parts/<job>/src/`), copied from `examples/bracket/`. Keep every size as a named number at the top.
 3. After every change: rebuild, run `tools/features.py --spec` and `tools/cnc_check.py` (with the minimum wall the owner gave). Run `tools/quick_fea.py` only after the owner approves the geometry, unless they ask for early tests. Report the numbers (mass, PASS/FAIL, safety factor once run), not just "done".
 4. Never scale scan data, never commit scans, secrets or big solver output, and never force-push. Keep personal part designs out of the public repo unless the owner says to share them.
 5. Use `.venv/bin/python` for CAD, `$SIM_VENV/bin/python` for meshing/FEA, and run heavy simulations in `~/sim-runs/`, not on `/mnt/c`.

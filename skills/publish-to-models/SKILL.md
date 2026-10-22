@@ -10,10 +10,13 @@ Models home (the only one): `[paths] models_dir` in the toolkit repo's `local.to
 
 The project's own rules (AGENTS.md, decision log, revision register) win over this skill wherever they differ.
 
-**A repo with its own CAD rule wins over the models home.** If the project repo says where its CAD is filed (e.g. st185's R67), file it there by that rule and don't publish it to the models home. The models home is for everything else.
+**A repo with its own CAD rule wins over the models home.** If the project repo says where its CAD is filed (for example a rule in its decision log), file it there by that rule and don't publish it to the models home. The models home is for everything else.
 
 ## Where it runs
 Publish straight from the user's machine into the models home, never through the agent's own computer. If that machine is offline, stop and tell the user. On Windows + WSL, write from WSL out to `/mnt/c/...`; never write through `\\wsl.localhost` paths from Windows. If a file must be staged, use a dedicated temp folder outside models (`<cad_staging>/<job>`, from `[paths] cad_staging` / `CAD_STAGING`); only that folder is ever removed.
+
+## Sources and runs
+Part build scripts live in the parts home (`HBCAD_PARTS_HOME`, default `~/cad-parts/<job>/src/`); copy the ones that built this rev into the rev's `src/`. Working outputs live in `~/cad-parts/<job>/runs/<stamp>/` and are not published, except the finished deliverables (final STEP, drawings, review views, final strength summary, SUMMARY.md). After a successful publish the run's regenerable outputs may be deleted; costly ones go to `~/cad-parts/_archive/<job>/`.
 
 ## Files others add are expected
 Drawings, PDFs, photos or notes dropped into a job or rev folder are legitimate. Never delete, move, rename, overwrite or flag a file this run didn't write, and leave them out of checks.
@@ -45,7 +48,8 @@ Drawings, PDFs, photos or notes dropped into a job or rev folder are legitimate.
 5. Copy, confirm each file landed (cloud-synced online-only or locked files can fail; let them download, retry if locked), then SHA-256 check every copied file; on Windows + WSL re-check the hashes from Windows, since sync clients can lag. Stop on any mismatch.
 6. Copy vs move. From a live project folder always copy. Move only when the user asks; then remove only manifest sources whose hash matched. A source in a git repo is removed with a normal commit via safe-repo-preflight.
 7. Old revs are add-only: a missing SUMMARY.md or MANIFEST may be added, nothing existing is changed. Real changes go in a new rev.
-8. Report the rev path, the files and the check result.
+8. Folder notes: run `.venv/bin/python tools/folder_notes.py` (add-only) so a new job folder, and its parts-home `<job>/`, `src/` and `runs/`, each get a README.md from `templates/notes/`. Never edit an existing README.
+9. Report the rev path, the files and the check result.
 
 ## Notes
 - Other tools find "the part" through SUMMARY/MANIFEST, never "whatever's in the folder".
