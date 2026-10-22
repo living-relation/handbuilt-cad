@@ -86,8 +86,9 @@ HBCAD_PARTS_HOME="$PARTS" .venv/bin/python tools/folder_notes.py "${fn_args[@]}"
 # end 5d
 
 # 6. skills: off by default. Only with --link-skills (or LINK_SKILLS=1): symlink skills/<name> into ~/.claude/skills
-#    and ~/.cursor/skills (a same-name entry is moved to ~/.skills-backup/<stamp>/ first; nothing is deleted).
-#    On Windows, setup.ps1 -LinkSkills does the same with junctions.
+#    and ~/.cursor/skills (a same-name entry is moved to ~/.skills-backup/<stamp>/ first). The only delete: a symlink
+#    into this clone's skills/ whose skill is gone is removed (the link only). On Windows, setup.ps1 -LinkSkills does
+#    the same with junctions.
 if [ "$LINK_SKILLS" != 1 ]; then
   echo "skills: not linked (opt in with --link-skills)"
 else
@@ -99,6 +100,12 @@ else
       if [ -L "$d" ] && [ "$(readlink -f "$d")" = "$(readlink -f "$s")" ]; then continue; fi
       if [ -e "$d" ] || [ -L "$d" ]; then b="$HOME/.skills-backup/$stamp/$(basename "$(dirname "$t")")"; mkdir -p "$b"; mv "$d" "$b/"; echo "skill backed up: $b/$name"; fi
       ln -s "$s" "$d"; echo "skill linked: $d -> $s"
+    done
+  done
+  for t in "$HOME/.claude/skills" "$HOME/.cursor/skills"; do
+    for d in "$t"/*; do
+      [ -L "$d" ] || continue; l=$(readlink "$d")
+      case "$l" in "$ROOT"/skills/*) [ -f "$l/SKILL.md" ] || { rm "$d"; echo "skill link pruned: $d"; } ;; esac
     done
   done
 fi
