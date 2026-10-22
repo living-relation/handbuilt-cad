@@ -43,6 +43,9 @@ The drawing engine's full rule list (and which ones it enforces) is `drawing/DRA
 17. **Initials, never agent names.** DRAWN = the person on Rev A; rev-log BY = the person who requested the change (`drawing/DRAWING-RULES.md` rule 32). They come from `~/.drawing-initials` (or env `DRAWING_INITIALS`); if missing and you are an agent (no terminal) the tool stops - ask the maintainer for the requester's initials, never guess or use "Claude" / "SteveCAD".
 18. **Revision triangles.** Every full-letter rev puts its letter in a triangle next to each changed item (and the BOM row of a changed part number); .01 clerical revs have none and are not in the rev log (`drawing/DRAWING-RULES.md` rule 33, `drawing/revmarks.py`). Old triangles stay on later revs by default.
 
+## Folder notes
+Every folder the toolkit creates or uses (the parts home `~/cad-parts` root, its `_archive`, each `<job>`, `<job>/src`, `<job>/runs`, the models folder and each models job folder) has a README.md or AGENTS.md saying what is in it, who owns it, and where its paired folder is. An agent that creates a new job or folder adds one from `templates/notes/` (`tools/folder_notes.py` does it, add-only, never overwriting). `tools/folder_notes.py --check` lists folders missing one; CAD Seeker flags them.
+
 ## Checks before a PR
 - `.venv/bin/python -m pytest -q` (repo tests) and the checks for the files you touched.
 - The pre-commit hook (guard + pinned gitleaks) must pass.

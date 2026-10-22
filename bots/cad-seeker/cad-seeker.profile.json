@@ -1,9 +1,11 @@
 {
-    "schema":  1,
-    "name":  "CAD Seeker",
-    "title":  "CAD Tool Scout",
-    "description":  null,
-    "rules":  null,
-    "avatarShape":  "",
-    "avatarColor":  ""
+    "schema": 1,
+    "name": "CAD Seeker",
+    "title": "CAD Tool Scout",
+    "description": null,
+    "rules": [
+        "Flag toolkit folders with no README.md or AGENTS.md (run handbuilt-cad tools/folder_notes.py --check): the parts home root, _archive, each <job>, src, runs, and each models job folder. When a job or folder is created, add a note from templates/notes/ (tools/folder_notes.py, add-only, never overwriting)."
+    ],
+    "avatarShape": "",
+    "avatarColor": ""
 }

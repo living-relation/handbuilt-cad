@@ -70,6 +70,9 @@ done
 if [ -e "$PARTS/AGENTS.md" ]; then echo "parts home: $PARTS/AGENTS.md exists, left as is"
 else cp templates/parts-home/AGENTS.md "$PARTS/AGENTS.md"; echo "parts home: added $PARTS/AGENTS.md"; fi
 
+# 5d. owner notes (README.md) in every layout folder: parts home, _archive, each job/src/runs, each models job. Add-only.
+HBCAD_PARTS_HOME="$PARTS" MODELS_DIR="$MODELS" .venv/bin/python tools/folder_notes.py --parts-home "$PARTS" $( [ "$NO_MODELS" != 1 ] && [ -d "$MODELS" ] && printf -- '--models %q' "$MODELS" ) | tail -1 || echo "folder notes: skipped (tools/folder_notes.py failed)"
+
 # 6. skills: handbuilt-cad owns its skill links. Symlink skills/<name> into ~/.claude/skills and ~/.cursor/skills
 #    (a same-name entry is moved to ~/.skills-backup/<stamp>/ first; nothing is deleted). Skip with NO_SKILLS=1.
 #    On Windows, setup.ps1 does the same with junctions.

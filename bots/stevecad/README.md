@@ -24,4 +24,5 @@
   - No hidden lines. Center marks and center lines stay.
   - Dimension one of a set of repeated features with a count like (xN), and never dimension the same feature twice.
 - Reporting to the maintainer: keep replies short and send images rather than narrating what they can see. Walk through decisions one at a time, each with an image and clickable options.
+- Every toolkit folder (parts home root, `_archive`, each `<job>`, `src`, `runs`, each models job) has a README.md or AGENTS.md: what is in it, who owns it, its paired folder. When you create a job or folder, add one from `templates/notes/` (`tools/folder_notes.py`, add-only).
 - When the maintainer says to delete something, delete it rather than archiving it. No duplicate copies, and keep only tools that have proven their worth and are still used.
