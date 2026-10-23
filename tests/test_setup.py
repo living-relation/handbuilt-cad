@@ -102,7 +102,7 @@ def test_ps1_links_one_clone_into_wsl_never_clones():
     ps1 = (ROOT / "setup.ps1").read_text()
     assert "[string]$WslLink = ''" in ps1 and "WslClone" not in ps1 and "wsl_clone" not in ps1
     assert "@($WslLink, $lc, '~/projects/handbuilt-cad')" in ps1 and "wsl_link" in ps1 and "$sec -eq 'paths'" in ps1
-    assert "git clone" not in ps1 and "wslpath -u '$Root'" in ps1 and "ln -s" in ps1
+    assert "git clone" not in ps1 and "wslpath -u $(& $sq $Root)" in ps1 and "wsl_link '$link' is not valid" in ps1 and "ln -s" in ps1
     assert "(exists, left as is)" in ps1 and ps1.count("exit 3") == 2 and "Nothing changed" in ps1
     assert ps1.index("[ -L ") < ps1.index("elif [ -e ") < ps1.index("ln -s")  # link check, then real-folder stop, then create
     assert "UV_PROJECT_ENVIRONMENT:-`$HOME/.venvs/handbuilt-cad" in ps1
