@@ -150,3 +150,10 @@ def test_setup_sh_linux_venv_outside_repo_on_windows_drive():
     assert 'case "$(pwd -P)" in /mnt/[a-z]/*) export UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-$HOME/.venvs/handbuilt-cad}"' in SETUP
     assert 'VENV="${UV_PROJECT_ENVIRONMENT:-$ROOT/.venv}"' in SETUP and 'export CAD_PY="$VENV/bin/python"' in SETUP
     assert "env -u UV_PROJECT_ENVIRONMENT" in SETUP
+
+def test_ps1_wsl_command_survives_windows_powershell_51():
+    """PS 5.1 mangles embedded double quotes in native args, so the bash script goes to wsl.exe base64-encoded."""
+    ps1 = (ROOT / "setup.ps1").read_text()
+    assert "bash -lc $cmd" not in ps1
+    assert "[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(\"exec </dev/null; $cmd\"))" in ps1
+    assert 'bash -lc "echo $b64 | base64 -d | bash"' in ps1

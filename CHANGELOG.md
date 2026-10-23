@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-10-23: setup.ps1 WSL step works in Windows PowerShell 5.1
+- `setup.ps1` passes the WSL setup script to `wsl.exe` base64-encoded. Windows PowerShell 5.1 dropped the escaping of its double quotes, so bash failed with `syntax error near unexpected token`. Works the same in PowerShell 7.
+
 ## 2026-10-23: one clone on Windows + WSL
 - Windows + WSL now uses one clone, in Windows (`<projects>\active\handbuilt-cad`). `setup.ps1` links it into WSL as `~/projects/handbuilt-cad` (`-WslLink`, `[paths] wsl_link`) and runs `setup.sh` through the link. It never clones in WSL. A correct link is left as is; a real folder or a link elsewhere stops setup with nothing changed. `-WslClone` and `wsl_clone` are gone.
 - `setup.sh` on a Windows drive (`/mnt/<x>/`) puts the Linux venv outside the repo (`UV_PROJECT_ENVIRONMENT`, default `~/.venvs/handbuilt-cad`) so it doesn't clash with the Windows `.venv`, and prints the matching `CAD_PY`. `sim/env.sh` uses `CAD_PY` for `hbm-py`.
