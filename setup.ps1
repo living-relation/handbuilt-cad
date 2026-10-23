@@ -125,7 +125,12 @@ else {
          "export UV_PROJECT_ENVIRONMENT=`"`${UV_PROJECT_ENVIRONMENT:-`$HOME/.venvs/handbuilt-cad}`"; " +
          "cd `"`$l`"; ${envPrefix}bash setup.sh $($shArgs -join ' ')"
   Write-Host "WSL setup: wsl -d $WslDistro (link $link, setup.sh $($shArgs -join ' '))"
-  & wsl.exe -d $WslDistro -- bash -lc $cmd
+  # Windows PowerShell 5.1 does not escape the double quotes inside $cmd when it builds wsl.exe's command line, so
+  # bash got a broken script ("syntax error near unexpected token"). Pass it base64-encoded instead: the encoded
+  # text has no quotes or spaces, so it survives 5.1 and 7.x alike. The script is one line, so bash has read all of
+  # it before it runs; stdin is then pointed at /dev/null so nothing in setup.sh can read the rest of the pipe.
+  $b64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("exec </dev/null; $cmd"))
+  & wsl.exe -d $WslDistro -- bash -lc "echo $b64 | base64 -d | bash"
   if ($LASTEXITCODE -ne 0) { throw "WSL setup: failed in $WslDistro (exit $LASTEXITCODE). Fix the error above and re-run, or use -NoWsl." }
 }
 Write-Host "Optional: setx MODELS_DIR `"$models`"  (setup does not change user env vars)"
