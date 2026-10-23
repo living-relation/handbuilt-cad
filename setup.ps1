@@ -1,7 +1,8 @@
-# handbuilt-cad setup for a Windows clone (pull-only copy). Safe to re-run.
-#   powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1 [-NoModels] [-NoVenv] [-LinkSkills] [-NoWsl] [-WslDistro Ubuntu] [-WslClone <wsl path>] [-FreeCADDir <dir>]
-#   Also runs the WSL half (setup.sh) in a WSL clone, so this one command does the whole install. -NoWsl skips it.
-param([switch]$NoModels, [switch]$NoVenv, [switch]$LinkSkills, [switch]$NoWsl, [string]$WslDistro = 'Ubuntu', [string]$WslClone = '', [string]$FreeCADDir = '')
+# handbuilt-cad setup for the one Windows clone (the only clone; WSL reaches it through a link). Safe to re-run.
+#   powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1 [-NoModels] [-NoVenv] [-LinkSkills] [-NoWsl] [-WslDistro Ubuntu] [-WslLink <wsl path>] [-FreeCADDir <dir>]
+#   Also links this clone into WSL (~/projects/handbuilt-cad) and runs the WSL half (setup.sh) there, so this one command
+#   does the whole install. -NoWsl skips it.
+param([switch]$NoModels, [switch]$NoVenv, [switch]$LinkSkills, [switch]$NoWsl, [string]$WslDistro = 'Ubuntu', [string]$WslLink = '', [string]$FreeCADDir = '')
 $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
 Set-Location $Root
@@ -27,7 +28,7 @@ if (-not (Test-Path $gl) -or ((& $gl version) -replace 'v','') -ne $GlVer) {
 git config core.hooksPath .githooks
 Write-Host "gitleaks $(& $gl version); hooks path set"
 
-# 2. venv (optional on Windows; WSL is the working copy)
+# 2. Windows venv (<repo>\.venv, optional). The WSL half keeps its Linux venv outside the repo (~/.venvs/handbuilt-cad).
 if (-not $NoVenv) {
   $uv = (Get-Command uv -ErrorAction SilentlyContinue).Source
   if (-not $uv -or ((& $uv --version).Split(' ')[1]) -ne $UvVer) {
@@ -86,11 +87,13 @@ if ($FreeCADDir) {
     if (Test-Path $dst) { Write-Host "skip $dst (exists)" } else { Copy-Item $b.FullName $dst; Write-Host "added $dst" }
   }
 }
-# 6. WSL half: run setup.sh in an existing WSL clone, never a duplicate. First existing clone of: -WslClone,
-#    [paths] wsl_clone in local.toml, ~/projects/handbuilt-cad, ~/handbuilt-cad. Only if none exists, clone from GitHub
-#    into -WslClone, else ~/projects/handbuilt-cad. An existing clone is left as is. Prints the clone used, with the matching flags (-NoModels -> --no-models, -LinkSkills -> --link-skills). This creates
-#    ~/cad-parts and writes the folder notes. Skip with -NoWsl. Fails clearly if WSL or the distro is missing.
-if ($NoWsl) { Write-Host "WSL setup: skipped (-NoWsl). Run 'bash setup.sh' in your WSL clone yourself." }
+# 6. WSL half: one clone only. Link this Windows clone into WSL (default ~/projects/handbuilt-cad, or -WslLink, or
+#    [paths] wsl_link in local.toml) and run setup.sh through the link. Never clones in WSL. Idempotent: a link that
+#    already points here is left as is. Never overwrites: if the path is a real folder/file (an old WSL clone?) or a
+#    link to somewhere else, it stops and changes nothing. The Linux venv goes to $UV_PROJECT_ENVIRONMENT
+#    (default ~/.venvs/handbuilt-cad), so it never clashes with the Windows .venv. Passes -NoModels -> --no-models,
+#    -LinkSkills -> --link-skills. Skip with -NoWsl. Fails clearly if WSL or the distro is missing.
+if ($NoWsl) { Write-Host "WSL setup: skipped (-NoWsl). Link this clone into WSL and run 'bash setup.sh' there yourself." }
 else {
   if (-not (Get-Command wsl.exe -ErrorAction SilentlyContinue)) { throw "WSL setup: wsl.exe not found. Install WSL ('wsl --install -d $WslDistro'), or re-run with -NoWsl." }
   $distros = (& wsl.exe --list --quiet 2>$null) -replace "`0", '' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
@@ -98,24 +101,24 @@ else {
   $shArgs = @()
   if ($NoModels) { $shArgs += '--no-models' }
   if ($LinkSkills) { $shArgs += '--link-skills' }
-  $url = 'https://github.com/living-relation/handbuilt-cad'
   $envPrefix = if ($env:MODELS_DIR) { "MODELS_DIR=`"`$(wslpath -u '$($env:MODELS_DIR)')`" " } else { '' }
   $lc = ''
   foreach ($line in (Get-Content "$Root\local.toml" -ErrorAction SilentlyContinue)) {
     if ($line -match '^\s*\[([^\]]*)\]') { $sec = $Matches[1].Trim(); continue }
-    if ($sec -eq 'paths' -and $line -match "^\s*wsl_clone\s*=\s*['`"]([^'`"]*)['`"]") { $lc = $Matches[1]; break }
+    if ($sec -eq 'paths' -and $line -match "^\s*wsl_link\s*=\s*['`"]([^'`"]*)['`"]") { $lc = $Matches[1]; break }
   }
-  $cands = @($WslClone, $lc, '~/projects/handbuilt-cad', '~/handbuilt-cad') | Where-Object { $_ }
-  $newClone = if ($WslClone) { $WslClone } else { '~/projects/handbuilt-cad' }
+  $link = @($WslLink, $lc, '~/projects/handbuilt-cad') | Where-Object { $_ } | Select-Object -First 1
   $q = { param($x) if ($x -like '~/*') { '"$HOME/' + $x.Substring(2) + '"' } else { "'" + $x + "'" } }
-  $winHead = (& git -C $Root rev-parse HEAD 2>$null) -as [string]
-  $cmd = "set -e; c=; for x in $(($cands | ForEach-Object { & $q $_ }) -join ' '); do if [ -d `"`$x/.git`" ]; then c=`$x; break; fi; done; " +
-         "if [ -n `"`$c`" ]; then echo `"WSL setup: using existing clone `$c`"; else c=$(& $q $newClone); echo `"WSL setup: no clone found, cloning into `$c`"; mkdir -p `"`$(dirname `"`$c`")`"; git clone $url `"`$c`"; fi; " +
-         "h=`$(git -C `"`$c`" rev-parse HEAD); echo `"WSL setup: clone `$c at commit `$h`"; " +
-         "if [ -n '$winHead' ] && [ `"`$h`" != '$winHead' ]; then echo `"WARNING: WSL clone is at `$h but this Windows clone is at $winHead (not pulled; update it yourself with git pull --ff-only)`"; fi; " +
-         "cd `"`$c`"; ${envPrefix}bash setup.sh $($shArgs -join ' ')"
-  Write-Host "WSL setup: wsl -d $WslDistro (setup.sh $($shArgs -join ' '))"
+  $cmd = "set -e; t=`$(wslpath -u '$Root'); l=$(& $q $link); " +
+         "if [ -L `"`$l`" ]; then " +
+           "if [ `"`$(readlink -f `"`$l`")`" = `"`$(readlink -f `"`$t`")`" ]; then echo `"WSL setup: link `$l -> `$t (exists, left as is)`"; " +
+           "else echo `"WSL setup: STOP: `$l is a link to `$(readlink `"`$l`"), not this clone (`$t). Nothing changed. Fix or remove that link yourself, then re-run.`"; exit 3; fi; " +
+         "elif [ -e `"`$l`" ]; then echo `"WSL setup: STOP: `$l is a real folder or file (an old WSL clone?). Nothing changed. Move it to an archive yourself (e.g. ~/cad-parts/_archive/handbuilt-cad-wsl-<date>), then re-run.`"; exit 3; " +
+         "else mkdir -p `"`$(dirname `"`$l`")`"; ln -s `"`$t`" `"`$l`"; echo `"WSL setup: linked `$l -> `$t`"; fi; " +
+         "export UV_PROJECT_ENVIRONMENT=`"`${UV_PROJECT_ENVIRONMENT:-`$HOME/.venvs/handbuilt-cad}`"; " +
+         "cd `"`$l`"; ${envPrefix}bash setup.sh $($shArgs -join ' ')"
+  Write-Host "WSL setup: wsl -d $WslDistro (link $link, setup.sh $($shArgs -join ' '))"
   & wsl.exe -d $WslDistro -- bash -lc $cmd
-  if ($LASTEXITCODE -ne 0) { throw "WSL setup: setup.sh failed in $WslDistro (exit $LASTEXITCODE). Fix the error above and re-run, or use -NoWsl." }
+  if ($LASTEXITCODE -ne 0) { throw "WSL setup: failed in $WslDistro (exit $LASTEXITCODE). Fix the error above and re-run, or use -NoWsl." }
 }
 Write-Host "Optional: setx MODELS_DIR `"$models`"  (setup does not change user env vars)"

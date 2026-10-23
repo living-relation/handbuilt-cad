@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-23: one clone on Windows + WSL
+- Windows + WSL now uses one clone, in Windows (`<projects>\active\handbuilt-cad`). `setup.ps1` links it into WSL as `~/projects/handbuilt-cad` (`-WslLink`, `[paths] wsl_link`) and runs `setup.sh` through the link. It never clones in WSL. A correct link is left as is; a real folder or a link elsewhere stops setup with nothing changed. `-WslClone` and `wsl_clone` are gone.
+- `setup.sh` on a Windows drive (`/mnt/<x>/`) puts the Linux venv outside the repo (`UV_PROJECT_ENVIRONMENT`, default `~/.venvs/handbuilt-cad`) so it doesn't clash with the Windows `.venv`, and prints the matching `CAD_PY`. `sim/env.sh` uses `CAD_PY` for `hbm-py`.
+- Docs (README, AGENTS.md, CONTRIBUTING.md, wiki) describe the one-clone layout; git runs from the Windows clone.
+
 ## 2026-10-22: setup no longer links skills by default; folder notes say who uses each folder
 - `setup.sh` and `setup.ps1` no longer link `skills/` into `~/.claude/skills` and `~/.cursor/skills` unless asked: use `bash setup.sh --link-skills` (or `LINK_SKILLS=1`) or `setup.ps1 -LinkSkills`. `NO_SKILLS` and `-NoSkills` are gone. Existing links are left alone.
 - Folder notes now say which tool uses the folder and that deleting or moving it breaks things, and name the repo and its GitHub link instead of a local clone path. `folder_notes.py --clone` is removed. Notes are strictly add-only (exclusive create).

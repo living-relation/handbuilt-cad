@@ -14,7 +14,7 @@ This file is the single agent guide for this repo. `CLAUDE.md` and `.cursor/rule
 1. Read this file, `CONTRIBUTING.md`, and the hooks/CI that apply (`.githooks/`, `.pre-commit-config.yaml`, `.github/workflows/` if present). Follow them. If a planned step would bypass a hook or gate, stop and ask the maintainer.
 2. Never use `--no-verify`, never force-push, never push to `main`. Work on a branch and open a PR.
 3. Never commit or push generated or bot-owned files by hand; let the workflow that owns them regenerate them.
-4. Run git in the WSL/Linux working copy. A Windows clone is pull-only (`git pull --ff-only`, one repo at a time; no batch pull/push scripts).
+4. One clone per machine. On Windows + WSL it is the Windows clone (`<projects>\active\handbuilt-cad`); WSL sees the same files through the link `~/projects/handbuilt-cad`, so there is no WSL clone to keep in sync. Run git from Windows; pull with `git pull --ff-only`, one repo at a time; no batch pull/push scripts. In WSL use the Linux venv (`$CAD_PY`, default `~/.venvs/handbuilt-cad/bin/python`), never the repo's Windows `.venv`.
 5. Use the repo's own venv (`.venv`, built by `setup.sh` from `uv.lock`). Don't install into system Python or into another project's venv. No code here imports from FreeCAD's bundled Python.
 
 ## Files that never go in this repo
@@ -47,7 +47,7 @@ The drawing engine's full rule list (and which ones it enforces) is `drawing/DRA
 Every folder the toolkit creates or uses (the parts home `~/cad-parts` root, its `_archive`, each `<job>`, `<job>/src`, `<job>/runs`, the models folder and each models job folder) has a README.md or AGENTS.md saying what is in it, who owns it, and where its paired folder is. An agent that creates a new job or folder adds one from `templates/notes/` (`tools/folder_notes.py` does it, add-only, never overwriting; it is the only writer of these notes, called by `setup.sh` and publish-to-models). Job folders are named `<name>_<MMDD>`; other folders are reported as warnings. `tools/folder_notes.py --check` lists folders missing one. This is the full rule.
 
 ## Checks before a PR
-- `.venv/bin/python -m pytest -q` (repo tests) and the checks for the files you touched.
+- `$CAD_PY -m pytest -q` (repo tests; `CAD_PY` = `.venv/bin/python`, or `~/.venvs/handbuilt-cad/bin/python` in WSL) and the checks for the files you touched.
 - The pre-commit hook (guard + pinned gitleaks) must pass.
 
 ## Linux runtime

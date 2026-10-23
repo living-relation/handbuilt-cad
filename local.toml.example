@@ -2,7 +2,7 @@
 # Every value can also come from the environment variable named in the comment.
 
 [paths]
-# wsl_clone = "~/projects/handbuilt-cad"   # setup.ps1: WSL clone to run setup.sh in (default: first existing of ~/projects/handbuilt-cad, ~/handbuilt-cad)
+# wsl_link = "~/projects/handbuilt-cad"   # setup.ps1: WSL link to this one Windows clone (no separate WSL clone)
 models_dir = ""        # MODELS_DIR; empty = <Desktop>/models (OneDrive Desktop if OneDrive keeps one). Windows paths: use single quotes
 cad_staging = ""       # CAD_STAGING; scratch output for renders/reports (outside the repo)
 freecad_dir = ""       # FREECAD_DIR; folder that holds bin/freecadcmd(.exe)
@@ -15,4 +15,4 @@ project = ""           # DRAWING_PROJECT; title-block COMPANY / PROJECT (empty =
 # DRAWN / rev-log BY are not set here: they are people's initials from ~/.drawing-initials or DRAWING_INITIALS (drawing/DRAWING-RULES.md rule 32)
 
 [python]
-cad_py = ""            # CAD_PY; empty = <repo>/.venv/bin/python
+cad_py = ""            # CAD_PY; empty = the venv setup built: <repo>/.venv, or on Windows + WSL (one clone) ~/.venvs/handbuilt-cad

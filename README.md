@@ -7,21 +7,27 @@ and docs only** - no part models. Finished models live in a `models` folder outs
 
 ## Setup (about 5 minutes)
 
-**WSL / Linux (the working copy):**
+**Windows + WSL: one clone, in Windows.** There is no separate WSL clone. WSL uses the same folder
+through a link (`~/projects/handbuilt-cad -> /mnt/c/<projects>/active/handbuilt-cad`).
+```powershell
+git clone <repo-url> <projects>\active\handbuilt-cad
+cd <projects>\active\handbuilt-cad
+powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1   # Windows part, then links the clone into WSL and runs setup.sh there; -NoWsl skips WSL, -NoModels / -LinkSkills pass through
+```
+`setup.ps1` makes the WSL link only if nothing is there. A link that already points to this clone is left
+as is. If `~/projects/handbuilt-cad` is a real folder (an old WSL clone) or a link to somewhere else,
+it stops and changes nothing; move the old folder to an archive yourself and re-run. Windows uses
+`<repo>\.venv`; the Linux venv lives outside the repo at `~/.venvs/handbuilt-cad` (`UV_PROJECT_ENVIRONMENT`).
+
+**Plain Linux (no Windows):**
 ```bash
 git clone <repo-url> ~/projects/handbuilt-cad
 cd ~/projects/handbuilt-cad
 bash setup.sh            # pinned uv + Python, .venv from uv.lock, gitleaks, git hooks, models folder
 ```
-**Windows (pull-only copy, optional):**
-```powershell
-git clone <repo-url> <projects>\active\handbuilt-cad
-powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1   # Windows + the WSL half (setup.sh in your existing WSL clone); -NoWsl skips WSL, -NoModels / -LinkSkills pass through
-```
-Both clones get the same `.gitattributes` (LF in the repo, CRLF only for .bat/.ps1), so a
-Windows clone and a WSL clone of the same commit show no fake changes.
+`.gitattributes` keeps LF in the repo (CRLF only for .bat/.ps1).
 
-Then use the venv: `.venv/bin/python tools/cnc_check.py --help` (or set `CAD_PY` to it).
+Then use the venv: `$CAD_PY tools/cnc_check.py --help` (`setup.sh` prints the `CAD_PY` to export: `.venv/bin/python`, or `~/.venvs/handbuilt-cad/bin/python` in WSL).
 
 ## What's where
 | Folder | What |
