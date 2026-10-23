@@ -5,6 +5,11 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 ROOT=$PWD
+# One clone: on Windows + WSL the repo lives on the Windows drive (/mnt/<x>/...) and WSL reaches it through a link
+# (~/projects/handbuilt-cad). Its .venv is the Windows one, so the Linux venv goes outside the repo:
+# $UV_PROJECT_ENVIRONMENT, default ~/.venvs/handbuilt-cad. Elsewhere (plain Linux) it stays <repo>/.venv.
+case "$(pwd -P)" in /mnt/[a-z]/*) export UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-$HOME/.venvs/handbuilt-cad}";; esac
+VENV="${UV_PROJECT_ENVIRONMENT:-$ROOT/.venv}"
 UV_VERSION=0.13.0
 UV_SHA=1468ebd5a5541121837c5a2817b9972ba6090fa6caa3d142620850a47fb75154  # uv-x86_64-unknown-linux-gnu.tar.gz
 NO_MODELS=0; WITH_FS=0; SIM=0; LINK_SKILLS=${LINK_SKILLS:-0}
@@ -22,10 +27,11 @@ if [ -z "$UV" ] || [ "$("$UV" --version | awk '{print $2}')" != "$UV_VERSION" ];
 fi
 echo "uv: $("$UV" --version)"
 
-# 2. pinned Python + .venv from uv.lock (never touches any other venv)
+# 2. pinned Python + the venv ($VENV) from uv.lock (never touches any other venv)
+echo "venv: $VENV"
 "$UV" python install "$(cat .python-version)"
 "$UV" sync --frozen
-[ "$WITH_FS" = 1 ] && (cd pipelines/fairsolid && "$UV" sync --frozen --extra test)
+[ "$WITH_FS" = 1 ] && (cd pipelines/fairsolid && env -u UV_PROJECT_ENVIRONMENT "$UV" sync --frozen --extra test)
 if [ "$SIM" = 1 ]; then
   echo "Sim venv: $UV venv .venv-sim --python 3.14 && $UV pip install --python .venv-sim -r requirements-sim.txt"
   echo "Apt packages (needs sudo, run by hand): sudo apt install \$(grep -v '^#' apt-sim.txt)"
@@ -82,7 +88,7 @@ done
 #     (AGENTS.md, README.md) and each models job. Add-only. A failure stops setup with folder_notes.py's exit status.
 fn_args=(--quiet --parts-home "$PARTS")
 if [ "$NO_MODELS" != 1 ] && [ -d "$MODELS" ]; then fn_args+=(--models "$MODELS"); else fn_args+=(--no-models); fi
-HBCAD_PARTS_HOME="$PARTS" .venv/bin/python tools/folder_notes.py "${fn_args[@]}"
+HBCAD_PARTS_HOME="$PARTS" "$VENV/bin/python" tools/folder_notes.py "${fn_args[@]}"
 # end 5d
 
 # 6. skills: off by default. Only with --link-skills (or LINK_SKILLS=1): symlink skills/<name> into ~/.claude/skills
@@ -115,7 +121,8 @@ cat <<MSG
 
 Done. Add these to your shell profile if you want them (setup does not edit dotfiles):
   export CAD_HOME="$ROOT"
-  export CAD_PY="$ROOT/.venv/bin/python"
+  export CAD_PY="$VENV/bin/python"
+  export UV_PROJECT_ENVIRONMENT="$VENV"   # so uv run / uv sync use this venv
   export MODELS_DIR="$MODELS"
   export HBCAD_PARTS_HOME="$PARTS"   # part build scripts and run outputs (tools/paths.py)
   export FAIRSOLID_HOME="$ROOT/pipelines/fairsolid"   # optional: scan_helper falls back to it (docs/FAIRSOLID.md)

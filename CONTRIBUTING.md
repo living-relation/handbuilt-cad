@@ -7,4 +7,4 @@
 - **No batch shortcuts.** No scripts that pull, push, merge or commit across many repos at once.
 - **No secrets, no personal data.** No tokens, credentials, personal paths, emails or names in code, docs or commit metadata. Commits use a GitHub noreply address.
 - **Line endings:** `.gitattributes` keeps LF in the repo (CRLF for .bat/.ps1). Don't override it per clone.
-- **Tests:** `.venv/bin/python -m pytest -q` plus the checks for what you touched.
+- **Tests:** `$CAD_PY -m pytest -q` (`.venv/bin/python`, or `~/.venvs/handbuilt-cad/bin/python` in WSL with the one-clone layout) plus the checks for what you touched.

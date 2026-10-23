@@ -8,7 +8,7 @@ Think of it as three toolboxes. `setup.sh` checks each one and only adds what's 
 
 | Toolbox | What it's for | Where it goes | Comes from |
 |---|---|---|---|
-| **1. Model box** (`.venv`) | Drawing parts with code (build123d), reading scans/meshes (trimesh), maths, pictures | `.venv/` inside the repo | `requirements.txt` |
+| **1. Model box** (`.venv`) | Drawing parts with code (build123d), reading scans/meshes (trimesh), maths, pictures | `.venv/` inside the repo; on Windows + WSL (one clone) the Linux venv is `~/.venvs/handbuilt-cad`, because the repo's `.venv` is the Windows one | `requirements.txt` |
 | **2. Simulation box** (`simvenv`) | Making meshes (gmsh), reading results (meshio), optimisation (nlopt, pypardiso) | `~/simvenv` (change with `SIM_VENV=/somewhere bash setup.sh`) | `requirements-sim.txt` |
 | **3. Programs** | **CalculiX** (strength solver), **Gmsh** (mesher), **ParaView** (result viewer), xvfb (lets ParaView make pictures without a screen) | system (`apt`) | Ubuntu packages |
 
@@ -38,7 +38,7 @@ Every line should be green `[ok]` (yellow `[skip]` is fine for extras). Then the
 
 ```bash
 source sim/env.sh
-.venv/bin/python -c "import build123d; print('build123d', build123d.__version__)"
+$CAD_PY -c "import build123d; print('build123d', build123d.__version__)"
 ccx -v | head -2
 ```
 

@@ -12,7 +12,7 @@ You never need to run the commands on the other wiki pages. They're instructions
 
 **What to tell your agent** (copy, then change the details):
 
-> Use the handbuilt-cad repo in `~/handbuilt-cad` (start with `README.md` and `docs/wiki/AI-agents.md`). Here's a scan of my bracket: `~/scans/bracket.stl`. Make a clean STEP I can machine from 6061, keep the holes where they are on the scan, run the fit, CNC and strength checks, and show me the 6-view sheet before you call it done.
+> Use the handbuilt-cad repo in `~/projects/handbuilt-cad` (start with `README.md` and `docs/wiki/AI-agents.md`). Here's a scan of my bracket: `~/scans/bracket.stl`. Make a clean STEP I can machine from 6061, keep the holes where they are on the scan, run the fit, CNC and strength checks, and show me the 6-view sheet before you call it done.
 
 Or start from an idea instead of a scan:
 
@@ -47,7 +47,7 @@ cd handbuilt-cad
 bash setup.sh
 ```
 
-On Windows, `setup.ps1` also runs this WSL step for you (`wsl -d Ubuntu`) in your existing WSL clone, never a duplicate: the first that exists of `-WslClone`, `[paths] wsl_clone` in `local.toml`, `~/projects/handbuilt-cad`, `~/handbuilt-cad`. Only if none exists does it clone into `~/projects/handbuilt-cad` (or `-WslClone`). It prints which clone it used and its commit, and warns (without pulling) if that differs from the Windows clone. It passes `-NoModels` and `-LinkSkills` through as `--no-models` and `--link-skills`, stops with a clear error if WSL or Ubuntu is missing, and `-NoWsl` skips it. `setup.sh` does everything (see [Setup](Setup.md) for what it installs). It asks for your password once if it needs to install programs. It takes about **5-15 minutes** the first time.
+**On Windows, use one clone, in Windows, instead of the lines above.** Clone in PowerShell to `<projects>\active\handbuilt-cad` and run `setup.ps1` there. It links that folder into WSL as `~/projects/handbuilt-cad` (or `-WslLink` / `[paths] wsl_link` in `local.toml`) and runs this WSL step for you (`wsl -d Ubuntu`) through the link. It never makes a second clone. If the link is already there and points to the clone, it's left as is. If that path is a real folder (an old WSL clone) or a link to somewhere else, it stops and changes nothing: move the old folder to an archive (e.g. `~/cad-parts/_archive/handbuilt-cad-wsl-<date>`) and re-run. The Linux venv goes to `~/.venvs/handbuilt-cad` so it never clashes with the Windows `.venv`. It passes `-NoModels` and `-LinkSkills` through as `--no-models` and `--link-skills`, stops with a clear error if WSL or Ubuntu is missing, and `-NoWsl` skips it. `setup.sh` does everything (see [Setup](Setup.md) for what it installs). It asks for your password once if it needs to install programs. It takes about **5-15 minutes** the first time.
 
 **You should see** green `[ok]` lines at the end, like:
 
@@ -82,4 +82,4 @@ To see the files from Windows: in the Ubuntu window type `explorer.exe .` (with 
 | Very slow when working in `/mnt/c/...` | Keep the folder in your Linux home (`~/handbuilt-cad`), as above. |
 | Using a Mac | Not tested. Use a Linux virtual machine, or install Docker/Ubuntu. |
 
-To update later: `cd ~/projects/handbuilt-cad && git pull && bash setup.sh`.
+To update later: on Windows, `git pull --ff-only` in the one clone (PowerShell), then `bash setup.sh` in WSL from `~/projects/handbuilt-cad`; on plain Linux, `cd ~/projects/handbuilt-cad && git pull --ff-only && bash setup.sh`.

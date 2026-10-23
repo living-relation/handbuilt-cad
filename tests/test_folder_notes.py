@@ -94,9 +94,14 @@ def test_non_job_folders_warn(tmp_path):
 
 
 def test_templates_mode_644():
-    import stat
-    for t in (ROOT / "templates").rglob("*.md"):
-        assert not t.stat().st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH), t
+    # Check the mode git records, not the file system: on a Windows drive seen from WSL (/mnt/c, the one-clone
+    # layout) every file shows as executable.
+    import subprocess
+    out = subprocess.run(["git", "-C", str(ROOT), "ls-files", "-s", "--", "templates"], capture_output=True, text=True, check=True).stdout
+    rows = [l.split(None, 3) for l in out.splitlines() if l.endswith(".md")]
+    assert rows
+    for mode, _, _, path in rows:
+        assert mode == "100644", path
 
 
 def _setup_5d():
@@ -107,7 +112,7 @@ def _setup_5d():
 def _run_5d(tmp_path, python, models):
     import subprocess
     ph = tmp_path / "parts home"; ph.mkdir()
-    block = "set -euo pipefail\n" + _setup_5d().replace(".venv/bin/python", python)
+    block = "set -euo pipefail\n" + _setup_5d().replace('"$VENV/bin/python"', python)
     env = dict(os.environ, PARTS=str(ph), MODELS=str(models), ROOT=str(tmp_path / "my clone"), NO_MODELS="0")
     return ph, subprocess.run(["bash", "-c", block], cwd=ROOT, env=env, capture_output=True, text=True)
 

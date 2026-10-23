@@ -98,20 +98,55 @@ def test_ps1_runs_wsl_half():
     assert ps1.index("if ($NoWsl)") < ps1.index("wsl.exe -d $WslDistro")
 
 
-def test_ps1_reuses_existing_wsl_clone_no_duplicate():
+def test_ps1_links_one_clone_into_wsl_never_clones():
     ps1 = (ROOT / "setup.ps1").read_text()
-    assert "[string]$WslClone = ''" in ps1
-    order = ["$WslClone, $lc, '~/projects/handbuilt-cad', '~/handbuilt-cad'"]
-    assert order[0] in ps1
-    assert "else { '~/projects/handbuilt-cad' }" in ps1
-    assert "using existing clone" in ps1 and "no clone found, cloning into" in ps1
-    assert ps1.index("using existing clone") < ps1.index("git clone $url")
-    assert "wsl_clone" in ps1 and "$sec -eq 'paths'" in ps1
+    assert "[string]$WslLink = ''" in ps1 and "WslClone" not in ps1 and "wsl_clone" not in ps1
+    assert "@($WslLink, $lc, '~/projects/handbuilt-cad')" in ps1 and "wsl_link" in ps1 and "$sec -eq 'paths'" in ps1
+    assert "git clone" not in ps1 and "wslpath -u '$Root'" in ps1 and "ln -s" in ps1
+    assert "(exists, left as is)" in ps1 and ps1.count("exit 3") == 2 and "Nothing changed" in ps1
+    assert ps1.index("[ -L ") < ps1.index("elif [ -e ") < ps1.index("ln -s")  # link check, then real-folder stop, then create
+    assert "UV_PROJECT_ENVIRONMENT:-`$HOME/.venvs/handbuilt-cad" in ps1
     inst = (ROOT / "docs" / "wiki" / "Install.md").read_text()
-    assert "~/projects/handbuilt-cad" in inst and "in `~/handbuilt-cad`, cloned if missing" not in inst
+    assert "~/projects/handbuilt-cad" in inst and "one clone" in inst.lower()
 
 
-def test_ps1_reports_wsl_clone_commit_and_warns():
+def _link_block(tmp_path):
+    """The bash link step of setup.ps1 (between 'l=...' and 'export UV_'), with t/l given by the test."""
     ps1 = (ROOT / "setup.ps1").read_text()
-    assert "at commit" in ps1 and "WARNING: WSL clone is at" in ps1 and "git pull --ff-only)" in ps1
-    assert "cd `\"`$c`\"" in ps1  # clone path quoted in bash
+    body = ps1[ps1.index('"if [ -L '):ps1.index('"export UV_PROJECT_ENVIRONMENT')]
+    parts = [p.strip().rstrip("+").strip() for p in body.splitlines()]
+    s = "".join(p[1:-1] for p in parts if p.startswith('"'))
+    return s.replace('`"', '"').replace("`$", "$")
+
+
+def _run_link(tmp_path, prep=None):
+    t = tmp_path / "C" / "handbuilt-cad"; t.mkdir(parents=True, exist_ok=True)
+    l = tmp_path / "home" / "projects" / "handbuilt-cad"
+    if prep: prep(l)
+    script = f"set -e; t='{t}'; l='{l}'; " + _link_block(tmp_path)
+    r = subprocess.run(["bash", "-c", script], capture_output=True, text=True)
+    return t, l, r
+
+
+def test_wsl_link_created_then_idempotent(tmp_path):
+    t, l, r = _run_link(tmp_path)
+    assert r.returncode == 0, r.stderr + r.stdout
+    assert l.is_symlink() and l.resolve() == t.resolve() and "linked" in r.stdout
+    _, _, r2 = _run_link(tmp_path)
+    assert r2.returncode == 0 and "left as is" in r2.stdout
+
+
+def test_wsl_link_never_overwrites_real_folder_or_other_link(tmp_path):
+    def real(l): l.mkdir(parents=True); (l / "keep.txt").write_text("x")
+    _, l, r = _run_link(tmp_path, real)
+    assert r.returncode == 3 and "STOP" in r.stdout and (l / "keep.txt").read_text() == "x" and not l.is_symlink()
+    other = tmp_path / "other"; other.mkdir()
+    def wrong(l): l.parent.mkdir(parents=True); l.symlink_to(other)
+    _, l2, r2 = _run_link(tmp_path / "b", wrong)
+    assert r2.returncode == 3 and "STOP" in r2.stdout and l2.resolve() == other.resolve()
+
+
+def test_setup_sh_linux_venv_outside_repo_on_windows_drive():
+    assert 'case "$(pwd -P)" in /mnt/[a-z]/*) export UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-$HOME/.venvs/handbuilt-cad}"' in SETUP
+    assert 'VENV="${UV_PROJECT_ENVIRONMENT:-$ROOT/.venv}"' in SETUP and 'export CAD_PY="$VENV/bin/python"' in SETUP
+    assert "env -u UV_PROJECT_ENVIRONMENT" in SETUP

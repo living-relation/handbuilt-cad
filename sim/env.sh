@@ -8,5 +8,6 @@ case $- in *u*) _hbm_u=1; set +u;; *) _hbm_u=;; esac   # OpenFOAM bashrc needs n
 [ -n "$_of" ] && source "$_of"
 [ -n "$_hbm_u" ] && set -u
 [ -f "$SIM_VENV/bin/activate" ] && source "$SIM_VENV/bin/activate"
-alias hbm-py="$HBM/.venv/bin/python"
-echo "toolkit loaded: HBM=$HBM  (models: \$HBM/.venv/bin/python, sim: $SIM_VENV)"
+_hbm_py="${CAD_PY:-${UV_PROJECT_ENVIRONMENT:-$HBM/.venv}/bin/python}"   # one-clone layout: Linux venv outside the repo
+alias hbm-py="$_hbm_py"
+echo "toolkit loaded: HBM=$HBM  (models: $_hbm_py, sim: $SIM_VENV)"
