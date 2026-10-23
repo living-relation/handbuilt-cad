@@ -5,7 +5,7 @@ the same versions were used on the agent box for the heavy work). Scale is never
 Fairsolid: no code changes so far. The checkout stays on main.
 
 ## Step 1 - scan list (%USERPROFILE%\agent-tools\scan-list.txt)
-- Searched C:\project_3D_scans (the Creality save folder), Creality AppData projects, OneDrive (Desktop, Documents),
+- Searched the scanner app's save folder and its AppData projects, OneDrive (Desktop, Documents),
   Downloads, <projects> (not shipping), and other C:\ folders. C: is the only drive. Google Drive was skipped (photos and CAD only).
 - 5323 hits went down to 485 after dropping compiled ESP32 `.c.obj` files.
 - The automatic "CAD export" label is NOT reliable for Creality `Mesh.ply` / exported scan STLs. Decimated scans have large flat

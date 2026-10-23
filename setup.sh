@@ -10,6 +10,11 @@ ROOT=$PWD
 # $UV_PROJECT_ENVIRONMENT, default ~/.venvs/handbuilt-cad. Elsewhere (plain Linux) it stays <repo>/.venv.
 case "$(pwd -P)" in /mnt/[a-z]/*) export UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-$HOME/.venvs/handbuilt-cad}";; esac
 VENV="${UV_PROJECT_ENVIRONMENT:-$ROOT/.venv}"
+case "$(pwd -P)" in /mnt/[a-z]/*)
+  case "$(readlink -m "$VENV")" in "$(pwd -P)"/.venv|"$(pwd -P)"/.venv/*)
+    echo "STOP: UV_PROJECT_ENVIRONMENT=$VENV is the Windows .venv inside this clone; a WSL uv sync would break it. Unset it or point it at ~/.venvs/handbuilt-cad." >&2; exit 2;; esac;;
+esac
+export UV_PROJECT_ENVIRONMENT="$VENV" CAD_PY="$VENV/bin/python"   # every uv call below (and child scripts) uses this venv
 UV_VERSION=0.13.0
 UV_SHA=1468ebd5a5541121837c5a2817b9972ba6090fa6caa3d142620850a47fb75154  # uv-x86_64-unknown-linux-gnu.tar.gz
 NO_MODELS=0; WITH_FS=0; SIM=0; LINK_SKILLS=${LINK_SKILLS:-0}
@@ -73,6 +78,7 @@ case "$local_models" in [A-Za-z]:\\*|[A-Za-z]:/*) command -v wslpath >/dev/null 
 MODELS="${MODELS_DIR:-${local_models:-$desktop/models}}"
 if [ "$NO_MODELS" = 1 ]; then echo "models folder: $MODELS (not created: --no-models)";
 elif [ -d "$MODELS" ]; then echo "models folder: $MODELS (exists, left as is)";
+elif [ -e "$MODELS" ] || [ -L "$MODELS" ]; then echo "models folder: STOP: $MODELS exists but is not a folder (a file or broken link). Nothing changed. Rename or remove it, or set MODELS_DIR / [paths] models_dir to a folder, then re-run." >&2; exit 3;
 else mkdir -p "$MODELS"; echo "models folder: created $MODELS"; fi
 # 5b. ownership notes in the models folder: written by tools/folder_notes.py in step 5d (single writer).
 
@@ -111,7 +117,10 @@ else
   for t in "$HOME/.claude/skills" "$HOME/.cursor/skills"; do
     for d in "$t"/*; do
       [ -L "$d" ] || continue; l=$(readlink "$d")
-      case "$l" in "$ROOT"/skills/*) [ -f "$l/SKILL.md" ] || { rm "$d"; echo "skill link pruned: $d"; } ;; esac
+      case "$l" in "$ROOT"/skills/*) [ -f "$l/SKILL.md" ] || { rm "$d"; echo "skill link pruned: $d"; } ;;
+        # stale link from an old handbuilt-cad clone (e.g. the retired ~/handbuilt-cad WSL clone): broken links only
+        */handbuilt-cad/skills/*|*/handbuilt-cad-*/skills/*) [ -e "$d" ] || { rm "$d"; echo "stale skill link pruned: $d -> $l"; } ;;
+      esac
     done
   done
 fi
@@ -119,7 +128,8 @@ fi
 
 cat <<MSG
 
-Done. Add these to your shell profile if you want them (setup does not edit dotfiles):
+Done. Add these to ~/.profile (read by login shells, including 'wsl -e bash -lc' and setup.ps1), not only
+~/.bashrc (interactive shells only), or source scripts/hbcad-env.sh from scripts. Setup does not edit dotfiles:
   export CAD_HOME="$ROOT"
   export CAD_PY="$VENV/bin/python"
   export UV_PROJECT_ENVIRONMENT="$VENV"   # so uv run / uv sync use this venv
