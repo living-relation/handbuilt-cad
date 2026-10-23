@@ -68,7 +68,8 @@ $models = if ($env:MODELS_DIR) { $env:MODELS_DIR }
           elseif ($lm = Get-LocalModelsDir) { $lm }
           else { Join-Path (Get-RealDesktop) 'models' }
 if ($NoModels) { Write-Host "models folder: $models (not created: -NoModels)" }
-elseif (Test-Path -LiteralPath $models) { Write-Host "models folder: $models (exists, left as is)" }
+elseif (Test-Path -LiteralPath $models -PathType Container) { Write-Host "models folder: $models (exists, left as is)" }
+elseif (Test-Path -LiteralPath $models) { throw "models folder: STOP: $models exists but is not a folder (a file?). Nothing changed. Rename or remove it, or set MODELS_DIR / [paths] models_dir to a folder, then re-run." }
 else { New-Item -ItemType Directory -Path $models | Out-Null; Write-Host "models folder: created $models" }
 # Part build scripts and their run outputs live in WSL/Linux (~/cad-parts, HBCAD_PARTS_HOME); setup.sh in WSL creates that folder.
 Write-Host "parts home: created by setup.sh in WSL (~/cad-parts, step 6 below), not on Windows"
@@ -101,15 +102,21 @@ else {
   $shArgs = @()
   if ($NoModels) { $shArgs += '--no-models' }
   if ($LinkSkills) { $shArgs += '--link-skills' }
-  $envPrefix = if ($env:MODELS_DIR) { "MODELS_DIR=`"`$(wslpath -u '$($env:MODELS_DIR)')`" " } else { '' }
+  # bash single-quote a value: ' -> '\'' (so paths with spaces, $, quotes or backticks pass through literally)
+  $sq = { param($x) "'" + ($x -replace "'", "'\''") + "'" }
+  $envPrefix = if ($env:MODELS_DIR) { "MODELS_DIR=`"`$(wslpath -u $(& $sq $env:MODELS_DIR))`" " } else { '' }
   $lc = ''
   foreach ($line in (Get-Content "$Root\local.toml" -ErrorAction SilentlyContinue)) {
     if ($line -match '^\s*\[([^\]]*)\]') { $sec = $Matches[1].Trim(); continue }
     if ($sec -eq 'paths' -and $line -match "^\s*wsl_link\s*=\s*['`"]([^'`"]*)['`"]") { $lc = $Matches[1]; break }
   }
   $link = @($WslLink, $lc, '~/projects/handbuilt-cad') | Where-Object { $_ } | Select-Object -First 1
-  $q = { param($x) if ($x -like '~/*') { '"$HOME/' + $x.Substring(2) + '"' } else { "'" + $x + "'" } }
-  $cmd = "set -e; t=`$(wslpath -u '$Root'); l=$(& $q $link); " +
+  # wsl_link / -WslLink must be a Linux path: ~/... or /..., no '..' parts, no control characters, not a Windows path.
+  if ($link -notmatch '^(~/|/)[^\x00-\x1f]+$' -or $link -match '(^|/)\.\.(/|$)' -or $link -match '\\' -or $link -match '^/mnt/[a-z]/') {
+    throw "WSL setup: wsl_link '$link' is not valid. Use a Linux path such as ~/projects/handbuilt-cad (not a Windows or /mnt path, no '..'). Nothing changed."
+  }
+  $q = { param($x) if ($x -like '~/*') { '"$HOME"/' + (& $sq $x.Substring(2)) } else { & $sq $x } }
+  $cmd = "set -e; t=`$(wslpath -u $(& $sq $Root)); l=$(& $q $link); " +
          "if [ -L `"`$l`" ]; then " +
            "if [ `"`$(readlink -f `"`$l`")`" = `"`$(readlink -f `"`$t`")`" ]; then echo `"WSL setup: link `$l -> `$t (exists, left as is)`"; " +
            "else echo `"WSL setup: STOP: `$l is a link to `$(readlink `"`$l`"), not this clone (`$t). Nothing changed. Fix or remove that link yourself, then re-run.`"; exit 3; fi; " +

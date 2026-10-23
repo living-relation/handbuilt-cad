@@ -79,7 +79,7 @@ To see the files from Windows: in the Ubuntu window type `explorer.exe .` (with 
 | `Permission denied` on setup.sh | Run it as `bash setup.sh` (not `./setup.sh`). |
 | `[fail] model venv install failed` | Check the internet, then just run `bash setup.sh` again. It's safe to re-run. |
 | `[fail] CalculiX missing` | Run `bash setup.sh` again and type your password when it asks. |
-| Very slow when working in `/mnt/c/...` | Keep the folder in your Linux home (`~/handbuilt-cad`), as above. |
+| Very slow when working in `/mnt/c/...` | Expected with the one-clone layout: the repo lives on the Windows drive and WSL reaches it through `~/projects/handbuilt-cad`. Keep heavy run outputs in the parts home (`~/cad-parts`, Linux side) and the venv in `~/.venvs/handbuilt-cad` (both already set up that way). |
 | Using a Mac | Not tested. Use a Linux virtual machine, or install Docker/Ubuntu. |
 
 To update later: on Windows, `git pull --ff-only` in the one clone (PowerShell), then `bash setup.sh` in WSL from `~/projects/handbuilt-cad`; on plain Linux, `cd ~/projects/handbuilt-cad && git pull --ff-only && bash setup.sh`.
