@@ -1,11 +1,14 @@
-# link-skills.ps1 - link handbuilt-cad's skills (skills\<name>\SKILL.md) into Claude Code/Desktop and Cursor as junctions,
+# link-skills.ps1 - link handbuilt-cad's skills (skills\<name>\SKILL.md) into ~\.claude\skills as junctions (Cursor reads it too),
 # so a git pull here updates them. handbuilt-cad's setup.ps1 runs it; it owns these links (no other repo installs them).
 # Usage: .\scripts\link-skills.ps1 [-From <dir>] [-WhatIf]  (default -From = this clone's skills\)
 # A same-name skill that is not already this link is moved to -BackupRoot first; never touches other skills.
 # The only delete: a junction into -From whose skill is gone (renamed or removed) is removed - the link only.
+# -Unlink: folders (default ~\.cursor\skills) where an old junction into -From is removed (the link only, never its target),
+# so a skill is not listed twice in Cursor; anything else there is never touched.
 [CmdletBinding(SupportsShouldProcess = $true)]
 param([string[]]$From = @((Join-Path (Split-Path $PSScriptRoot -Parent) 'skills')),
-      [string[]]$Targets = @("$env:USERPROFILE\.claude\skills", "$env:USERPROFILE\.cursor\skills"),
+      [string[]]$Targets = @("$env:USERPROFILE\.claude\skills"),
+      [string[]]$Unlink = @("$env:USERPROFILE\.cursor\skills"),
       [string]$BackupRoot = "$env:USERPROFILE\.skills-backup")
 $ErrorActionPreference = 'Stop'
 $stamp = Get-Date -Format yyyyMMdd-HHmmss
@@ -51,5 +54,16 @@ foreach ($t in $Targets) {
     if (-not $PSCmdlet.ShouldProcess($item.FullName, "remove dead skill link -> $tgt")) { [pscustomobject]@{ Path = $item.FullName; Target = $tgt; Action = 'would-prune' }; continue }
     [IO.Directory]::Delete($item.FullName, $false)
     [pscustomobject]@{ Path = $item.FullName; Target = $tgt; Action = 'pruned' }
+  }
+}
+# Unlink: remove only junctions in -Unlink folders that point into a -From folder (the link only, never its target),
+# so a skill is not listed twice in Cursor. Real folders and links to anything else are never touched.
+foreach ($u in @($Unlink | Where-Object { $_ -and ($Targets -notcontains $_) })) {
+  foreach ($item in @(Get-ChildItem -LiteralPath $u -Force -ErrorAction SilentlyContinue | Where-Object { $_.LinkType -eq 'Junction' })) {
+    $tgt = "$(@($item.Target)[0])".TrimEnd('\')
+    if (-not @($roots | Where-Object { ($tgt + '\').StartsWith($_, [StringComparison]::OrdinalIgnoreCase) }).Count) { continue }
+    if (-not $PSCmdlet.ShouldProcess($item.FullName, "remove duplicate skill link -> $tgt")) { [pscustomobject]@{ Path = $item.FullName; Target = $tgt; Action = 'would-unlink' }; continue }
+    [IO.Directory]::Delete($item.FullName, $false)
+    [pscustomobject]@{ Path = $item.FullName; Target = $tgt; Action = 'unlinked' }
   }
 }
