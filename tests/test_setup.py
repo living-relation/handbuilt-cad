@@ -169,7 +169,7 @@ def test_setup_installs_sim_by_default_with_opt_out():
     ps1 = (ROOT / "setup.ps1").read_text()
     assert "[switch]$NoSim" in ps1 and "if ($NoSim) { $shArgs += '--no-sim' }" in ps1
     assert "wsl.exe -d $WslDistro -u root -e bash -c" in ps1 and "DEBIAN_FRONTEND=noninteractive apt-get update" in ps1
-    assert "-replace '=.*$', ''" in ps1 and ps1.index("-u root") < ps1.index("bash setup.sh $(")
+    assert "-replace '=.*$', ''" in ps1 and ps1.index("-u root") < ps1.index("echo $b64 | base64 -d | bash")
 
 
 def test_sim_apt_missing_strips_versions(tmp_path):
