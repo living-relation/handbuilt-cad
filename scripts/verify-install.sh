@@ -30,7 +30,7 @@ if [ "$SIM" = 1 ]; then
   done
   sv=${SIM_VENV_L:-${SIM_VENV:-$HOME/simvenv}}
   if [ -x "$sv/bin/python" ] && "$sv/bin/python" -c 'import gmsh, meshio, numpy' 2>/dev/null; then ok "sim venv ($sv, $("$sv/bin/python" -V 2>&1))"
-  else miss "sim venv $sv (python with gmsh, meshio, numpy from requirements-sim.txt)"; fi
+  else miss "sim venv $sv (default ~/simvenv; python with gmsh, meshio, numpy from requirements-sim.txt)"; fi
 else
   echo "  skipped: ccx, gmsh, pvpython, sim venv (--no-sim)"
 fi

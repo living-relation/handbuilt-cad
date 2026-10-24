@@ -23,7 +23,7 @@ it stops and changes nothing; move the old folder to an archive yourself and re-
 ```bash
 git clone <repo-url> ~/projects/handbuilt-cad
 cd ~/projects/handbuilt-cad
-bash setup.sh            # pinned uv + Python, .venv from uv.lock, sim tools (sudo once), gitleaks, hooks, models folder, env file, verify
+bash setup.sh            # pinned uv + Python, .venv from uv.lock, sim tools (no password via setup.ps1), gitleaks, hooks, models folder, env file, verify
 ```
 `.gitattributes` keeps LF in the repo (CRLF only for .bat/.ps1).
 

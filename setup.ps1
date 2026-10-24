@@ -102,7 +102,7 @@ else {
   $shArgs = @()
   if ($NoModels) { $shArgs += '--no-models' }
   if ($LinkSkills) { $shArgs += '--link-skills' }
-  if ($NoSim) { $shArgs += '--no-sim' }   # sim tools (apt, sim venv) install by default; sudo asks for the password once
+  if ($NoSim) { $shArgs += '--no-sim' }   # sim tools (apt, sim venv) install by default; apt runs as root via wsl.exe, no password
   # bash single-quote a value: ' -> '\'' (so paths with spaces, $, quotes or backticks pass through literally)
   $sq = { param($x) "'" + ($x -replace "'", "'\''") + "'" }
   $envPrefix = if ($env:MODELS_DIR) { "MODELS_DIR=`"`$(wslpath -u $(& $sq $env:MODELS_DIR))`" " } else { '' }
@@ -125,6 +125,13 @@ else {
          "else mkdir -p `"`$(dirname `"`$l`")`"; ln -s `"`$t`" `"`$l`"; echo `"WSL setup: linked `$l -> `$t`"; fi; " +
          "export UV_PROJECT_ENVIRONMENT=`"`${UV_PROJECT_ENVIRONMENT:-`$HOME/.venvs/handbuilt-cad}`"; " +
          "cd `"`$l`"; ${envPrefix}bash setup.sh $($shArgs -join ' ')"
+  # Sim apt packages as root through wsl.exe (no WSL password needed). Pins and CRLF stripped: pins may not match a newer Ubuntu.
+  if (-not $NoSim) {
+    $pkgs = (Get-Content "$Root\apt-sim.txt") | ForEach-Object { ($_ -replace "`r", '' -replace '#.*$', '' -replace '=.*$', '').Trim() } | Where-Object { $_ }
+    Write-Host "WSL sim apt (as root): $($pkgs -join ' ')"
+    & wsl.exe -d $WslDistro -u root -e bash -c "DEBIAN_FRONTEND=noninteractive apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y $($pkgs -join ' ')"
+    if ($LASTEXITCODE -ne 0) { throw "WSL sim apt: failed in $WslDistro (exit $LASTEXITCODE). Fix the error above and re-run, or use -NoSim." }
+  }
   Write-Host "WSL setup: wsl -d $WslDistro (link $link, setup.sh $($shArgs -join ' '))"
   # Windows PowerShell 5.1 does not escape the double quotes inside $cmd when it builds wsl.exe's command line, so
   # bash got a broken script ("syntax error near unexpected token"). Pass it base64-encoded instead: the encoded

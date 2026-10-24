@@ -48,8 +48,10 @@ for b in uv uvx; do
 done
 
 # 2c. sim tools (default; --no-sim skips). apt packages from apt-sim.txt (by name; the versions there are the
-#     reference workstation's), then the sim venv ($SIM_VENV, default ~/simvenv) from requirements-sim.txt on the
-#     repo's pinned Python (.python-version, the one build123d/OCP support; never the system python3).
+#     reference workstation's; setup.ps1 installs them first as root via wsl.exe, so no password), then the sim venv
+#     ($SIM_VENV, default ~/simvenv, used by tools/quick_fea.py and examples/bracket) from requirements-sim.txt with
+#     the pinned uv on the repo Python (.python-version; never the 3.14 system Python). A venv on another Python
+#     (e.g. 3.12) is moved aside, not deleted.
 SIM_VENV="${SIM_VENV:-$HOME/simvenv}"; APT_CMD=""
 if [ "$SIM" = 1 ]; then
   # sim_apt_missing: apt-sim.txt package names that dpkg does not list as installed
@@ -63,13 +65,16 @@ if [ "$SIM" = 1 ]; then
   if [ -z "$need" ]; then echo "sim apt: all apt-sim.txt packages installed"
   else
     APT_CMD="sudo apt-get update && sudo apt-get install -y $need"
+    export DEBIAN_FRONTEND=noninteractive
     if [ "$(id -u)" = 0 ]; then apt-get update && apt-get install -y $need
-    elif sudo -n true 2>/dev/null || { : </dev/tty; } 2>/dev/null; then
-      echo "sim apt: installing $need(sudo may ask for your password once)"
+    elif sudo -n true 2>/dev/null; then sudo -n apt-get update && sudo -n apt-get install -y $need
+    elif { : </dev/tty; } 2>/dev/null; then
+      echo "sim apt: installing $need(sudo asks for your password)"
       sudo apt-get update && sudo apt-get install -y $need
     else
-      echo "sim apt: STOP: no terminal for the sudo password, so the sim tools were NOT installed." >&2
-      echo "  Open Ubuntu and paste:  $APT_CMD" >&2
+      echo "sim apt: STOP: no passwordless sudo and no terminal, so the sim tools were NOT installed." >&2
+      echo "  On Windows + WSL, run setup.ps1 from Windows: it installs them as root through wsl.exe, no password." >&2
+      echo "  Or paste in a terminal:  $APT_CMD" >&2
     fi
   fi
   SIM_PY="${SIM_PYTHON:-$(cat .python-version)}"
@@ -186,13 +191,16 @@ if [ "$PROFILE" = 1 ]; then
   for LF in "$HOME/.bash_profile" "$HOME/.bash_login" "$HOME/.profile"; do [ -f "$LF" ] && break; done
   if grep -qF "$MARK" "$LF" 2>/dev/null; then echo "login file: $LF (already loads it)"
   else [ -f "$LF" ] && cp -p "$LF" "$LF.hbcad-bak-$(date +%Y%m%d-%H%M%S)"; printf '\n%s\n' "$MARK" >> "$LF"; echo "login file: added the env line to $LF"; fi
+  # SIM_VENV in the login file too, unless some export SIM_VENV= line is already there (no duplicates).
+  if [ "$SIM_VENV" = "$HOME/simvenv" ] && ! grep -qE '^[[:space:]]*export[[:space:]]+SIM_VENV=' "$LF" 2>/dev/null; then
+    printf '%s\n' 'export SIM_VENV="$HOME/simvenv"' >> "$LF"; echo "login file: added SIM_VENV to $LF"; fi
 else echo "login file: not changed (--no-profile). Add this line yourself: $MARK"; fi
 # end 7
 
 # 8. verify: fails (exit 1) with a list of anything missing.
 v_args=(); [ "$SIM" = 1 ] || v_args+=(--no-sim)
 if ! bash scripts/verify-install.sh "${v_args[@]}"; then
-  [ -n "$APT_CMD" ] && echo "To install the missing sim tools, open Ubuntu and paste:  $APT_CMD" >&2
+  [ -n "$APT_CMD" ] && echo "Missing sim tools: re-run setup.ps1 from Windows (no password), or paste:  $APT_CMD" >&2
   exit 1
 fi
 echo "Done."
