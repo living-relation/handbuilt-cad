@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-23: setup installs the sim tools and checks itself
+- `setup.sh` (and so `setup.ps1`) now installs the sim tools by default: `apt-sim.txt` with `sudo apt-get install -y` (password asked once; no terminal = stop with the command to paste), the sim venv `~/simvenv` on the repo Python, and uv in `~/.local/bin`. Opt out with `--no-sim` / `-NoSim`.
+- Setup writes `~/.config/handbuilt-cad/env.sh` and loads it from the login file, so `CAD_HOME`, `CAD_PY`, `MODELS_DIR`, `HBCAD_PARTS_HOME`, `SIM_VENV` work in `bash -lc` (`--no-profile` skips).
+- New `scripts/verify-install.sh`, run last by setup: exit 1 with a list of anything missing.
+- AGENTS.md has a "Where every tool lives" table. Elmer and OpenFOAM are documented as optional, not installed by setup.
+
 ## 2026-10-23: setup.ps1 WSL step works in Windows PowerShell 5.1
 - `setup.ps1` passes the WSL setup script to `wsl.exe` base64-encoded. Windows PowerShell 5.1 dropped the escaping of its double quotes, so bash failed with `syntax error near unexpected token`. Works the same in PowerShell 7.
 

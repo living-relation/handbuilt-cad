@@ -50,5 +50,19 @@ Every folder the toolkit creates or uses (the parts home `~/cad-parts` root, its
 - `$CAD_PY -m pytest -q` (repo tests; `CAD_PY` = `.venv/bin/python`, or `~/.venvs/handbuilt-cad/bin/python` in WSL) and the checks for the files you touched.
 - The pre-commit hook (guard + pinned gitleaks) must pass.
 
+## Where every tool lives
+WSL/Linux paths; `bash scripts/verify-install.sh` checks all of them (setup runs it last). Env vars load in any `bash -lc` from `~/.config/handbuilt-cad/env.sh`.
+
+| Tool | Path / command | Used by (skill) |
+|---|---|---|
+| CAD venv (build123d, OCP) | `$CAD_PY` (`~/.venvs/handbuilt-cad/bin/python`) | all CAD skills, cnc-part-check, cad-drawing, blend-fillet |
+| Sim venv (gmsh, meshio) | `$SIM_VENV/bin/python` (`~/simvenv`) | sim-stack (`tools/quick_fea.py`) |
+| CalculiX | `ccx` (`/usr/bin/ccx`, apt) | sim-stack |
+| Gmsh | `gmsh` (`/usr/bin/gmsh`, apt) | sim-stack |
+| ParaView | `xvfb-run -a pvpython` (apt `paraview`) | sim-stack |
+| uv | `uv` (`~/.local/bin/uv`) | setup, venvs |
+| Elmer, OpenFOAM | optional, **not installed by setup** (`sim/SIM_TOOLS.md`) | sim-stack full studies |
+| Repo / parts / models | `$CAD_HOME`, `$HBCAD_PARTS_HOME`, `$MODELS_DIR` | publish-to-models, all |
+
 ## Linux runtime
-Open3D needs the system library `libEGL.so.1`. On Ubuntu install it with `sudo apt-get install -y --no-install-recommends libegl1` or `import open3d` fails. `bash setup.sh` does not install apt packages. Fairsolid and the sim toolbox stay optional (`--with-fairsolid`, and `--sim`, which only prints the sim commands).
+Open3D needs the system library `libEGL.so.1`. On Ubuntu install it with `sudo apt-get install -y --no-install-recommends libegl1` or `import open3d` fails. `bash setup.sh` installs the sim apt packages in `apt-sim.txt` (sudo asks for the password once; with no terminal it stops and prints the command to paste), the sim venv and uv, then runs `scripts/verify-install.sh`, which fails with a list of anything missing. `--no-sim` / `-NoSim` skips the sim tools. Fairsolid stays optional (`--with-fairsolid`).

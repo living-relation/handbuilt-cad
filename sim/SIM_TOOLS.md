@@ -6,6 +6,8 @@ Strength (FEA), heat and CFD tools. The solvers run in WSL (Ubuntu 26.04), and F
 
 ## What's installed
 
+`setup.sh` installs CalculiX, Gmsh, ParaView and OCCT tools (`apt-sim.txt`) and the sim venv by default. **Elmer and OpenFOAM are optional and not installed by setup**; the rows below record the reference workstation's manual install.
+
 | Tool | Use | Version | Where | Smoke test |
 |---|---|---|---|---|
 | CalculiX `ccx` | Static strength, thermal FEA | 2.21 (apt `calculix-ccx`) | WSL `/usr/bin/ccx` | Cantilever 100x10x10 mm steel, 100 N: tip 0.1902 mm vs 0.1920 mm hand calc (Timoshenko), -0.9 %. Steady heat block: mid-point 60.00 C, exact 60.00 C. `smoke/ccx/RESULT.txt` |
@@ -13,7 +15,7 @@ Strength (FEA), heat and CFD tools. The solvers run in WSL (Ubuntu 26.04), and F
 | OpenFOAM | CFD | OpenFOAM 14 (openfoam.org apt repo, package `openfoam14` 20261008) | WSL `/opt/openfoam14` | Lid-driven cavity tutorial ran to the end; residuals Ux 1 -> 3e-5, p 1 -> 4e-6. `smoke/openfoam/` |
 | Gmsh | Meshing | 4.14.0 (apt) in WSL; 4.15.2 Python module in the venv | WSL `/usr/bin/gmsh` | Meshed `pcv_adapter.step`: 4114 nodes, 13295 tets. `smoke/gmsh/` |
 | ParaView | Post-processing, `pvpython` | 6.0.1 (apt) | WSL `/usr/bin/paraview`, `pvpython` | Rendered the beam result to `smoke/paraview/beam_displacement_x50.png` (headless with `xvfb-run`) |
-| Python venv | meshio 5.3.5, gmsh 4.15.2, pygmsh 7.1.17, numpy 2.5.3, matplotlib 3.11.2, vtk 9.7.1, ccx2paraview 3.2.0 | Python 3.14 | WSL `~/simvenv` | Used by the smoke tests |
+| Python venv | meshio 5.3.5, gmsh 4.15.2, pygmsh 7.1.17, numpy 2.5.3, matplotlib 3.11.2, vtk 9.7.1, ccx2paraview 3.2.0 | repo Python (`.python-version`) | WSL `~/simvenv` (`$SIM_VENV`) | Used by the smoke tests |
 | FreeCAD | CAD and FEM front end | 1.1.4 portable (official 7z, SHA256 checked) | Windows `<freecad_dir>` (kept on Windows), start with `<freecad_dir>\FreeCAD.bat` | FEM workbench imports OK (`smoke/freecad_check_result.txt`) |
 
 ## How to run
