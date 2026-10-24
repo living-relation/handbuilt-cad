@@ -54,8 +54,8 @@ def test_skills_not_linked_by_default(tmp_path):
 
 def test_skills_linked_with_opt_in(tmp_path):
     home, _ = _run_step6(tmp_path, "1")
-    for t in (".claude", ".cursor"):
-        assert (home / t / "skills" / "demo").is_symlink()
+    assert (home / ".claude" / "skills" / "demo").is_symlink()
+    assert not (home / ".cursor").exists()  # Cursor reads ~/.claude/skills; linking both listed skills twice
 
 
 def test_dead_skill_links_pruned_only_when_ours(tmp_path):
@@ -73,8 +73,24 @@ def test_dead_skill_links_pruned_only_when_ours(tmp_path):
         d = home / t / "skills"
         assert not (d / "gone").is_symlink() and not (d / "gone").exists()
         assert (d / "elsewhere").is_symlink() and (d / "keep").is_symlink() and (d / "real").is_dir()
-        assert (d / "demo").is_symlink()
+    assert (home / ".claude" / "skills" / "demo").is_symlink()
+    assert not (home / ".cursor" / "skills" / "demo").exists()
     assert "skill link pruned" in out
+
+
+def test_old_cursor_links_into_clone_removed_only(tmp_path):
+    home = tmp_path / "home"
+    root = tmp_path / "clone"  # _run_step6 creates root/skills/demo
+    other = tmp_path / "other"; (other / "keep").mkdir(parents=True)
+    d = home / ".cursor" / "skills"; d.mkdir(parents=True)
+    (d / "demo").symlink_to(root / "skills" / "demo")  # ours: the duplicate
+    (d / "keep").symlink_to(other / "keep")            # not ours
+    (d / "real").mkdir()                               # real folder
+    _, out = _run_step6(tmp_path, "1")
+    assert not (d / "demo").is_symlink() and (root / "skills" / "demo" / "SKILL.md").exists()
+    assert (d / "keep").is_symlink() and (d / "real").is_dir()
+    assert (home / ".claude" / "skills" / "demo").is_symlink()
+    assert "duplicate skill link removed" in out
 
 
 def test_ps1_link_skills_prunes_only_dead_links_into_from():
@@ -82,6 +98,13 @@ def test_ps1_link_skills_prunes_only_dead_links_into_from():
     assert "[IO.Directory]::Delete($item.FullName, $false)" in ps1  # link only, never recursive
     assert "StartsWith($_, [StringComparison]::OrdinalIgnoreCase)" in ps1 and "'SKILL.md'" in ps1
     assert "'would-prune'" in ps1 and "Remove-Item" not in ps1
+
+
+def test_ps1_link_skills_claude_only_and_unlinks_cursor():
+    ps1 = (ROOT / "scripts" / "link-skills.ps1").read_text()
+    assert '[string[]]$Targets = @("$env:USERPROFILE\\.claude\\skills"),' in ps1
+    assert '[string[]]$Unlink = @("$env:USERPROFILE\\.cursor\\skills"),' in ps1
+    assert "'would-unlink'" in ps1 and "'unlinked'" in ps1 and ps1.count("[IO.Directory]::Delete($item.FullName, $false)") == 2
 
 
 def test_setup_sh_flag_and_ps1_opt_in():
