@@ -12,7 +12,7 @@ through a link (`~/projects/handbuilt-cad -> /mnt/c/<projects>/active/handbuilt-
 ```powershell
 git clone <repo-url> <projects>\active\handbuilt-cad
 cd <projects>\active\handbuilt-cad
-powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1   # Windows part, then links the clone into WSL and runs setup.sh there; -NoWsl skips WSL, -NoModels / -LinkSkills pass through
+powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1   # Windows part, then links the clone into WSL and runs setup.sh there; -NoWsl skips WSL, -NoModels / -LinkSkills / -NoSim pass through
 ```
 `setup.ps1` makes the WSL link only if nothing is there. A link that already points to this clone is left
 as is. If `~/projects/handbuilt-cad` is a real folder (an old WSL clone) or a link to somewhere else,
@@ -23,11 +23,13 @@ it stops and changes nothing; move the old folder to an archive yourself and re-
 ```bash
 git clone <repo-url> ~/projects/handbuilt-cad
 cd ~/projects/handbuilt-cad
-bash setup.sh            # pinned uv + Python, .venv from uv.lock, gitleaks, git hooks, models folder
+bash setup.sh            # pinned uv + Python, .venv from uv.lock, sim tools (no password via setup.ps1), gitleaks, hooks, models folder, env file, verify
 ```
 `.gitattributes` keeps LF in the repo (CRLF only for .bat/.ps1).
 
 Then use the venv: `$CAD_PY tools/cnc_check.py --help` (`setup.sh` prints the `CAD_PY` to export: `.venv/bin/python`, or `~/.venvs/handbuilt-cad/bin/python` in WSL).
+
+Setup ends with `scripts/verify-install.sh`; if it prints MISSING, setup failed. Where each tool lives: `AGENTS.md`.
 
 ## What's where
 | Folder | What |

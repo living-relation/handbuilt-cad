@@ -148,7 +148,7 @@ def test_wsl_link_never_overwrites_real_folder_or_other_link(tmp_path):
 
 def test_setup_sh_linux_venv_outside_repo_on_windows_drive():
     assert 'case "$(pwd -P)" in /mnt/[a-z]/*) export UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-$HOME/.venvs/handbuilt-cad}"' in SETUP
-    assert 'VENV="${UV_PROJECT_ENVIRONMENT:-$ROOT/.venv}"' in SETUP and 'export CAD_PY="$VENV/bin/python"' in SETUP
+    assert 'VENV="${UV_PROJECT_ENVIRONMENT:-$ROOT/.venv}"' in SETUP and 'export CAD_PY="\\${CAD_PY:-$VENV/bin/python}"' in SETUP
     assert "env -u UV_PROJECT_ENVIRONMENT" in SETUP
 
 def test_ps1_wsl_command_survives_windows_powershell_51():
@@ -157,3 +157,61 @@ def test_ps1_wsl_command_survives_windows_powershell_51():
     assert "bash -lc $cmd" not in ps1
     assert "[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(\"exec </dev/null; $cmd\"))" in ps1
     assert 'bash -lc "echo $b64 | base64 -d | bash"' in ps1
+
+
+def test_setup_installs_sim_by_default_with_opt_out():
+    assert "SIM=1;" in SETUP and "--no-sim) SIM=0" in SETUP and "sudo apt-get install -y $need" in SETUP
+    assert "Or paste in a terminal:" in SETUP and "sudo -n true" in SETUP
+    assert '"$UV" venv "$SIM_VENV" --python "$SIM_PY"' in SETUP and 'SIM_PY="${SIM_PYTHON:-$(cat .python-version)}"' in SETUP
+    assert "sudo -n apt-get install -y $need" in SETUP and "setup.ps1 from Windows" in SETUP
+    assert 'SIM_VENV="${SIM_VENV:-$HOME/simvenv}"' in SETUP
+    assert "python3 " not in SETUP.split("# 2c.")[1].split("# 3.")[0]
+    ps1 = (ROOT / "setup.ps1").read_text()
+    assert "[switch]$NoSim" in ps1 and "if ($NoSim) { $shArgs += '--no-sim' }" in ps1
+    assert "wsl.exe -d $WslDistro -u root -e bash -c" in ps1 and "DEBIAN_FRONTEND=noninteractive apt-get update" in ps1
+    assert "-replace '=.*$', ''" in ps1 and ps1.index("-u root") < ps1.index("echo $b64 | base64 -d | bash")
+
+
+def test_sim_apt_missing_strips_versions(tmp_path):
+    (tmp_path / "apt-sim.txt").write_text("# c\ncalculix-ccx=2.21-1\n\ngmsh=4.14\n")
+    bin_ = tmp_path / "bin"; bin_.mkdir()
+    (bin_ / "dpkg-query").write_text("#!/bin/sh\n[ \"$3\" = gmsh ] && echo 'install ok installed'; exit 0\n")
+    (bin_ / "dpkg-query").chmod(0o755)
+    script = _block("  sim_apt_missing() {", "  # end sim_apt_missing") + "\nsim_apt_missing\n"
+    env = dict(os.environ, PATH=f"{bin_}:{os.environ['PATH']}")
+    r = subprocess.run(["bash", "-c", script], cwd=tmp_path, env=env, capture_output=True, text=True, check=True)
+    assert r.stdout.split() == ["calculix-ccx"]
+
+
+def test_verify_fails_loudly_with_list(tmp_path):
+    home = tmp_path / "home"; home.mkdir()
+    env = {"HOME": str(home), "PATH": "/usr/bin:/bin", "USER": "x"}
+    r = subprocess.run(["bash", str(ROOT / "scripts" / "verify-install.sh")], env=env, capture_output=True, text=True)
+    assert r.returncode == 1 and "FAILED" in r.stderr
+    for s in ("CAD_HOME", "CAD_PY", "MODELS_DIR", "HBCAD_PARTS_HOME", "build123d", "sim venv"):
+        assert s in r.stderr, s
+    assert "verify-install.sh" in SETUP and "exit 1" in SETUP.split("# 8. verify")[1]
+
+
+def test_env_file_loads_in_bash_lc(tmp_path):
+    home = tmp_path / "home"; home.mkdir()
+    (home / ".profile").write_text("# existing\n")
+    blk = _block("# 7. env file", "# end 7")
+    pre = f"ROOT=/r; VENV=/v; MODELS=/m; PARTS=/p; SIM_VENV={home}/simvenv; PROFILE=1\n"
+    env = {"HOME": str(home), "PATH": "/usr/bin:/bin"}
+    for _ in range(2):  # idempotent
+        subprocess.run(["bash", "-c", "set -euo pipefail\n" + pre + blk], env=env, check=True, capture_output=True)
+    assert (home / ".profile").read_text().count("handbuilt-cad setup") == 1
+    assert (home / ".profile").read_text().count("export SIM_VENV=") == 1
+
+
+def test_profile_keeps_existing_sim_venv_line(tmp_path):
+    home = tmp_path / "home"; home.mkdir()
+    (home / ".profile").write_text('export SIM_VENV="$HOME/simvenv"\n')
+    blk = _block("# 7. env file", "# end 7")
+    pre = f"ROOT=/r; VENV=/v; MODELS=/m; PARTS=/p; SIM_VENV={home}/simvenv; PROFILE=1\n"
+    subprocess.run(["bash", "-c", "set -euo pipefail\n" + pre + blk], env={"HOME": str(home), "PATH": "/usr/bin:/bin"}, check=True, capture_output=True)
+    assert (home / ".profile").read_text().count("export SIM_VENV=") == 1
+    out = subprocess.run(["env", "-i", f"HOME={home}", "bash", "-lc", 'echo "$CAD_HOME $CAD_PY $MODELS_DIR $HBCAD_PARTS_HOME $SIM_VENV"'],
+                         capture_output=True, text=True).stdout.strip()
+    assert out == f"/r /v/bin/python /m /p {home}/simvenv"

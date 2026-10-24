@@ -12,8 +12,8 @@
 | Python | uv-managed CPython | existing | 3.13.16 (`.python-version`) | toolkit venv |
 | uv | astral-sh/uv release | existing | 0.13.0 | venv + lock |
 | gitleaks | gitleaks/gitleaks release | existing | 8.30.1 (`.gitleaks-version`) | pre-commit secret scan |
-| gmsh, CalculiX, ParaView, OCCT tools | Ubuntu apt (`apt-sim.txt`) | existing | see `apt-sim.txt` | optional sim tools |
-| sim venv packages | PyPI (`requirements-sim.txt`) | existing | see file | optional meshing/FEA post (Python 3.14 venv) |
+| gmsh, CalculiX, ParaView, OCCT tools | Ubuntu apt (`apt-sim.txt`) | existing | see `apt-sim.txt` | sim tools, installed by setup (`--no-sim` skips) |
+| sim venv packages | PyPI (`requirements-sim.txt`) | existing | see file | meshing/FEA post (`~/simvenv`, `.python-version` Python) |
 | FreeCAD | FreeCAD release | existing | 1.1.4 | headless FEM / edge breaks; its bundled Python is never imported by this repo |
 | FreeCAD launcher wrappers | `sim/` (`*.bat`) | modified (our wrappers) | - | run ccx/gmsh in WSL from FreeCAD |
 | tools/* | `tools/` | made | - | toolkit (`sketch_blend.py`, `chamfer_batch.py` ported from handbuilt-models 2026-10-17) |

@@ -1,4 +1,4 @@
-# Simulation venv (~/simvenv, Python 3.14) - meshing, FEA post, topology
+# Simulation venv (~/simvenv, Python from .python-version; installed by setup.sh) - meshing, FEA post, topology
 gmsh==4.15.2
 meshio==5.3.5
 pygmsh==7.1.17

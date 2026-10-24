@@ -1,4 +1,4 @@
-# Optional sim tools for WSL/Ubuntu (install by hand: sudo apt install $(grep -v '^#' apt-sim.txt))
+# Optional sim tools for WSL/Ubuntu (setup.sh installs these by name with sudo apt-get install -y; --no-sim skips)
 # Versions are the ones in use on the reference workstation; apt may offer newer.
 calculix-ccx=2.21-1build1
 gmsh=4.14.0+ds1-1build4

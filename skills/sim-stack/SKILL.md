@@ -16,6 +16,7 @@ The project's own rules win over this skill. Versions, smoke tests and solver co
   - If a quick check lands close to the limit, or the load case doesn't fit it, say so and offer the full study.
 
 ## Where it runs
+- Installed by `setup.sh` (default): CalculiX, Gmsh, ParaView (`apt-sim.txt`) and the sim venv. **Elmer and OpenFOAM are optional and not installed by setup**; check `command -v ElmerSolver` / `ls /opt/openfoam*` first, and if missing tell the user instead of installing. `bash scripts/verify-install.sh` checks the default tools.
 - WSL on the user's machine: `source sim/wsl-env.sh` from the repo root (OpenFOAM env, sim venv `$SIM_VENV`, `$SIM`; `sim/env.sh` on plain Linux). FreeCAD stays on Windows (`[paths] freecad_dir`; WSL wrappers `ccx_wsl.bat` / `gmsh_wsl.bat`).
 - Run cases in the parts-home runs folder, `<parts_home>/<job>/runs/<stamp>/` (`tools/paths.py`; `[paths] parts_home` / `HBCAD_PARTS_HOME`, default `~/cad-parts`), on the Linux side, not `/mnt/c`. Never inside a git repo; never commit run output.
 - The sim venv and system packages are shared and read-only for agents: no installs, upgrades or rollback scripts without the user's yes.

@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # handbuilt-cad setup for WSL/Linux. Safe to re-run. Touches only this repo, ~/.cache/uv,
-# uv's Python store, and (unless --no-models) creates <Desktop>/models if it is missing.
-#   bash setup.sh [--no-models] [--with-fairsolid] [--sim] [--link-skills]
+# uv's Python store, and (unless --no-models) creates <Desktop>/models if it is missing. By default it also installs
+# the sim tools (apt-sim.txt via sudo apt-get, the sim venv), uv in ~/.local/bin, and an env file loaded by login
+# shells; then scripts/verify-install.sh checks everything and fails loudly if anything is missing.
+#   bash setup.sh [--no-models] [--with-fairsolid] [--no-sim] [--no-profile] [--link-skills]
 set -euo pipefail
 cd "$(dirname "$0")"
 ROOT=$PWD
@@ -17,8 +19,9 @@ esac
 export UV_PROJECT_ENVIRONMENT="$VENV" CAD_PY="$VENV/bin/python"   # every uv call below (and child scripts) uses this venv
 UV_VERSION=0.13.0
 UV_SHA=1468ebd5a5541121837c5a2817b9972ba6090fa6caa3d142620850a47fb75154  # uv-x86_64-unknown-linux-gnu.tar.gz
-NO_MODELS=0; WITH_FS=0; SIM=0; LINK_SKILLS=${LINK_SKILLS:-0}
-for a in "$@"; do case $a in --no-models) NO_MODELS=1;; --with-fairsolid) WITH_FS=1;; --sim) SIM=1;; --link-skills) LINK_SKILLS=1;; *) echo "unknown option $a"; exit 2;; esac; done
+NO_MODELS=0; WITH_FS=0; SIM=1; PROFILE=1; LINK_SKILLS=${LINK_SKILLS:-0}
+# --sim is the default now; still accepted so old commands keep working.
+for a in "$@"; do case $a in --no-models) NO_MODELS=1;; --with-fairsolid) WITH_FS=1;; --sim) SIM=1;; --no-sim) SIM=0;; --no-profile) PROFILE=0;; --link-skills) LINK_SKILLS=1;; *) echo "unknown option $a"; exit 2;; esac; done
 
 # 1. pinned uv (use the one on PATH if it is the pinned version, else fetch into .tools/)
 UV=$(command -v uv || true)
@@ -37,9 +40,50 @@ echo "venv: $VENV"
 "$UV" python install "$(cat .python-version)"
 "$UV" sync --frozen
 [ "$WITH_FS" = 1 ] && (cd pipelines/fairsolid && env -u UV_PROJECT_ENVIRONMENT "$UV" sync --frozen --extra test)
+
+# 2b. uv on PATH for agents: copy the pinned uv into ~/.local/bin if no uv is there (never replaces one).
+mkdir -p "$HOME/.local/bin"
+for b in uv uvx; do
+  if [ ! -e "$HOME/.local/bin/$b" ] && [ -x "$(dirname "$UV")/$b" ]; then install -m 755 "$(dirname "$UV")/$b" "$HOME/.local/bin/$b"; echo "uv: installed $HOME/.local/bin/$b"; fi
+done
+
+# 2c. sim tools (default; --no-sim skips). apt packages from apt-sim.txt (by name; the versions there are the
+#     reference workstation's; setup.ps1 installs them first as root via wsl.exe, so no password), then the sim venv
+#     ($SIM_VENV, default ~/simvenv, used by tools/quick_fea.py and examples/bracket) from requirements-sim.txt with
+#     the pinned uv on the repo Python (.python-version; never the 3.14 system Python). A venv on another Python
+#     (e.g. 3.12) is moved aside, not deleted.
+SIM_VENV="${SIM_VENV:-$HOME/simvenv}"; APT_CMD=""
 if [ "$SIM" = 1 ]; then
-  echo "Sim venv: $UV venv .venv-sim --python 3.14 && $UV pip install --python .venv-sim -r requirements-sim.txt"
-  echo "Apt packages (needs sudo, run by hand): sudo apt install \$(grep -v '^#' apt-sim.txt)"
+  # sim_apt_missing: apt-sim.txt package names that dpkg does not list as installed
+  sim_apt_missing() {
+    grep -v '^[[:space:]]*#' apt-sim.txt | sed 's/=.*//; s/[[:space:]]//g' | grep -v '^$' | while read -r p; do
+      dpkg-query -W -f='${Status}' "$p" 2>/dev/null | grep -q 'install ok installed' || printf '%s ' "$p"
+    done
+  }
+  # end sim_apt_missing
+  need=$(sim_apt_missing)
+  if [ -z "$need" ]; then echo "sim apt: all apt-sim.txt packages installed"
+  else
+    APT_CMD="sudo apt-get update && sudo apt-get install -y $need"
+    export DEBIAN_FRONTEND=noninteractive
+    if [ "$(id -u)" = 0 ]; then apt-get update && apt-get install -y $need
+    elif sudo -n true 2>/dev/null; then sudo -n apt-get update && sudo -n apt-get install -y $need
+    elif { : </dev/tty; } 2>/dev/null; then
+      echo "sim apt: installing $need(sudo asks for your password)"
+      sudo apt-get update && sudo apt-get install -y $need
+    else
+      echo "sim apt: STOP: no passwordless sudo and no terminal, so the sim tools were NOT installed." >&2
+      echo "  On Windows + WSL, run setup.ps1 from Windows: it installs them as root through wsl.exe, no password." >&2
+      echo "  Or paste in a terminal:  $APT_CMD" >&2
+    fi
+  fi
+  SIM_PY="${SIM_PYTHON:-$(cat .python-version)}"
+  if [ -x "$SIM_VENV/bin/python" ] && ! "$SIM_VENV/bin/python" -c "import sys; v='$SIM_PY'.split('.'); sys.exit(sys.version_info[:2] != (int(v[0]), int(v[1])))" 2>/dev/null; then
+    old="$SIM_VENV.old-$(date +%Y%m%d-%H%M%S)"; mv "$SIM_VENV" "$old"; echo "sim venv: wrong Python, moved to $old (not deleted)"
+  fi
+  [ -x "$SIM_VENV/bin/python" ] || env -u UV_PROJECT_ENVIRONMENT "$UV" venv "$SIM_VENV" --python "$SIM_PY"
+  env -u UV_PROJECT_ENVIRONMENT "$UV" pip install --python "$SIM_VENV/bin/python" -r requirements-sim.txt
+  echo "sim venv: $SIM_VENV ($("$SIM_VENV/bin/python" -V))"
 fi
 
 # 3. hooks: pinned gitleaks + core.hooksPath so the hooks run on a fresh clone
@@ -126,14 +170,37 @@ else
 fi
 # end 6
 
-cat <<MSG
+# 7. env file for every shell, including agents' non-interactive 'wsl bash -lc'. Setup rewrites
+#    ~/.config/handbuilt-cad/env.sh each run and adds one marked line to the login file bash reads
+#    (~/.bash_profile, else ~/.bash_login, else ~/.profile), backing that file up first. --no-profile skips the line.
+ENVF="$HOME/.config/handbuilt-cad/env.sh"; mkdir -p "$(dirname "$ENVF")"
+cat > "$ENVF" <<ENV
+# Written by handbuilt-cad setup.sh (re-run it to update). Existing values win.
+export CAD_HOME="\${CAD_HOME:-$ROOT}"
+export CAD_PY="\${CAD_PY:-$VENV/bin/python}"
+export UV_PROJECT_ENVIRONMENT="\${UV_PROJECT_ENVIRONMENT:-$VENV}"
+export MODELS_DIR="\${MODELS_DIR:-$MODELS}"
+export HBCAD_PARTS_HOME="\${HBCAD_PARTS_HOME:-$PARTS}"
+export SIM_VENV="\${SIM_VENV:-$SIM_VENV}"
+export FAIRSOLID_HOME="\${FAIRSOLID_HOME:-$ROOT/pipelines/fairsolid}"
+case ":\$PATH:" in *":\$HOME/.local/bin:"*) ;; *) export PATH="\$HOME/.local/bin:\$PATH";; esac
+ENV
+echo "env file: $ENVF"
+MARK='[ -f "$HOME/.config/handbuilt-cad/env.sh" ] && . "$HOME/.config/handbuilt-cad/env.sh"  # handbuilt-cad setup'
+if [ "$PROFILE" = 1 ]; then
+  for LF in "$HOME/.bash_profile" "$HOME/.bash_login" "$HOME/.profile"; do [ -f "$LF" ] && break; done
+  if grep -qF "$MARK" "$LF" 2>/dev/null; then echo "login file: $LF (already loads it)"
+  else [ -f "$LF" ] && cp -p "$LF" "$LF.hbcad-bak-$(date +%Y%m%d-%H%M%S)"; printf '\n%s\n' "$MARK" >> "$LF"; echo "login file: added the env line to $LF"; fi
+  # SIM_VENV in the login file too, unless some export SIM_VENV= line is already there (no duplicates).
+  if [ "$SIM_VENV" = "$HOME/simvenv" ] && ! grep -qE '^[[:space:]]*export[[:space:]]+SIM_VENV=' "$LF" 2>/dev/null; then
+    printf '%s\n' 'export SIM_VENV="$HOME/simvenv"' >> "$LF"; echo "login file: added SIM_VENV to $LF"; fi
+else echo "login file: not changed (--no-profile). Add this line yourself: $MARK"; fi
+# end 7
 
-Done. Add these to ~/.profile (read by login shells, including 'wsl -e bash -lc' and setup.ps1), not only
-~/.bashrc (interactive shells only), or source scripts/hbcad-env.sh from scripts. Setup does not edit dotfiles:
-  export CAD_HOME="$ROOT"
-  export CAD_PY="$VENV/bin/python"
-  export UV_PROJECT_ENVIRONMENT="$VENV"   # so uv run / uv sync use this venv
-  export MODELS_DIR="$MODELS"
-  export HBCAD_PARTS_HOME="$PARTS"   # part build scripts and run outputs (tools/paths.py)
-  export FAIRSOLID_HOME="$ROOT/pipelines/fairsolid"   # optional: scan_helper falls back to it (docs/FAIRSOLID.md)
-MSG
+# 8. verify: fails (exit 1) with a list of anything missing.
+v_args=(); [ "$SIM" = 1 ] || v_args+=(--no-sim)
+if ! bash scripts/verify-install.sh "${v_args[@]}"; then
+  [ -n "$APT_CMD" ] && echo "Missing sim tools: re-run setup.ps1 from Windows (no password), or paste:  $APT_CMD" >&2
+  exit 1
+fi
+echo "Done."

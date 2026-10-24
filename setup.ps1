@@ -1,8 +1,8 @@
 # handbuilt-cad setup for the one Windows clone (the only clone; WSL reaches it through a link). Safe to re-run.
-#   powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1 [-NoModels] [-NoVenv] [-LinkSkills] [-NoWsl] [-WslDistro Ubuntu] [-WslLink <wsl path>] [-FreeCADDir <dir>]
+#   powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1 [-NoModels] [-NoVenv] [-LinkSkills] [-NoSim] [-NoWsl] [-WslDistro Ubuntu] [-WslLink <wsl path>] [-FreeCADDir <dir>]
 #   Also links this clone into WSL (~/projects/handbuilt-cad) and runs the WSL half (setup.sh) there, so this one command
 #   does the whole install. -NoWsl skips it.
-param([switch]$NoModels, [switch]$NoVenv, [switch]$LinkSkills, [switch]$NoWsl, [string]$WslDistro = 'Ubuntu', [string]$WslLink = '', [string]$FreeCADDir = '')
+param([switch]$NoModels, [switch]$NoVenv, [switch]$LinkSkills, [switch]$NoSim, [switch]$NoWsl, [string]$WslDistro = 'Ubuntu', [string]$WslLink = '', [string]$FreeCADDir = '')
 $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
 Set-Location $Root
@@ -93,7 +93,7 @@ if ($FreeCADDir) {
 #    already points here is left as is. Never overwrites: if the path is a real folder/file (an old WSL clone?) or a
 #    link to somewhere else, it stops and changes nothing. The Linux venv goes to $UV_PROJECT_ENVIRONMENT
 #    (default ~/.venvs/handbuilt-cad), so it never clashes with the Windows .venv. Passes -NoModels -> --no-models,
-#    -LinkSkills -> --link-skills. Skip with -NoWsl. Fails clearly if WSL or the distro is missing.
+#    -LinkSkills -> --link-skills, -NoSim -> --no-sim. Skip with -NoWsl. Fails clearly if WSL or the distro is missing.
 if ($NoWsl) { Write-Host "WSL setup: skipped (-NoWsl). Link this clone into WSL and run 'bash setup.sh' there yourself." }
 else {
   if (-not (Get-Command wsl.exe -ErrorAction SilentlyContinue)) { throw "WSL setup: wsl.exe not found. Install WSL ('wsl --install -d $WslDistro'), or re-run with -NoWsl." }
@@ -102,6 +102,7 @@ else {
   $shArgs = @()
   if ($NoModels) { $shArgs += '--no-models' }
   if ($LinkSkills) { $shArgs += '--link-skills' }
+  if ($NoSim) { $shArgs += '--no-sim' }   # sim tools (apt, sim venv) install by default; apt runs as root via wsl.exe, no password
   # bash single-quote a value: ' -> '\'' (so paths with spaces, $, quotes or backticks pass through literally)
   $sq = { param($x) "'" + ($x -replace "'", "'\''") + "'" }
   $envPrefix = if ($env:MODELS_DIR) { "MODELS_DIR=`"`$(wslpath -u $(& $sq $env:MODELS_DIR))`" " } else { '' }
@@ -124,6 +125,13 @@ else {
          "else mkdir -p `"`$(dirname `"`$l`")`"; ln -s `"`$t`" `"`$l`"; echo `"WSL setup: linked `$l -> `$t`"; fi; " +
          "export UV_PROJECT_ENVIRONMENT=`"`${UV_PROJECT_ENVIRONMENT:-`$HOME/.venvs/handbuilt-cad}`"; " +
          "cd `"`$l`"; ${envPrefix}bash setup.sh $($shArgs -join ' ')"
+  # Sim apt packages as root through wsl.exe (no WSL password needed). Pins and CRLF stripped: pins may not match a newer Ubuntu.
+  if (-not $NoSim) {
+    $pkgs = (Get-Content "$Root\apt-sim.txt") | ForEach-Object { ($_ -replace "`r", '' -replace '#.*$', '' -replace '=.*$', '').Trim() } | Where-Object { $_ }
+    Write-Host "WSL sim apt (as root): $($pkgs -join ' ')"
+    & wsl.exe -d $WslDistro -u root -e bash -c "DEBIAN_FRONTEND=noninteractive apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y $($pkgs -join ' ')"
+    if ($LASTEXITCODE -ne 0) { throw "WSL sim apt: failed in $WslDistro (exit $LASTEXITCODE). Fix the error above and re-run, or use -NoSim." }
+  }
   Write-Host "WSL setup: wsl -d $WslDistro (link $link, setup.sh $($shArgs -join ' '))"
   # Windows PowerShell 5.1 does not escape the double quotes inside $cmd when it builds wsl.exe's command line, so
   # bash got a broken script ("syntax error near unexpected token"). Pass it base64-encoded instead: the encoded
