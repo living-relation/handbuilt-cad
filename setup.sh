@@ -142,7 +142,7 @@ HBCAD_PARTS_HOME="$PARTS" "$VENV/bin/python" tools/folder_notes.py "${fn_args[@]
 # end 5d
 
 # 6. skills: off by default. Only with --link-skills (or LINK_SKILLS=1): symlink skills/<name> into ~/.claude/skills
-#    only (Cursor reads it too; old symlinks into this clone's skills/ in ~/.cursor/skills are removed, the link only)
+#    and ~/.cursor/skills
 #    (a same-name entry is moved to ~/.skills-backup/<stamp>/ first). The only delete: a symlink
 #    into this clone's skills/ whose skill is gone is removed (the link only). On Windows, setup.ps1 -LinkSkills does
 #    the same with junctions.
@@ -152,19 +152,14 @@ else
   stamp=$(date +%Y%m%d-%H%M%S)
   for s in "$ROOT"/skills/*/; do
     s=${s%/}; [ -f "$s/SKILL.md" ] || continue; name=$(basename "$s")
-    for t in "$HOME/.claude/skills"; do
+    for t in "$HOME/.claude/skills" "$HOME/.cursor/skills"; do
       mkdir -p "$t"; d="$t/$name"
       if [ -L "$d" ] && [ "$(readlink -f "$d")" = "$(readlink -f "$s")" ]; then continue; fi
       if [ -e "$d" ] || [ -L "$d" ]; then b="$HOME/.skills-backup/$stamp/$(basename "$(dirname "$t")")"; mkdir -p "$b"; mv "$d" "$b/"; echo "skill backed up: $b/$name"; fi
       ln -s "$s" "$d"; echo "skill linked: $d -> $s"
     done
   done
-  # Cursor also reads ~/.claude/skills: drop our old links in ~/.cursor/skills so skills are not listed twice (links only)
-  for d in "$HOME/.cursor/skills"/*; do
-    [ -L "$d" ] || continue
-    case "$(readlink "$d")" in "$ROOT"/skills/*) rm "$d"; echo "duplicate skill link removed: $d" ;; esac
-  done
-  for t in "$HOME/.claude/skills"; do
+  for t in "$HOME/.claude/skills" "$HOME/.cursor/skills"; do
     for d in "$t"/*; do
       [ -L "$d" ] || continue; l=$(readlink "$d")
       case "$l" in "$ROOT"/skills/*) [ -f "$l/SKILL.md" ] || { rm "$d"; echo "skill link pruned: $d"; } ;;
