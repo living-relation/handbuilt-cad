@@ -76,8 +76,7 @@ Write-Host "parts home: created by setup.sh in WSL (~/cad-parts, step 6 below), 
 # 4b. folder notes (models folder and parts home) have one writer, tools/folder_notes.py, run by setup.sh step 5d in WSL.
 if (-not $NoModels) { Write-Host "models notes: added by setup.sh in WSL (tools/folder_notes.py, step 6 below), not on Windows" }
 
-# 4c. skills: off by default. Only with -LinkSkills: junction skills\<name> into ~\.claude\skills (Cursor reads it too;
-#     old junctions from this repo in ~\.cursor\skills are removed, the link only)
+# 4c. skills: off by default. Only with -LinkSkills: junction skills\<name> into ~\.claude\skills and ~\.cursor\skills
 #     (a same-name folder is backed up to ~\.skills-backup first; nothing is deleted).
 if (-not $LinkSkills) { Write-Host 'skills: not linked (opt in with -LinkSkills)' }
 else { & "$Root\scripts\link-skills.ps1" | ForEach-Object { Write-Host "skill $($_.Action): $($_.Path)" } }

@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-10-26: skills are linked for Cursor too
+- `setup.ps1 -LinkSkills` and `setup.sh --link-skills` now link each CAD skill into `~/.cursor/skills` as well as `~/.claude/skills` (Windows and WSL), so Cursor loads them from the repo. They no longer remove links in `~/.cursor/skills`; dead links there are pruned like in `~/.claude/skills`.
+
 ## 2026-10-23: setup installs the sim tools and checks itself
 - `setup.sh` (and so `setup.ps1`) now installs the sim tools by default: `apt-sim.txt` (`setup.ps1` as root via `wsl -u root`, no password; `setup.sh` alone tries `sudo -n`, then a prompt in a terminal), the sim venv `~/simvenv` on the repo Python (3.13; an old 3.12 one is moved aside) with `SIM_VENV` in `~/.profile`, and uv in `~/.local/bin`. Opt out with `--no-sim` / `-NoSim`.
 - Setup writes `~/.config/handbuilt-cad/env.sh` and loads it from the login file, so `CAD_HOME`, `CAD_PY`, `MODELS_DIR`, `HBCAD_PARTS_HOME`, `SIM_VENV` work in `bash -lc` (`--no-profile` skips).
