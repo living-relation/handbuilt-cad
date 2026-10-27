@@ -22,7 +22,7 @@ The project's own rules win over this skill. Versions, smoke tests and solver co
 - The sim venv and system packages are shared and read-only for agents: no installs, upgrades or rollback scripts without the user's yes.
 
 ## Inputs (once per job, saved in SUMMARY.md)
-- Load and boundary cases, material data, acceptance limit and safety factor. Look up material properties and bought-part ratings yourself from primary sources and cite them from the datasheet or the maker's own page (the primary-source-spec-check skill, from the workstation skills); ask the user only for what no source settles (loads, limit, safety factor). Never assume a safety factor.
+- Load and boundary cases, material data, acceptance limit and safety factor. Look up material properties and bought-part ratings yourself from primary sources and cite them from the datasheet or the maker's own page (the primary-source-spec-check skill, which lives in this repo at `skills/primary-source-spec-check`); ask the user only for what no source settles (loads, limit, safety factor). Never assume a safety factor.
 
 ## Quick check
 ```bash
