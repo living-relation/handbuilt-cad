@@ -25,9 +25,9 @@ git clone <repo-url> ~/projects/handbuilt-cad
 cd ~/projects/handbuilt-cad
 bash setup.sh            # pinned uv + Python, .venv from uv.lock, sim tools (no password via setup.ps1), gitleaks, hooks, models folder, env file, verify
 ```
-`.gitattributes` keeps LF in the repo (CRLF only for .bat/.ps1).
+`.gitattributes` keeps LF in the repo (CRLF only for .bat/.cmd/.ps1).
 
-Double-click `pull.cmd` in the clone (or run it from a prompt) to `git pull --ff-only` this repo only.
+Double-click `pull.cmd` in the clone (or run it from a prompt) to `git pull --ff-only` this repo only. Double-click `install.cmd` (or run it from a prompt; extra args pass through, e.g. `install.cmd -LinkSkills`) to run `setup.ps1`.
 
 Then use the venv: `$CAD_PY tools/cnc_check.py --help` (`setup.sh` prints the `CAD_PY` to export: `.venv/bin/python`, or `~/.venvs/handbuilt-cad/bin/python` in WSL).
 

@@ -238,3 +238,15 @@ def test_profile_keeps_existing_sim_venv_line(tmp_path):
     out = subprocess.run(["env", "-i", f"HOME={home}", "bash", "-lc", 'echo "$CAD_HOME $CAD_PY $MODELS_DIR $HBCAD_PARTS_HOME $SIM_VENV"'],
                          capture_output=True, text=True).stdout.strip()
     assert out == f"/r /v/bin/python /m /p {home}/simvenv"
+
+
+def test_install_cmd_is_setup_ps1_wrapper_passthrough():
+    """install.cmd runs setup.ps1 with default args and %*; it must not add flags."""
+    cmd = (ROOT / "install.cmd").read_text()
+    assert "@echo off" in cmd
+    assert 'cd /d "%~dp0"' in cmd
+    assert "powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1 %*" in cmd
+    assert "Exit code:" in cmd and "pause" in cmd
+    assert "-NoSim" not in cmd and "-LinkSkills" not in cmd and "-NoWsl" not in cmd
+    readme = (ROOT / "README.md").read_text()
+    assert "`pull.cmd`" in readme and "`install.cmd`" in readme
