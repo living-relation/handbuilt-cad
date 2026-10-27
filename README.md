@@ -27,6 +27,8 @@ bash setup.sh            # pinned uv + Python, .venv from uv.lock, sim tools (no
 ```
 `.gitattributes` keeps LF in the repo (CRLF only for .bat/.ps1).
 
+Double-click `pull.cmd` in the clone (or run it from a prompt) to `git pull --ff-only` this repo only.
+
 Then use the venv: `$CAD_PY tools/cnc_check.py --help` (`setup.sh` prints the `CAD_PY` to export: `.venv/bin/python`, or `~/.venvs/handbuilt-cad/bin/python` in WSL).
 
 Setup ends with `scripts/verify-install.sh`; if it prints MISSING, setup failed. Where each tool lives: `AGENTS.md`.
