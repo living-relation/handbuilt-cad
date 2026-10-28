@@ -4,8 +4,8 @@ App name: **Fairsolid** (chosen by the user 2026-10-08; "fairing" is the CAD wor
 curves and surfaces). It replaces the project's original working name, which is already taken elsewhere. Web check
 found no software, company, package or CAD add-on using it (not a legal trademark search).
 
-Status: in progress. Decisions are added here as the user approves each part.
-Branch: `surface-fit`
+Status: all parts decided; the code is in `pipelines/fairsolid/`. The old `surface-fit` branch is
+archived (see `docs/FAIRSOLID.md`).
 
 ## Why
 Scanned meshes carry scan texture and noise. A workable model must be a smooth solid that

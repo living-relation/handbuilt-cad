@@ -10,6 +10,8 @@ maintainer something the rules already answer.
 
 This file is the single agent guide for this repo. `CLAUDE.md` and `.cursor/rules/cad.mdc` only point here.
 
+**State and decisions:** current goal and open items live only in `STATE.md`; dated decisions in `DECISIONS.md`. Scripts and hooks are registered in `automation.yml`. The `commit-msg` hook warns when code changes without one of these being updated (skip one commit with `[no-state]`).
+
 ## Before you change anything
 1. Read this file, `CONTRIBUTING.md`, and the hooks/CI that apply (`.githooks/`, `.pre-commit-config.yaml`, `.github/workflows/` if present). Follow them. If a planned step would bypass a hook or gate, stop and ask the maintainer.
 2. Never use `--no-verify`, never force-push, never push to `main`. Work on a branch and open a PR.

@@ -14,6 +14,7 @@ local.toml
 mcp.json
 CLAUDE.local.md
 .claude/settings.local.json
+.claude/worktrees/
 # Part / model files and solver output (models live in $MODELS_DIR)
 *.step
 *.stp

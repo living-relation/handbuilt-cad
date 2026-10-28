@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-28: one state file, decisions file and automation registry
+- New `STATE.md` (goal, open items, last cleanup) and `DECISIONS.md` (dated decisions). `AGENTS.md` points to both.
+- New `automation.yml` lists every hook and setup job; `scripts/registry-check.py` checks it.
+- New `.githooks/commit-msg` runs `scripts/state-check.sh` in comment mode (`.state-check-mode`): it warns when code changes without a state/decisions update. `[no-state]` in the message skips one commit.
+- Removed `docs/PRE-PUBLIC-CHECKLIST.md` (done when the repo went public). Fairsolid's surface-fit plan status updated.
+
 ## 2026-10-26: skills are linked for Cursor too
 - `setup.ps1 -LinkSkills` and `setup.sh --link-skills` now link each CAD skill into `~/.cursor/skills` as well as `~/.claude/skills` (Windows and WSL), so Cursor loads them from the repo. They no longer remove links in `~/.cursor/skills`; dead links there are pruned like in `~/.claude/skills`.
 
