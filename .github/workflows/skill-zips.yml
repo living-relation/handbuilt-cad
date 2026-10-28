@@ -1,10 +1,15 @@
 # Rebuild Claude-importable zips (skills/<name>.zip) when skill folders change.
-# Never pushes to main.
+# Never pushes to the default branch (main).
 #
-# pull_request (same-repo branches): commit changed zips back onto the PR branch
-# so they are current at merge. Actor + [skip ci] + zip path filter prevent loops.
-# pull_request (forks): check only; cannot push to the fork.
-# push to main / workflow_dispatch: if zips are stale, open or update a PR.
+# pull_request (same-repo, head != main): commit changed zips onto the PR branch.
+# pull_request (forks): check only.
+# push to main / workflow_dispatch on main: if zips are stale, open chore/skill-zips.
+# workflow_dispatch on any other ref, or verify_only: check only.
+#
+# GITHUB_TOKEN pushes do not start new workflow runs. After a zip commit this
+# workflow re-dispatches itself with verify_only=true on that ref.
+# Repo setting required: Actions → Workflow permissions →
+# "Allow GitHub Actions to create and approve pull requests".
 name: skill-zips
 
 on:
@@ -12,16 +17,31 @@ on:
     paths:
       - "skills/**"
       - "!**/*.zip"
+      - "scripts/pack_skill_zips.py"
+      - "scripts/pack-skill-zips.sh"
+      - "scripts/pack-skill-zips.ps1"
+      - "scripts/pack-skill-zips.reqs.txt"
+      - "scripts/stage-skill-zips.sh"
+      - ".github/workflows/skill-zips.yml"
   push:
     branches: [main]
     paths:
       - "skills/**"
       - "!**/*.zip"
+      - "scripts/pack_skill_zips.py"
+      - "scripts/pack-skill-zips.sh"
+      - "scripts/pack-skill-zips.ps1"
+      - "scripts/pack-skill-zips.reqs.txt"
+      - "scripts/stage-skill-zips.sh"
+      - ".github/workflows/skill-zips.yml"
   workflow_dispatch:
+    inputs:
+      verify_only:
+        description: Check zips only; do not commit or open a PR
+        type: boolean
+        default: false
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 concurrency:
   group: skill-zips-${{ github.head_ref || github.ref }}
@@ -33,7 +53,11 @@ jobs:
       github.event_name == 'pull_request'
       && github.event.pull_request.head.repo.full_name == github.repository
       && github.actor != 'github-actions[bot]'
+      && github.head_ref != github.event.repository.default_branch
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -44,31 +68,53 @@ jobs:
           python-version-file: .python-version
       - name: Rebuild zips
         run: |
-          python -m pip install --quiet pyyaml
+          python -m pip install --quiet -r scripts/pack-skill-zips.reqs.txt
           python scripts/pack_skill_zips.py --no-check
       - name: Commit zips to the PR branch
+        id: commit
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HEAD_REF: ${{ github.head_ref }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- skills/*.zip
-          deleted=$(git ls-files -d -- 'skills/*.zip' || true)
-          if [ -n "$deleted" ]; then git add -- $deleted; fi
-          extra=$(git diff --cached --name-only | grep -vE '^skills/[^/]+\.zip$' || true)
-          if [ -n "$extra" ]; then
-            echo "refusing to commit non-zip paths: $extra"
+          if [ -z "${HEAD_REF}" ] || [ "${HEAD_REF}" = "${DEFAULT_BRANCH}" ] || [ "${HEAD_REF}" = main ]; then
+            echo "refusing to push to default branch '${HEAD_REF}'"
             exit 1
           fi
+          if printf '%s' "${HEAD_REF}" | grep -q '[^A-Za-z0-9._/-]'; then
+            echo "unsafe branch name"
+            exit 1
+          fi
+          case "${HEAD_REF}" in -*|*".."*|refs/*) echo "unsafe branch name"; exit 1 ;; esac
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          sh scripts/stage-skill-zips.sh
+          sh scripts/guard-staged.sh
+          sh scripts/fetch-gitleaks.sh
+          sh scripts/run-gitleaks.sh
           if git diff --cached --quiet; then
             echo "no zip changes"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             git commit -m "chore: rebuild Claude skill zips [skip ci]"
             git -c "http.https://github.com/.extraheader=AUTHORIZATION: bearer ${GITHUB_TOKEN}" \
-              push origin "HEAD:${HEAD_REF}"
+              push origin "HEAD:refs/heads/${HEAD_REF}"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
+      - name: Re-run checks on the zip commit
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_REF: ${{ github.head_ref }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          if [ -z "${HEAD_REF}" ] || [ "${HEAD_REF}" = "${DEFAULT_BRANCH}" ] || [ "${HEAD_REF}" = main ]; then
+            echo "refusing to dispatch on default branch '${HEAD_REF}'"
+            exit 1
+          fi
+          gh workflow run skill-zips.yml --ref "${HEAD_REF}" -f verify_only=true
       - name: Claude limit checks
         run: python scripts/pack_skill_zips.py --check-only
 
@@ -89,17 +135,97 @@ jobs:
           python-version-file: .python-version
       - name: Rebuild zips and fail if they would change
         run: |
-          python -m pip install --quiet pyyaml
+          python -m pip install --quiet -r scripts/pack-skill-zips.reqs.txt
           python scripts/pack_skill_zips.py
-          git add -- skills/*.zip
+          sh scripts/stage-skill-zips.sh
           git diff --cached --exit-code -- 'skills/*.zip'
 
   on-main:
     if: >-
       github.actor != 'github-actions[bot]'
-      && (github.event_name == 'workflow_dispatch'
-          || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+      && github.event.inputs.verify_only != 'true'
+      && ((github.event_name == 'push' && github.ref == 'refs/heads/main')
+          || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'))
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.repository.default_branch }}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version-file: .python-version
+      - name: Rebuild zips
+        run: |
+          python -m pip install --quiet -r scripts/pack-skill-zips.reqs.txt
+          python scripts/pack_skill_zips.py --no-check
+      - name: Open or update a PR if zips are stale
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          sh scripts/stage-skill-zips.sh
+          if git diff --cached --quiet; then
+            echo "zips are current"
+            exit 0
+          fi
+          tmp=$(mktemp -d)
+          mkdir -p "$tmp/skills"
+          git diff --cached --name-only --diff-filter=ACMR -- 'skills/*.zip' | while IFS= read -r f; do
+            [ -n "$f" ] || continue
+            cp -a "$f" "$tmp/$f"
+          done
+          git diff --cached --name-only --diff-filter=D -- 'skills/*.zip' > "$tmp/deleted.txt" || true
+          git fetch origin "${DEFAULT_BRANCH}" "+refs/heads/chore/skill-zips:refs/remotes/origin/chore/skill-zips" || git fetch origin "${DEFAULT_BRANCH}"
+          git reset --hard "origin/${DEFAULT_BRANCH}"
+          git checkout -B chore/skill-zips
+          if [ -d "$tmp/skills" ]; then
+            find "$tmp/skills" -name '*.zip' -exec cp -a {} skills/ \;
+          fi
+          if [ -s "$tmp/deleted.txt" ]; then
+            while IFS= read -r f; do
+              [ -n "$f" ] || continue
+              rm -f "$f"
+            done < "$tmp/deleted.txt"
+          fi
+          sh scripts/stage-skill-zips.sh
+          sh scripts/guard-staged.sh
+          sh scripts/fetch-gitleaks.sh
+          sh scripts/run-gitleaks.sh
+          if git diff --cached --quiet; then
+            echo "zips already match origin/${DEFAULT_BRANCH}"
+            exit 0
+          fi
+          git commit -m "chore: rebuild Claude skill zips [skip ci]"
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: bearer ${GITHUB_TOKEN}" \
+            push --force-with-lease origin chore/skill-zips
+          if gh pr list --head chore/skill-zips --state open --json number --jq 'length' | grep -qx 0; then
+            gh pr create --base "${DEFAULT_BRANCH}" --head chore/skill-zips \
+              --title "chore: rebuild Claude skill zips" \
+              --body "CI rebuilt \`skills/*.zip\` because they were stale on ${DEFAULT_BRANCH}. Review and merge. This PR does not push to ${DEFAULT_BRANCH} itself."
+          else
+            echo "updated existing skill-zips PR"
+          fi
+          gh workflow run skill-zips.yml --ref chore/skill-zips -f verify_only=true
+      - name: Claude limit checks
+        run: python scripts/pack_skill_zips.py --check-only
+
+  verify:
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      && (github.event.inputs.verify_only == 'true'
+          || github.ref != 'refs/heads/main')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -107,41 +233,12 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version-file: .python-version
-      - name: Rebuild zips
-        run: |
-          python -m pip install --quiet pyyaml
-          python scripts/pack_skill_zips.py --no-check
-      - name: Open or update a PR if zips are stale
+      - name: Check zips and limits
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CI: "true"
         run: |
-          set -euo pipefail
-          git add -- skills/*.zip
-          deleted=$(git ls-files -d -- 'skills/*.zip' || true)
-          if [ -n "$deleted" ]; then git add -- $deleted; fi
-          extra=$(git diff --cached --name-only | grep -vE '^skills/[^/]+\.zip$' || true)
-          if [ -n "$extra" ]; then
-            echo "refusing to commit non-zip paths: $extra"
-            exit 1
-          fi
-          if git diff --cached --quiet; then
-            echo "zips are current"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          branch=chore/skill-zips
-          git checkout -B "$branch"
-          git commit -m "chore: rebuild Claude skill zips [skip ci]"
-          git -c "http.https://github.com/.extraheader=AUTHORIZATION: bearer ${GITHUB_TOKEN}" \
-            push origin "HEAD:${branch}"
-          if gh pr list --head "$branch" --state open --json number --jq '.[0].number' | grep -q '[0-9]'; then
-            echo "updated existing skill-zips PR"
-          else
-            gh pr create --base main --head "$branch" \
-              --title "chore: rebuild Claude skill zips" \
-              --body "CI rebuilt \`skills/*.zip\` because they were stale on main. Review and merge. This PR does not push to main itself."
-          fi
-      - name: Claude limit checks
-        run: python scripts/pack_skill_zips.py --check-only
+          python -m pip install --quiet -r scripts/pack-skill-zips.reqs.txt pytest==9.1.1
+          python scripts/pack_skill_zips.py
+          sh scripts/stage-skill-zips.sh
+          git diff --cached --exit-code -- 'skills/*.zip'
+          python -m pytest -q tests/test_pack_skill_zips.py tests/test_guard_staged.py

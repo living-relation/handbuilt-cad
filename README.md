@@ -33,7 +33,7 @@ Then use the venv: `$CAD_PY tools/cnc_check.py --help` (`setup.sh` prints the `C
 
 Setup ends with `scripts/verify-install.sh`; if it prints MISSING, setup failed. Where each tool lives: `AGENTS.md`.
 
-Claude skill zips (`skills/<name>.zip`) are rebuilt by CI when a PR touches a skill folder; the bot commits any changed zips back onto that PR branch. If main is stale, CI opens a zip PR instead of pushing to main. The local pack script is optional:
+Claude skill zips (`skills/<name>.zip`) are rebuilt by CI on a same-repo PR whose head is not `main`; the bot commits any changed zips back onto that PR branch (never onto `main`). If `main` is stale, CI opens or updates `chore/skill-zips` instead. That zip PR needs the repo setting **Allow GitHub Actions to create and approve pull requests**. GITHUB_TOKEN commits do not start checks on their own; the workflow re-dispatches a verify run on the new commit. The local pack script is optional:
 
 ```powershell
 powershell -NoProfile -File scripts\pack-skill-zips.ps1

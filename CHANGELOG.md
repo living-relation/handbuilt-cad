@@ -2,7 +2,7 @@
 
 ## 2026-10-28: Claude skill zips next to each skill folder
 - One import zip per skill at `skills/<name>.zip`, rebuilt by `scripts/pack_skill_zips.py` (optional wrappers: `scripts/pack-skill-zips.sh`, `scripts/pack-skill-zips.ps1`).
-- GitHub Action `.github/workflows/skill-zips.yml` rebuilds on a PR that touches `skills/**` (except `*.zip`) and commits changed zips back to that PR branch. On stale `main` / `workflow_dispatch` it opens a zip PR. It never pushes to `main`. Actor + `[skip ci]` prevent loops.
+- GitHub Action `.github/workflows/skill-zips.yml` rebuilds on a same-repo PR whose head is not `main` and commits changed zips back to that branch. On stale `main` it resets `chore/skill-zips` to `origin/main` (`--force-with-lease` on that bot branch only) and opens a zip PR. It never pushes to `main`. GITHUB_TOKEN commits re-dispatch a verify run. Actor + `[skip ci]` prevent loops.
 - Guard, gitignore and linkers treat only directories with `SKILL.md` as skills; zip files are not linked. `verify-install.sh` still does not scan `skills/`.
 
 ## 2026-10-26: skills are linked for Cursor too

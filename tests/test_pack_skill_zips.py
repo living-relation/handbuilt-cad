@@ -1,8 +1,12 @@
 """Deterministic Claude skill zips and limit checks (does not edit skills)."""
+import os
+import stat
 import subprocess
 import sys
 import zipfile
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -61,7 +65,8 @@ def test_zip_layout_is_single_top_folder_with_skill_md(tmp_path):
     assert all(n == "demo-skill/" or n.startswith("demo-skill/") for n in names)
     assert not any(n.endswith(".zip") for n in names)
     assert infos["demo-skill/SKILL.md"].compress_type == zipfile.ZIP_STORED
-    assert infos["demo-skill/SKILL.md"].external_attr >> 16 & 0o170000  # file type bits set
+    mode = infos["demo-skill/SKILL.md"].external_attr >> 16
+    assert stat.S_IFMT(mode) == stat.S_IFREG
 
 
 def test_zips_are_byte_identical_across_rebuilds(tmp_path):
@@ -119,6 +124,20 @@ def test_untracked_file_excluded_when_git_repo(tmp_path):
         names = zf.namelist()
     assert "demo-skill/SKILL.md" in names
     assert "demo-skill/secret.txt" not in names
+
+
+def test_untracked_skill_md_fails_in_git_repo(tmp_path):
+    repo = tmp_path / "r"
+    skills = repo / "skills"
+    skill = skills / "demo-skill"
+    _write_skill(skill, "demo-skill", "A demo skill for packing.")
+    _git(repo, "init")
+    _git(repo, "config", "user.email", "ci@users.noreply.github.com")
+    _git(repo, "config", "user.name", "ci")
+    _git(repo, "commit", "--allow-empty", "-m", "init")
+    rc = pack.pack(skills, check=True)
+    assert rc == 1
+    assert not (skills / "demo-skill.zip").exists()
 
 
 def test_limit_violations_are_reported_without_editing_skill(tmp_path):
@@ -196,6 +215,7 @@ def test_long_multiline_description_warns_and_does_not_fail(tmp_path, capsys):
     assert warnings and "200" in warnings[0]
 
 
+@pytest.mark.skipif(not os.environ.get("CI"), reason="zips are CI-owned (AGENTS.md rule 3); set CI=1 to run")
 def test_committed_skill_zips_match_rebuild():
     skills = list(pack.iter_skill_dirs(SKILLS))
     assert skills, "expected SKILL.md folders under skills/"
@@ -242,10 +262,38 @@ def test_workflow_commits_to_pr_branch_never_to_main():
     assert "persist-credentials: false" in yml
     assert "continue-on-error" not in yml
     assert "11bd71901bbe5b1630ceea73d27597364c9af683" in yml
+    assert "github.head_ref != github.event.repository.default_branch" in yml
+    assert "refusing to push to default branch" in yml
+    assert "--force-with-lease" in yml
+    assert "gh workflow run" in yml
+    assert "verify_only" in yml
+    assert "scripts/pack_skill_zips.py" in yml
+    assert ".github/workflows/skill-zips.yml" in yml
+    assert "guard-staged.sh" in yml
+    assert "pack-skill-zips.reqs.txt" in yml
+    assert "permissions: {}" in yml
     assert "HEAD:main" not in yml
-    assert "origin main" not in yml
+    assert "push origin main" not in yml
     assert "chore/skill-zips" in yml
-    assert "github.head_ref" in yml
+
+
+def test_stage_skill_zips_uses_git_pathspec():
+    sh = (ROOT / "scripts" / "stage-skill-zips.sh").read_text()
+    assert "-- 'skills/*.zip'" in sh
+    assert "skills/*.zip" not in sh.replace("'skills/*.zip'", "")
+    assert "guard-staged.sh" not in sh  # caller runs the guard
+
+
+def test_pyyaml_is_pinned():
+    req = (ROOT / "scripts" / "pack-skill-zips.reqs.txt").read_text()
+    assert "pyyaml==6.0.3" in req.lower() or "PyYAML==6.0.3" in req
+
+
+def test_rule_3_is_reworded_in_place():
+    line = [l for l in (ROOT / "AGENTS.md").read_text().splitlines() if l.startswith("3. ")][0]
+    assert line.startswith("3. Skill zips")
+    assert "rebuilt automatically by CI" in line
+    assert "Allow GitHub Actions to create and approve pull requests" in (ROOT / "CONTRIBUTING.md").read_text()
 
 
 def test_verify_install_does_not_scan_skills_folder():

@@ -26,7 +26,7 @@ Changes go through a PR reviewed by the maintainer.
 
 Each skill folder has a sibling zip `skills/<skill-name>.zip` for import into Claude. The zip is one top folder named after the skill, with `SKILL.md` directly inside. Only directories that contain `SKILL.md` are packed; the zips themselves, `README.md`, and folders without `SKILL.md` are ignored.
 
-CI rebuilds them on a pull request that changes a skill folder and commits any changed zips back onto that PR branch (`[skip ci]` + actor guard so it cannot loop). Nothing is pushed to `main`. If main is ever stale, the same workflow opens or updates a zip-only PR. The local pack script is optional:
+CI rebuilds them on a same-repo pull request whose head is not `main` and commits any changed zips back onto that PR branch (never onto `main`). Actor guard + `[skip ci]` + zip path filter prevent a loop. If `main` is stale, CI resets `chore/skill-zips` to `origin/main` and opens or updates a zip-only PR. That needs **Allow GitHub Actions to create and approve pull requests**. GITHUB_TOKEN commits do not start checks; the workflow re-dispatches a verify run on the new commit. The local pack script is optional:
 
 ```powershell
 powershell -NoProfile -File scripts\pack-skill-zips.ps1

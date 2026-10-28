@@ -38,6 +38,10 @@ NAME_MAX = 64
 SKIP_NAMES = {"thumbs.db"}
 
 
+class PackError(Exception):
+    """Fatal pack error. pack() prints it and returns 1."""
+
+
 def iter_skill_dirs(skills_root: Path) -> list[Path]:
     """Directories that contain SKILL.md. Files (including .zip) are ignored."""
     if not skills_root.is_dir():
@@ -73,6 +77,8 @@ def _is_skipped(rel: Path) -> bool:
 def skill_files(skill_dir: Path) -> list[Path]:
     tracked = _git_ls_files(skill_dir)
     if tracked is not None:
+        if not any(Path(p).as_posix() == "SKILL.md" for p in tracked):
+            raise PackError(f"SKILL.md is not git-tracked in {skill_dir}")
         candidates = [skill_dir / p for p in tracked]
     else:
         candidates = [p for p in skill_dir.rglob("*") if p.is_file()]
@@ -295,6 +301,13 @@ def pack(skills_root: Path, *, check: bool = True, write: bool = True) -> int:
     failed = False
     for skill in skills:
         dest = skills_root / f"{skill.name}.zip"
+        try:
+            skill_files(skill)
+        except PackError as e:
+            print(f"FAIL {skill.name}: {e}", file=sys.stderr)
+            failed = True
+            report.append((skill.name, [str(e)], []))
+            continue
         if write:
             if write_zip_if_changed(dest, build_zip_bytes(skill)):
                 print(f"wrote {dest.relative_to(skills_root.parent)}")
