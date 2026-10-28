@@ -275,6 +275,12 @@ def test_workflow_commits_to_pr_branch_never_to_main():
     assert "HEAD:main" not in yml
     assert "push origin main" not in yml
     assert "chore/skill-zips" in yml
+    on_pr = yml.split("on-pr:")[1].split("on-pr-fork:")[0]
+    assert "pytest" in on_pr
+    assert "git diff --cached --exit-code -- 'skills/*.zip'" in on_pr
+    assert 'CI: "true"' in on_pr
+    on_main = yml.split("on-main:")[1].split("verify:")[0]
+    assert on_main.index("git reset --hard") < on_main.index("pack_skill_zips.py --no-check")
 
 
 def test_stage_skill_zips_uses_git_pathspec():
