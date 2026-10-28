@@ -1,4 +1,4 @@
-# Rebuild Claude-importable zips in skills\<name>.zip (same bytes as pack-skill-zips.sh).
+# Optional: rebuild Claude-importable zips in skills\<name>.zip (CI does this on PRs).
 # Usage: powershell -NoProfile -File scripts\pack-skill-zips.ps1 [--no-check]
 [CmdletBinding()]
 param([Parameter(ValueFromRemainingArguments = $true)][string[]]$PackArgs)

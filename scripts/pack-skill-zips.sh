@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Rebuild Claude-importable zips in skills/<name>.zip (same bytes as pack-skill-zips.ps1).
+# Optional: rebuild Claude-importable zips in skills/<name>.zip (CI does this on PRs).
 # Usage: bash scripts/pack-skill-zips.sh [--no-check]
 set -euo pipefail
 cd "$(dirname "$0")/.."

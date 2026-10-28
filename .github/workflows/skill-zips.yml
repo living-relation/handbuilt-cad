@@ -1,10 +1,17 @@
-# Rebuild one Claude-importable zip per skill (skills/<name>.zip) when skill
-# folders change. The bot commit only touches those zips, so it must not
-# retrigger this workflow: zip paths are excluded, github-actions[bot] is
-# skipped, and the commit message includes [skip ci].
+# Rebuild Claude-importable zips (skills/<name>.zip) when skill folders change.
+# Never pushes to main.
+#
+# pull_request (same-repo branches): commit changed zips back onto the PR branch
+# so they are current at merge. Actor + [skip ci] + zip path filter prevent loops.
+# pull_request (forks): check only; cannot push to the fork.
+# push to main / workflow_dispatch: if zips are stale, open or update a PR.
 name: skill-zips
 
 on:
+  pull_request:
+    paths:
+      - "skills/**"
+      - "!**/*.zip"
   push:
     branches: [main]
     paths:
@@ -14,25 +21,35 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
-  group: skill-zips
+  group: skill-zips-${{ github.head_ref || github.ref }}
   cancel-in-progress: false
 
 jobs:
-  pack:
+  on-pr:
     if: >-
-      github.event_name == 'workflow_dispatch'
-      || (github.actor != 'github-actions[bot]'
-          && !contains(github.event.head_commit.message, '[skip ci]'))
+      github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          ref: ${{ github.head_ref }}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version-file: .python-version
       - name: Rebuild zips
-        id: pack
-        continue-on-error: true
-        run: python3 scripts/pack_skill_zips.py
-      - name: Commit zips that changed
+        run: |
+          python -m pip install --quiet pyyaml
+          python scripts/pack_skill_zips.py --no-check
+      - name: Commit zips to the PR branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_REF: ${{ github.head_ref }}
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
@@ -49,10 +66,82 @@ jobs:
             echo "no zip changes"
           else
             git commit -m "chore: rebuild Claude skill zips [skip ci]"
-            git push
+            git -c "http.https://github.com/.extraheader=AUTHORIZATION: bearer ${GITHUB_TOKEN}" \
+              push origin "HEAD:${HEAD_REF}"
           fi
-      - name: Fail on Claude limit violations
-        if: steps.pack.outcome == 'failure'
+      - name: Claude limit checks
+        run: python scripts/pack_skill_zips.py --check-only
+
+  on-pr-fork:
+    if: >-
+      github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name != github.repository
+      && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version-file: .python-version
+      - name: Rebuild zips and fail if they would change
         run: |
-          echo "pack reported Claude skill limit violations (skill content was not edited)."
-          exit 1
+          python -m pip install --quiet pyyaml
+          python scripts/pack_skill_zips.py
+          git add -- skills/*.zip
+          git diff --cached --exit-code -- 'skills/*.zip'
+
+  on-main:
+    if: >-
+      github.actor != 'github-actions[bot]'
+      && (github.event_name == 'workflow_dispatch'
+          || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version-file: .python-version
+      - name: Rebuild zips
+        run: |
+          python -m pip install --quiet pyyaml
+          python scripts/pack_skill_zips.py --no-check
+      - name: Open or update a PR if zips are stale
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git add -- skills/*.zip
+          deleted=$(git ls-files -d -- 'skills/*.zip' || true)
+          if [ -n "$deleted" ]; then git add -- $deleted; fi
+          extra=$(git diff --cached --name-only | grep -vE '^skills/[^/]+\.zip$' || true)
+          if [ -n "$extra" ]; then
+            echo "refusing to commit non-zip paths: $extra"
+            exit 1
+          fi
+          if git diff --cached --quiet; then
+            echo "zips are current"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          branch=chore/skill-zips
+          git checkout -B "$branch"
+          git commit -m "chore: rebuild Claude skill zips [skip ci]"
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: bearer ${GITHUB_TOKEN}" \
+            push origin "HEAD:${branch}"
+          if gh pr list --head "$branch" --state open --json number --jq '.[0].number' | grep -q '[0-9]'; then
+            echo "updated existing skill-zips PR"
+          else
+            gh pr create --base main --head "$branch" \
+              --title "chore: rebuild Claude skill zips" \
+              --body "CI rebuilt \`skills/*.zip\` because they were stale on main. Review and merge. This PR does not push to main itself."
+          fi
+      - name: Claude limit checks
+        run: python scripts/pack_skill_zips.py --check-only

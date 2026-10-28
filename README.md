@@ -33,7 +33,7 @@ Then use the venv: `$CAD_PY tools/cnc_check.py --help` (`setup.sh` prints the `C
 
 Setup ends with `scripts/verify-install.sh`; if it prints MISSING, setup failed. Where each tool lives: `AGENTS.md`.
 
-Claude skill zips (`skills/<name>.zip`) are rebuilt on push to `main` that touches skill folders (not the zips themselves). To rebuild locally:
+Claude skill zips (`skills/<name>.zip`) are rebuilt by CI when a PR touches a skill folder; the bot commits any changed zips back onto that PR branch. If main is stale, CI opens a zip PR instead of pushing to main. The local pack script is optional:
 
 ```powershell
 powershell -NoProfile -File scripts\pack-skill-zips.ps1

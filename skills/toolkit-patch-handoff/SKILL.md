@@ -1,12 +1,11 @@
 ---
 name: toolkit-patch-handoff
 description: >-
-  Use when improving a shared CAD toolkit repo: edit only in a scratch clone on
-  the user's machine, never commit from the worker, run tests there, and hand
-  the reviewer a clean patch plus report; the reviewer pushes a branch and opens
-  a PR, never commits to main.
+  Use when improving a shared CAD toolkit repo: edit and test only in a
+  scratch clone on the user's machine, never commit from the worker, hand the
+  reviewer a patch and report.
 ---
-Use this whenever an agent improves tools, docs or scripts in a shared CAD toolkit repo (or the same pattern for another shared repo). All work runs on the user's machine (e.g. in WSL), never on the agent's own computer; if that machine is offline, stop and tell the user. Follow safe-repo-preflight and the repo's own rules (AGENTS.md, hooks, CI) throughout; they win over this skill.
+Use this whenever an agent improves tools, docs or scripts in a shared CAD toolkit repo (or the same pattern for another shared repo). All work runs on the user's machine (e.g. in WSL), never on the agent's own computer; if that machine is offline, stop and tell the user. Follow safe-repo-preflight and the repo's own rules (AGENTS.md, hooks, CI) throughout; they win over this skill. Hand the reviewer a clean patch plus report; the reviewer pushes a branch and opens a PR, and never commits to main.
 
 ## Steps
 1. **Scratch clone only.** Work in a disposable clone outside every live checkout (e.g. `<scratch_dir>/<agent>/<task>/`, where `scratch_dir` is a folder the user set aside for scratch work, outside the repo). Never edit the user's or another agent's working copy of the repo.

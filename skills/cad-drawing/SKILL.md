@@ -1,12 +1,14 @@
 ---
 name: cad-drawing
 description: >-
-  Use when making or regenerating a 2-D part drawing (11x17 PDF, plus DXF for
-  machined parts) or an assembly drawing from a finished, checked STEP with the
-  handbuilt-cad drawing engine (drawing/part.py, drawing/asm.py). Runs on the
-  user's machine.
+  Use when making or regenerating a 2-D part or assembly drawing (11x17 PDF,
+  DXF for machined parts) from a checked STEP with drawing/part.py or
+  drawing/asm.py.
 ---
 A project's own rules win over this skill, including where it files its CAD and drawings. The repo's CAD and drawing rules are `AGENTS.md` "CAD and drawing rules" and `drawing/DRAWING-RULES.md`; this skill only says how to run the engine and what to look at. Model checks are cnc-part-check; filing is publish-to-models.
+
+## When to use
+A finished, checked STEP, using the handbuilt-cad drawing engine (`drawing/part.py`, `drawing/asm.py`). Runs on the user's machine.
 
 ## Where it runs
 - WSL or Linux on the user's machine, with the handbuilt-cad venv (`[python] cad_py` in `local.toml`, empty = the repo's `.venv`). Shared venvs are read-only for agents.

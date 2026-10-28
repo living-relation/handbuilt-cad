@@ -2,13 +2,13 @@
 name: blend-fillet
 description: >-
   Use when the CAD kernel's own fillet fails at a junction between two bodies
-  (tilted arm on a plate, lofted or multi-face bodies) and a rolling-ball blend
-  solid from tools/blend.py is needed instead. Runs on the user's machine.
+  and a rolling-ball blend from tools/blend.py is needed. Runs on the user's
+  machine.
 ---
 The project's own rules win over this skill. Fillet order, batching and "skip and list failures" are in cnc-part-check (Fillets and edge breaks); this skill is only the fallback for one junction the kernel can't fillet.
 
 ## When
-After all cuts, as part of the last fillet pass, and only once the kernel fillet on that junction has failed in small batches. If the blend also fails, skip it and list it with the other skipped fillets (build report and drawing notes); never stall the model on it.
+After all cuts, as part of the last fillet pass, and only once the kernel fillet on that junction has failed in small batches. Typical junctions: a tilted arm on a plate, lofted or multi-face bodies. The fallback is a rolling-ball blend solid from `tools/blend.py`, used instead of the kernel fillet. If the blend also fails, skip it and list it with the other skipped fillets (build report and drawing notes); never stall the model on it.
 
 ## Where it runs
 WSL or Linux on the user's machine, with the handbuilt-cad venv (shapely; `compare` also needs scipy). Output to the job's working folder, never into the repo.

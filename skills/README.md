@@ -26,7 +26,7 @@ Changes go through a PR reviewed by the maintainer.
 
 Each skill folder has a sibling zip `skills/<skill-name>.zip` for import into Claude. The zip is one top folder named after the skill, with `SKILL.md` directly inside. Only directories that contain `SKILL.md` are packed; the zips themselves, `README.md`, and folders without `SKILL.md` are ignored.
 
-They are rebuilt on push to `main` that changes a skill folder (the workflow skips zip-only commits so it cannot retrigger itself). To rebuild by hand:
+CI rebuilds them on a pull request that changes a skill folder and commits any changed zips back onto that PR branch (`[skip ci]` + actor guard so it cannot loop). Nothing is pushed to `main`. If main is ever stale, the same workflow opens or updates a zip-only PR. The local pack script is optional:
 
 ```powershell
 powershell -NoProfile -File scripts\pack-skill-zips.ps1
@@ -36,7 +36,7 @@ powershell -NoProfile -File scripts\pack-skill-zips.ps1
 bash scripts/pack-skill-zips.sh
 ```
 
-Do not edit the zip bytes; change the skill folder and rebuild. The packer reports Claude name/description limit violations and does not rewrite `SKILL.md`.
+Do not edit the zip bytes. The packer reports Claude name/description limit violations and does not rewrite `SKILL.md`. A description over 200 characters warns only and does not fail.
 
 ## Installing
 

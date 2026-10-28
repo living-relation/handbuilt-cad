@@ -1,5 +1,4 @@
 """Deterministic Claude skill zips and limit checks (does not edit skills)."""
-import os
 import subprocess
 import sys
 import zipfile
@@ -30,6 +29,10 @@ def _write_skill(folder: Path, name: str, description: str, body: str = "body\n"
     )
 
 
+def _git(repo: Path, *args):
+    return subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True, text=True)
+
+
 def test_iter_skill_dirs_ignores_zips_readme_and_folders_without_skill_md(tmp_path):
     skills = tmp_path / "skills"
     _write_skill(skills / "demo-skill", "demo-skill", "A demo skill for packing.")
@@ -52,10 +55,13 @@ def test_zip_layout_is_single_top_folder_with_skill_md(tmp_path):
     zpath = skills / "demo-skill.zip"
     with zipfile.ZipFile(zpath) as zf:
         names = zf.namelist()
+        infos = {i.filename: i for i in zf.infolist()}
     assert "demo-skill/SKILL.md" in names
     assert "demo-skill/refs/note.md" in names
     assert all(n == "demo-skill/" or n.startswith("demo-skill/") for n in names)
     assert not any(n.endswith(".zip") for n in names)
+    assert infos["demo-skill/SKILL.md"].compress_type == zipfile.ZIP_STORED
+    assert infos["demo-skill/SKILL.md"].external_attr >> 16 & 0o170000  # file type bits set
 
 
 def test_zips_are_byte_identical_across_rebuilds(tmp_path):
@@ -64,10 +70,9 @@ def test_zips_are_byte_identical_across_rebuilds(tmp_path):
     assert pack.pack(skills, check=True) == 0
     first = (skills / "demo-skill.zip").read_bytes()
     old = skills / "demo-skill" / "SKILL.md"
-    old.touch()  # mtime change must not change the zip
+    old.touch()
     assert pack.pack(skills, check=True) == 0
     assert (skills / "demo-skill.zip").read_bytes() == first
-    # second process, same bytes
     r = _run(["--skills", str(skills)])
     assert r.returncode == 0, r.stdout + r.stderr
     assert (skills / "demo-skill.zip").read_bytes() == first
@@ -84,6 +89,38 @@ def test_stale_zip_removed_when_skill_folder_gone(tmp_path):
     assert (skills / "keep-me.zip").read_bytes() != b"PK old"
 
 
+def test_env_dotfile_is_excluded_from_zip(tmp_path):
+    skills = tmp_path / "skills"
+    skill = skills / "demo-skill"
+    _write_skill(skill, "demo-skill", "A demo skill for packing.")
+    (skill / ".env").write_text("SECRET=1\n")
+    (skill / ".hidden").mkdir()
+    (skill / ".hidden" / "note.md").write_text("nope\n")
+    assert pack.pack(skills, check=True) == 0
+    with zipfile.ZipFile(skills / "demo-skill.zip") as zf:
+        names = zf.namelist()
+    assert "demo-skill/SKILL.md" in names
+    assert not any(".env" in n or ".hidden" in n for n in names)
+
+
+def test_untracked_file_excluded_when_git_repo(tmp_path):
+    repo = tmp_path / "r"
+    skills = repo / "skills"
+    skill = skills / "demo-skill"
+    _write_skill(skill, "demo-skill", "A demo skill for packing.")
+    (skill / "secret.txt").write_text("untracked\n")
+    _git(repo, "init")
+    _git(repo, "config", "user.email", "ci@users.noreply.github.com")
+    _git(repo, "config", "user.name", "ci")
+    _git(repo, "add", "skills/demo-skill/SKILL.md")
+    _git(repo, "commit", "-m", "skill")
+    assert pack.pack(skills, check=True) == 0
+    with zipfile.ZipFile(skills / "demo-skill.zip") as zf:
+        names = zf.namelist()
+    assert "demo-skill/SKILL.md" in names
+    assert "demo-skill/secret.txt" not in names
+
+
 def test_limit_violations_are_reported_without_editing_skill(tmp_path):
     skills = tmp_path / "skills"
     bad = skills / "Bad_Name"
@@ -93,25 +130,74 @@ def test_limit_violations_are_reported_without_editing_skill(tmp_path):
     assert rc == 1
     assert (bad / "SKILL.md").read_text(encoding="utf-8") == original
     assert (skills / "Bad_Name.zip").is_file()
-    issues = pack.check_skill(bad)
+    issues, warnings = pack.check_skill(bad)
     joined = " ".join(issues)
     assert "lowercase" in joined
-    assert "does not match folder" not in joined or "Bad_Name" in joined
     assert "1024" in joined
     assert "angle-bracket" in joined
+    assert warnings == []
 
 
 def test_reserved_name_and_folder_mismatch(tmp_path):
     skills = tmp_path / "skills"
     folder = skills / "ok-name"
     _write_skill(folder, "claude-helper", "Uses reserved words.")
-    issues = " ".join(pack.check_skill(folder))
-    assert "does not match folder" in issues
-    assert "reserved word" in issues
+    issues, _ = pack.check_skill(folder)
+    text = " ".join(issues)
+    assert "does not match folder" in text
+    assert "reserved word" in text
+
+
+def test_unparseable_frontmatter_fails(tmp_path):
+    skills = tmp_path / "skills"
+    folder = skills / "demo-skill"
+    folder.mkdir(parents=True)
+    (folder / "SKILL.md").write_text(
+        "---\nname: demo-skill\ndescription: ok\nthis line is garbage\n---\nbody\n",
+        encoding="utf-8",
+    )
+    issues, _ = pack.check_skill(folder)
+    assert any("cannot parse" in i or "YAML" in i for i in issues)
+
+
+def test_long_multiline_description_warns_and_does_not_fail(tmp_path, capsys):
+    skills = tmp_path / "skills"
+    folder = skills / "demo-skill"
+    folder.mkdir(parents=True)
+    para = (
+        "Use this skill when packing a long folded description that stays under "
+        "the hard 1024 character cap but goes past the 200 character warning so "
+        "the packer must print a GitHub annotation and still succeed."
+    )
+    assert 200 < len(para) < 1024
+    (folder / "SKILL.md").write_text(
+        "---\n"
+        "name: demo-skill\n"
+        "description: >-\n"
+        f"  {para[:80]}\n"
+        f"  {para[80:160]}\n"
+        f"  {para[160:]}\n"
+        "---\n"
+        "body\n",
+        encoding="utf-8",
+    )
+    original = (folder / "SKILL.md").read_text(encoding="utf-8")
+    name, desc, err = pack.parse_frontmatter(original)
+    assert err is None and name == "demo-skill"
+    assert desc is not None and len(desc) > 200
+    rc = pack.pack(skills, check=True)
+    assert rc == 0
+    assert (folder / "SKILL.md").read_text(encoding="utf-8") == original
+    out = capsys.readouterr().out
+    assert "::warning" in out
+    assert "warn over 200" in out
+    issues, warnings = pack.check_skill(folder)
+    assert issues == []
+    assert warnings and "200" in warnings[0]
 
 
 def test_committed_skill_zips_match_rebuild():
-    skills = [p for p in pack.iter_skill_dirs(SKILLS)]
+    skills = list(pack.iter_skill_dirs(SKILLS))
     assert skills, "expected SKILL.md folders under skills/"
     for skill in skills:
         zpath = SKILLS / f"{skill.name}.zip"
@@ -122,7 +208,7 @@ def test_committed_skill_zips_match_rebuild():
 def test_current_skills_pass_claude_limits():
     failed = []
     for skill in pack.iter_skill_dirs(SKILLS):
-        issues = pack.check_skill(skill)
+        issues, _ = pack.check_skill(skill)
         if issues:
             failed.append((skill.name, issues))
     assert failed == []
@@ -146,16 +232,31 @@ def test_gitignore_unignores_skill_zips():
     assert "!/skills/*.zip" in gi or "!skills/*.zip" in gi
 
 
-def test_workflow_does_not_retrigger_on_zip_commit():
+def test_workflow_commits_to_pr_branch_never_to_main():
     yml = (ROOT / ".github" / "workflows" / "skill-zips.yml").read_text()
-    assert '"skills/**"' in yml or "'skills/**'" in yml
+    assert "pull_request" in yml
     assert "!**/*.zip" in yml
     assert "github-actions[bot]" in yml
     assert "[skip ci]" in yml
     assert "workflow_dispatch" in yml
-    assert "skills/**/*.zip" not in yml.split("paths:")[0]
+    assert "persist-credentials: false" in yml
+    assert "continue-on-error" not in yml
+    assert "11bd71901bbe5b1630ceea73d27597364c9af683" in yml
+    assert "HEAD:main" not in yml
+    assert "origin main" not in yml
+    assert "chore/skill-zips" in yml
+    assert "github.head_ref" in yml
 
 
 def test_verify_install_does_not_scan_skills_folder():
     text = (ROOT / "scripts" / "verify-install.sh").read_text()
     assert "skills/" not in text and "skills\\" not in text
+
+
+def test_name_regex_matches_claude_rule():
+    assert pack.NAME_RE.fullmatch("a")
+    assert pack.NAME_RE.fullmatch("cnc-part-check")
+    assert pack.NAME_RE.fullmatch("a--b")  # hyphens only, as Claude states
+    assert not pack.NAME_RE.fullmatch("Bad_Name")
+    assert not pack.NAME_RE.fullmatch("Has Space")
+    assert not pack.NAME_RE.fullmatch("")
