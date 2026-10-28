@@ -22,6 +22,22 @@ Every CAD skill follows the repo rules on capped sections (AGENTS.md "Capped sec
 
 Changes go through a PR reviewed by the maintainer.
 
+## Claude import zips
+
+Each skill folder has a sibling zip `skills/<skill-name>.zip` for import into Claude. The zip is one top folder named after the skill, with `SKILL.md` directly inside. Only directories that contain `SKILL.md` are packed; the zips themselves, `README.md`, and folders without `SKILL.md` are ignored.
+
+They are rebuilt on push to `main` that changes a skill folder (the workflow skips zip-only commits so it cannot retrigger itself). To rebuild by hand:
+
+```powershell
+powershell -NoProfile -File scripts\pack-skill-zips.ps1
+```
+
+```bash
+bash scripts/pack-skill-zips.sh
+```
+
+Do not edit the zip bytes; change the skill folder and rebuild. The packer reports Claude name/description limit violations and does not rewrite `SKILL.md`.
+
 ## Installing
 
 handbuilt-cad's setup owns the skill links, and linking is off by default. Opt in with `setup.ps1 -LinkSkills`, which junctions each `skills\<name>` into `~\.claude\skills` and `~\.cursor\skills` (`scripts\link-skills.ps1`), or `bash setup.sh --link-skills` (or `LINK_SKILLS=1`), which symlinks them into the WSL `~/.claude/skills` and `~/.cursor/skills`. A same-name folder is backed up to `~/.skills-backup` first. Re-running it also removes links it made whose skill was renamed or removed (the link only); nothing else is deleted. No other repo installs these skills.

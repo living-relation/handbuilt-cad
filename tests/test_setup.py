@@ -58,6 +58,26 @@ def test_skills_linked_with_opt_in(tmp_path):
     assert (home / ".cursor" / "skills" / "demo").is_symlink()
 
 
+def test_skills_link_ignores_zips_readme_and_folders_without_skill_md(tmp_path):
+    home = tmp_path / "home"; home.mkdir()
+    root = tmp_path / "clone"
+    (root / "skills" / "demo").mkdir(parents=True)
+    (root / "skills" / "demo" / "SKILL.md").write_text("x")
+    (root / "skills" / "demo.zip").write_bytes(b"PK")
+    (root / "skills" / "README.md").write_text("not a skill")
+    (root / "skills" / "not-a-skill").mkdir()
+    (root / "skills" / "not-a-skill" / "notes.md").write_text("x")
+    env = dict(os.environ, HOME=str(home), ROOT=str(root), LINK_SKILLS="1")
+    script = "set -euo pipefail\n" + _block("# 6. skills", "# end 6")
+    r = subprocess.run(["bash", "-c", script], env=env, capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr + r.stdout
+    for dest in (home / ".claude" / "skills", home / ".cursor" / "skills"):
+        assert (dest / "demo").is_symlink()
+        assert not (dest / "demo.zip").exists()
+        assert not (dest / "README.md").exists()
+        assert not (dest / "not-a-skill").exists()
+
+
 def test_dead_skill_links_pruned_only_when_ours(tmp_path):
     home = tmp_path / "home"
     root = tmp_path / "clone"

@@ -21,11 +21,11 @@ handbuilt-cad/
 ├── drawing/               2D drawing engine (part / assembly sheets, rev letters, rev log, templates)
 ├── pipelines/fairsolid/   scan -> parametric STEP pipeline
 ├── sim/                   simulation: env.sh, SIM_TOOLS.md, install / smoke / rollback scripts, FreeCAD wrappers (freecad/)
-├── skills/                agent skills (publish-to-models, cnc-part-check, scan-to-parametric, ...)
+├── skills/                agent skills plus Claude-import zips at skills/<name>.zip
 ├── examples/bracket/      worked example (run_all.sh)
 ├── templates/parts-home/ owner AGENTS.md that setup.sh puts in the parts home
 ├── scans/INDEX.md         list of raw scans (scans themselves are not in git)
-├── scripts/               repo hooks: guard-staged, gitleaks
+├── scripts/               repo hooks: guard-staged, gitleaks; pack-skill-zips
 └── tests/                 pytest suite (.venv/bin/python -m pytest -q)
 ```
 

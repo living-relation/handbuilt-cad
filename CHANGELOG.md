@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-28: Claude skill zips next to each skill folder
+- One import zip per skill at `skills/<name>.zip`, rebuilt by `scripts/pack_skill_zips.py` (wrappers: `scripts/pack-skill-zips.sh`, `scripts/pack-skill-zips.ps1`).
+- GitHub Action `.github/workflows/skill-zips.yml` rebuilds on push to `main` that touches `skills/**` except `*.zip`, plus `workflow_dispatch`. The bot commit cannot retrigger itself (zip paths excluded, actor check, `[skip ci]`).
+- Guard, gitignore and linkers treat only directories with `SKILL.md` as skills; zip files are not linked. `verify-install.sh` still does not scan `skills/`.
+
 ## 2026-10-26: skills are linked for Cursor too
 - `setup.ps1 -LinkSkills` and `setup.sh --link-skills` now link each CAD skill into `~/.cursor/skills` as well as `~/.claude/skills` (Windows and WSL), so Cursor loads them from the repo. They no longer remove links in `~/.cursor/skills`; dead links there are pruned like in `~/.claude/skills`.
 

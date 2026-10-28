@@ -33,6 +33,16 @@ Then use the venv: `$CAD_PY tools/cnc_check.py --help` (`setup.sh` prints the `C
 
 Setup ends with `scripts/verify-install.sh`; if it prints MISSING, setup failed. Where each tool lives: `AGENTS.md`.
 
+Claude skill zips (`skills/<name>.zip`) are rebuilt on push to `main` that touches skill folders (not the zips themselves). To rebuild locally:
+
+```powershell
+powershell -NoProfile -File scripts\pack-skill-zips.ps1
+```
+
+```bash
+bash scripts/pack-skill-zips.sh
+```
+
 ## What's where
 | Folder | What |
 |---|---|
@@ -42,7 +52,7 @@ Setup ends with `scripts/verify-install.sh`; if it prints MISSING, setup failed.
 | parts home (`~/cad-parts`, outside git) | part build scripts (`<job>/src`) and working outputs (`<job>/runs`); created by `setup.sh`, found through `HBCAD_PARTS_HOME` (`tools/paths.py`). Finished results go to the models folder (`publish-to-models`) |
 | `pipelines/fairsolid/` | scan mesh -> parametric STEP pipeline (own venv, see its README). This is Fairsolid (the old fairsolid GitHub repo was deleted on 2026-10-21), see [`docs/FAIRSOLID.md`](docs/FAIRSOLID.md) |
 | `examples/` | small generic examples |
-| `skills/` | agent skills (Claude, Cursor and bots install them from here; see `skills/README.md`) |
+| `skills/` | agent skills (Claude, Cursor and bots install them from here; see `skills/README.md`). Claude-importable zips live next to each skill folder as `skills/<name>.zip` |
 | `docs/` | wiki, tools index (`docs/TOOLS.md`), history |
 
 ## Rules in one line

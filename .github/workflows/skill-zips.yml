@@ -1,0 +1,58 @@
+# Rebuild one Claude-importable zip per skill (skills/<name>.zip) when skill
+# folders change. The bot commit only touches those zips, so it must not
+# retrigger this workflow: zip paths are excluded, github-actions[bot] is
+# skipped, and the commit message includes [skip ci].
+name: skill-zips
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "skills/**"
+      - "!**/*.zip"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: skill-zips
+  cancel-in-progress: false
+
+jobs:
+  pack:
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || (github.actor != 'github-actions[bot]'
+          && !contains(github.event.head_commit.message, '[skip ci]'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rebuild zips
+        id: pack
+        continue-on-error: true
+        run: python3 scripts/pack_skill_zips.py
+      - name: Commit zips that changed
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- skills/*.zip
+          deleted=$(git ls-files -d -- 'skills/*.zip' || true)
+          if [ -n "$deleted" ]; then git add -- $deleted; fi
+          extra=$(git diff --cached --name-only | grep -vE '^skills/[^/]+\.zip$' || true)
+          if [ -n "$extra" ]; then
+            echo "refusing to commit non-zip paths: $extra"
+            exit 1
+          fi
+          if git diff --cached --quiet; then
+            echo "no zip changes"
+          else
+            git commit -m "chore: rebuild Claude skill zips [skip ci]"
+            git push
+          fi
+      - name: Fail on Claude limit violations
+        if: steps.pack.outcome == 'failure'
+        run: |
+          echo "pack reported Claude skill limit violations (skill content was not edited)."
+          exit 1

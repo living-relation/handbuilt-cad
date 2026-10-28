@@ -150,6 +150,7 @@ if [ "$LINK_SKILLS" != 1 ]; then
   echo "skills: not linked (opt in with --link-skills)"
 else
   stamp=$(date +%Y%m%d-%H%M%S)
+  # Directories with SKILL.md only. Files (skills/<name>.zip, README.md) are not skills.
   for s in "$ROOT"/skills/*/; do
     s=${s%/}; [ -f "$s/SKILL.md" ] || continue; name=$(basename "$s")
     for t in "$HOME/.claude/skills" "$HOME/.cursor/skills"; do
