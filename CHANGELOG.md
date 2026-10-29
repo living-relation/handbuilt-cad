@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-28: one state file, decisions file and automation registry
+- New `STATE.md` (goal, open items, last cleanup) and `DECISIONS.md` (dated decisions). `AGENTS.md` points to both.
+- New `automation.yml` lists every hook, workflow and setup job; `scripts/registry-check.py` checks it.
+- New `.githooks/commit-msg` runs `scripts/state-check.sh` in comment mode (`.state-check-mode`): it warns when code changes without a state/decisions update. `[no-state]` in the message skips one commit. It uses the first Python that actually runs and warns (never goes silent) if the registry check fails.
+- Removed `docs/PRE-PUBLIC-CHECKLIST.md` (done when the repo went public). Fairsolid's surface-fit plan status updated.
+
 ## 2026-10-28: Claude skill zips next to each skill folder
 - One import zip per skill at `skills/<name>.zip`, rebuilt by `scripts/pack_skill_zips.py` (optional wrappers: `scripts/pack-skill-zips.sh`, `scripts/pack-skill-zips.ps1`).
 - GitHub Action `.github/workflows/skill-zips.yml` rebuilds on a same-repo PR whose head is not `main` and commits changed zips back to that branch, then runs the same pytest + zip-match checks as the verify job. On stale `main` it resets `chore/skill-zips` to `origin/main`, rebuilds the zips on that tree (`--force-with-lease` on that bot branch only), and opens a zip PR. It never pushes to `main`. GITHUB_TOKEN commits re-dispatch a verify run. Actor + `[skip ci]` prevent loops.

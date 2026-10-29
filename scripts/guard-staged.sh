@@ -36,5 +36,5 @@ while IFS= read -r f; do
 done < "${TMPDIR:-/tmp}/guard.$$"
 rm -f "${TMPDIR:-/tmp}/guard.$$"
 if [ "$warn" -gt 0 ] && [ -f .guard-strict ]; then echo "guard: BLOCK $warn file(s) with home paths (.guard-strict is on)"; fail=1; fi
-[ "$warn" -gt 0 ] && echo "guard: $warn file(s) with home paths (warning only; see docs/PRE-PUBLIC-CHECKLIST.md or CONTRIBUTING)"
+[ "$warn" -gt 0 ] && echo "guard: $warn file(s) with home paths (warning only; create .guard-strict to block them, see CONTRIBUTING)"
 exit $fail
