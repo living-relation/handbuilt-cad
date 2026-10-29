@@ -1,0 +1,11 @@
+{
+  "autodeskProduct": "Fusion",
+  "type": "addin",
+  "id": "c38fcc8e-c630-4f19-b2ad-aa3102203fa8",
+  "author": "handbuilt-cad",
+  "description": {"": "HB BOM: count parts, fill part number/description/material from build.json or by hand, export CSV and Excel with a report of anything blocked or empty."},
+  "version": "1.0.0",
+  "runOnStartup": true,
+  "supportedOS": "windows|mac",
+  "editEnabled": true
+}
