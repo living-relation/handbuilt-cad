@@ -296,7 +296,16 @@ def test_pyyaml_is_pinned():
 
 
 def test_rule_3_is_reworded_in_place():
-    line = [l for l in (ROOT / "AGENTS.md").read_text().splitlines() if l.startswith("3. ")][0]
+    lines = (ROOT / "AGENTS.md").read_text().splitlines()
+    rule2 = [l for l in lines if l.startswith("2. ")][0]
+    assert "Never use `--no-verify`" in rule2
+    assert "never force-push" in rule2
+    assert "never push to `main`" in rule2
+    assert (
+        "Exception: the skill-zips CI bot may force-push (with lease) its own "
+        "`chore/skill-zips` branch only."
+    ) in rule2
+    line = [l for l in lines if l.startswith("3. ")][0]
     assert line.startswith("3. Skill zips")
     assert "rebuilt automatically by CI" in line
     assert "Allow GitHub Actions to create and approve pull requests" in (ROOT / "CONTRIBUTING.md").read_text()
