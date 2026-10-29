@@ -295,6 +295,17 @@ def test_pyyaml_is_pinned():
     assert "pyyaml==6.0.3" in req.lower() or "PyYAML==6.0.3" in req
 
 
+def test_electrical_plan_rules_are_their_own_section():
+    text = (ROOT / "AGENTS.md").read_text()
+    assert "## Electrical and design plans" in text
+    elec = text.split("## Electrical and design plans")[1].split("##")[0]
+    assert "wiring tables" in elec.lower()
+    assert "schematic" in elec.lower()
+    assert "TBA" in elec
+    assert "manufacturer CAD model" in elec
+    assert "a1, a2" in text
+
+
 def test_rule_3_is_reworded_in_place():
     lines = (ROOT / "AGENTS.md").read_text().splitlines()
     rule2 = [l for l in lines if l.startswith("2. ")][0]

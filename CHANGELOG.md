@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-29: electrical plan, off-the-shelf CAD, questions to Dan
+- Every design with electronics has a plan document (wiring tables, schematic, electronics BOM). Wiring tables list every required wire; unplanned GPIO/PCB pins are TBA. Electrical designs use real gauges, connectors, routing and device specs. Off-the-shelf parts use the manufacturer CAD model, or a labelled best-guess from the datasheet.
+- Questions to the maintainer are always multiple choice, labelled a1, a2, with a recommended answer when there is one.
+- Docs and skills only (`AGENTS.md` "Electrical and design plans", not CAD rule 19 — that number is reserved for PR 49).
+
 ## 2026-10-28: Claude skill zips next to each skill folder
 - One import zip per skill at `skills/<name>.zip`, rebuilt by `scripts/pack_skill_zips.py` (optional wrappers: `scripts/pack-skill-zips.sh`, `scripts/pack-skill-zips.ps1`).
 - GitHub Action `.github/workflows/skill-zips.yml` rebuilds on a same-repo PR whose head is not `main` and commits changed zips back to that branch, then runs the same pytest + zip-match checks as the verify job. On stale `main` it resets `chore/skill-zips` to `origin/main`, rebuilds the zips on that tree (`--force-with-lease` on that bot branch only), and opens a zip PR. It never pushes to `main`. GITHUB_TOKEN commits re-dispatch a verify run. Actor + `[skip ci]` prevent loops.

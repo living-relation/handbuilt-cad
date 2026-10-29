@@ -29,9 +29,9 @@ Use what the user already gave (brief, BOM, existing SUMMARY.md). Ask only for w
 - Never ask the user about cutters unless they are the machinist. Assume standard shop end mills and state the radius used.
 
 ## Asking the user
-- Look it up first. For bought parts, mating parts and standards, find the maker's drawings, datasheets and specs yourself (primary sources) and cite them. Ask only what those can't answer, and mark a value TBD only if no source settles it (primary-source-spec-check).
+- Look it up first. For bought parts, mating parts and standards, find the maker's drawings, datasheets and specs yourself (primary sources) and cite them. Ask only what those can't answer, and mark a value TBD only if no source settles it (primary-source-spec-check). Unplanned GPIO/PCB pins are TBA, not a guessed pin.
 - Inside a project repo with its own rules (an AGENTS.md or a decision log), those rules win: for example, open questions go in its open-items list instead of pickers, and maker drawings and specs are looked up before asking.
-- Everywhere else: one decision at a time, each with an image and clickable choices (the user's preference).
+- Everywhere else: one decision at a time, each with an image and multiple-choice answers labelled with one letter plus a number (a1, a2), with a recommended answer when there is one.
 
 ## Which files to check
 Check the primary file(s) named in SUMMARY.md/MANIFEST.sha256 (assemblies: the assembly STEP plus each machined part). If none are named, ask; on a check-only run, check the obvious files by name and flag it as a guess. Other files people add (drawings, PDFs, photos) are expected; ignore them, never move or delete them.
@@ -40,7 +40,7 @@ Check the primary file(s) named in SUMMARY.md/MANIFEST.sha256 (assemblies: the a
 - Before changing any part on its own, look at the assembly to see how it is oriented and what it mates with.
 - Machined bodies: all steps.
 - 3D-printed bodies: valid body, minimum wall on critical or structural features (step 3 rules; flag the rest), and hole sizes vs saved limits. Skip weight, machinability and setups.
-- Purchased or customer-supplied parts (screws, enclosures, circuit boards): valid body and no overlap only.
+- Purchased or customer-supplied parts (screws, enclosures, circuit boards): valid body and no overlap only. Off-the-shelf parts, especially dev boards, use the manufacturer CAD model, or a clearly labelled best-guess model built from the datasheet when none exists.
 
 ## Steps
 1. Valid bodies. A part is one valid solid; in an assembly every body is valid on its own.
@@ -50,7 +50,7 @@ Check the primary file(s) named in SUMMARY.md/MANIFEST.sha256 (assemblies: the a
 5. Fit. Check against saved fit targets; report passes vs total. Assemblies also check overlaps and mates. Intentional O-ring or gasket squeeze is not a failure: report the squeeze % and flag it if outside the normal range (static O-rings about 15–30%).
 6. Machinability, no toolpaths (machined bodies). Report the setup count (flips and re-clamps, as a minimum), the smallest inside corner radius vs the assumed cutter radius, and unreachable or knife-edge spots.
 7. Review views. Render the saved views with the model shown as smooth solid bodies, mesh triangulation and polygon edges hidden; look at them yourself, then send. Section views are capped (closed-surface clipping, solid cut faces), never open cut faces, which render as hollow shells. (`tools/render/smooth_render.py --section`).
-8. Report numbers and views, then (following Asking the user) walk the user through the open problems and the flag list (thin spots that are non-structural or unclear, skipped fillets) one decision at a time: each finding gets an image of the spot and clickable choices (e.g. Change it / Approve as is / Not sure, discuss). Save the approvals where step 3 lists them (on a check-only run, report them so they're saved at the next publish). No strength or FEA until geometry is approved, unless the user asks for early tests to check the overall design or find risks.
+8. Report numbers and views, then (following Asking the user) walk the user through the open problems and the flag list (thin spots that are non-structural or unclear, skipped fillets) one decision at a time: each finding gets an image of the spot and multiple-choice answers labelled a1, a2 (e.g. a1 Change it / a2 Approve as is — recommended / a3 Not sure, discuss). Save the approvals where step 3 lists them (on a check-only run, report them so they're saved at the next publish). No strength or FEA until geometry is approved, unless the user asks for early tests to check the overall design or find risks.
 
 ## Fillets and edge breaks
 - Both come last, after all cuts (pockets, holes, slots) are done.
@@ -63,3 +63,4 @@ Check the primary file(s) named in SUMMARY.md/MANIFEST.sha256 (assemblies: the a
 ## Notes
 - New revs follow publish-to-models: in the models home, new rev-letter folders (`rev<LETTER>`, clerical `rev<LETTER>.<NN>`); in a project repo with its own revision register, its rules win. Never overwrite an old rev.
 - Drawings follow the drawing rules: no hidden lines, no mesh lines, the model drives the drawing. Workflow: redline the drawing, then change the model, then regenerate the drawing.
+- Designs with electronics need a plan document (wiring tables, schematic, electronics BOM) per AGENTS.md "Electrical and design plans". Wiring tables list every required wire; unplanned GPIO/PCB pins are TBA. Electrical designs use real gauges, connectors, routing and device specs.
