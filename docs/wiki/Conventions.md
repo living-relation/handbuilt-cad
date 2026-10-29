@@ -8,6 +8,9 @@
 - **Units:** millimetres, degrees, newtons, MPa, kilograms. Threads named by standard (e.g. 7/8-14 UNF).
 - **Fixed interfaces.** Derived designs (billet knuckles) keep every hole, bore, eye and mount exactly where the approved model has them, checked automatically.
 - **Safety factor target (knuckle project convention):** 2.0× on yield at the `LOADS.md` cases for its structural parts. Not a repo-wide rule; other jobs use the owner's target.
+- **Electronics:** every design with electronics has a plan document (wiring tables, schematic, electronics BOM). Wiring tables list every required wire; unplanned GPIO/PCB pins are TBA. Electrical designs use real gauges, connectors, routing and device specs ([`AGENTS.md`](../../AGENTS.md) "Electrical and design plans").
+- **Off-the-shelf CAD.** Off-the-shelf parts (dev boards, extrusion brackets, plates and similar hardware) use the supplier's official CAD model, or a labelled best-guess from the datasheet when none exists. Put the supplier's part number on the BOM. Save every part model, purchased and fabricated, in a `parts/` folder inside the project.
+- **Questions to the maintainer:** always multiple choice, labelled a1, a2, with a recommended answer when there is one.
 - **Git:** the rules are in [`AGENTS.md`](../../AGENTS.md) and [`CONTRIBUTING.md`](../../CONTRIBUTING.md): branch -> PR -> review -> merge, never commit or push to `main`, never force-push or rewrite pushed history, never skip a hook. There is one clone, in Windows; WSL reaches it through the `~/projects/handbuilt-cad` link. Run git from Windows and pull with `git pull --ff-only`.
 - **Backups:** git history is the backup for anything in the repo. The projects `_archive` folder is only for obsolete work, and only with the owner's OK; no zip snapshots there before changes.
 - **STEP only:** STEP is the deliverable; STL only when a print job needs one.

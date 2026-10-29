@@ -150,11 +150,19 @@ if [ "$LINK_SKILLS" != 1 ]; then
   echo "skills: not linked (opt in with --link-skills)"
 else
   stamp=$(date +%Y%m%d-%H%M%S)
+  # Claude-app-owned skills (skills/EXCLUDE.txt, or SKILL.md frontmatter `source: harness-design-app`): never linked,
+  # and a same-name entry in ~/.claude/skills or ~/.cursor/skills is never moved, backed up, replaced or removed.
+  hb_app_skill() { # $1 name, $2 dir (may be missing)
+    if [ -f "$ROOT/skills/EXCLUDE.txt" ] && sed 's/#.*//; s/[[:space:]]//g' "$ROOT/skills/EXCLUDE.txt" | grep -qxF "$1"; then return 0; fi
+    [ -f "$2/SKILL.md" ] && sed -n '1{/^---/!q;d};/^---/q;p' "$2/SKILL.md" | grep -Eq "^source:[[:space:]]*['\"]?harness-design-app['\"]?[[:space:]]*$"
+  }
   # Directories with SKILL.md only. Files (skills/<name>.zip, README.md) are not skills.
   for s in "$ROOT"/skills/*/; do
     s=${s%/}; [ -f "$s/SKILL.md" ] || continue; name=$(basename "$s")
+    if hb_app_skill "$name" "$s"; then echo "SKIP harness app skill: $s"; continue; fi
     for t in "$HOME/.claude/skills" "$HOME/.cursor/skills"; do
       mkdir -p "$t"; d="$t/$name"
+      if hb_app_skill "$name" "$d"; then echo "SKIP harness app skill: $d"; continue; fi
       if [ -L "$d" ] && [ "$(readlink -f "$d")" = "$(readlink -f "$s")" ]; then continue; fi
       if [ -e "$d" ] || [ -L "$d" ]; then b="$HOME/.skills-backup/$stamp/$(basename "$(dirname "$t")")"; mkdir -p "$b"; mv "$d" "$b/"; echo "skill backed up: $b/$name"; fi
       ln -s "$s" "$d"; echo "skill linked: $d -> $s"
@@ -163,6 +171,7 @@ else
   for t in "$HOME/.claude/skills" "$HOME/.cursor/skills"; do
     for d in "$t"/*; do
       [ -L "$d" ] || continue; l=$(readlink "$d")
+      if hb_app_skill "$(basename "$d")" "$d"; then echo "SKIP harness app skill: $d"; continue; fi
       case "$l" in "$ROOT"/skills/*) [ -f "$l/SKILL.md" ] || { rm "$d"; echo "skill link pruned: $d"; } ;;
         # stale link from an old handbuilt-cad clone (e.g. the retired ~/handbuilt-cad WSL clone): broken links only
         */handbuilt-cad/skills/*|*/handbuilt-cad-*/skills/*) [ -e "$d" ] || { rm "$d"; echo "stale skill link pruned: $d -> $l"; } ;;

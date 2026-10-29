@@ -16,7 +16,7 @@ The first four are the generic versions (paths come from `local.toml`, no projec
 
 sim-stack covers both the quick single-load-case check (`tools/quick_fea.py`, formerly the quick-fea skill) and full studies.
 
-Every CAD skill follows the repo rules on capped sections (AGENTS.md "Capped sections only") and lettered revs ("Rev folders are lettered").
+Every CAD skill follows the repo rules on capped sections (AGENTS.md "Capped sections only") and lettered revs ("Rev folders are lettered"). Electrical and plan rules are in AGENTS.md "Electrical and design plans". Questions to the maintainer are multiple choice (a1, a2).
 
 **Single home.** This folder is the only place CAD skills are edited. Agents (Claude, Cursor, Grok Bot and any other) load them from here or link to them (see Installing); they never edit a copy kept anywhere else. A change to a CAD skill is a PR to this folder.
 

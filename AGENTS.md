@@ -6,9 +6,13 @@ Before starting work or asking the maintainer anything, read in order: (1) this 
 working memory `%USERPROFILE%\.claude\working-memory\<project>\INDEX.md` (WSL:
 `/mnt/c/Users/<user>/.claude/working-memory/<project>/INDEX.md`), (4) the newest handoff note if one
 exists (none yet; see `handoff/` if present). If a rule or note already answers a question, act on it and cite it - never ask the
-maintainer something the rules already answer.
+maintainer something the rules already answer. When you do ask (Dan): always multiple
+choice, labelled with one letter plus a number (a1, a2), with a recommended answer when
+there is one.
 
 This file is the single agent guide for this repo. `CLAUDE.md` and `.cursor/rules/cad.mdc` only point here.
+
+**State and decisions:** current goal and open items live only in `STATE.md`; dated decisions in `DECISIONS.md`. Scripts and hooks are registered in `automation.yml`. The `commit-msg` hook warns when code changes without one of these being updated (skip one commit with `[no-state]`).
 
 ## Before you change anything
 1. Read this file, `CONTRIBUTING.md`, and the hooks/CI that apply (`.githooks/`, `.pre-commit-config.yaml`, `.github/workflows/` if present). Follow them. If a planned step would bypass a hook or gate, stop and ask the maintainer.
@@ -44,6 +48,12 @@ The drawing engine's full rule list (and which ones it enforces) is `drawing/DRA
 17. **Initials, never agent names.** DRAWN = the person on Rev A; rev-log BY = the person who requested the change (`drawing/DRAWING-RULES.md` rule 32). They come from `~/.drawing-initials` (or env `DRAWING_INITIALS`); if missing and you are an agent (no terminal) the tool stops - ask the maintainer for the requester's initials, never guess or use "Claude" / "SteveCAD".
 18. **Revision triangles.** Every full-letter rev puts its letter in a triangle next to each changed item (and the BOM row of a changed part number); .01 clerical revs have none and are not in the rev log (`drawing/DRAWING-RULES.md` rule 33, `drawing/revmarks.py`). Old triangles stay on later revs by default.
 19. **Latest rev replaces the previous one.** The latest revision of a model always replaces the previous one. When a new rev is filed, delete the old rev's models and outputs (models folder and runs); keep only the latest rev. Never keep old revs side by side. Delete only after the new rev is filed and hash-checked (`skills/publish-to-models` step 7). The rev log carries the history.
+
+## Electrical and design plans
+1. **Plan document.** Every design with electronics includes a plan document with wiring tables, a schematic, and an electronics BOM.
+2. **Wiring tables.** List every required wire for each device signal. If GPIO/PCB pins can't be planned yet, leave the pin as TBA instead of assigning one.
+3. **Real wiring.** Electrical designs carry real planned wiring (wire gauges, connectors, routing) and real device specs.
+4. **Off-the-shelf CAD.** Off-the-shelf parts (dev boards, extrusion brackets, plates and similar hardware) use the supplier's official CAD model, or a clearly labelled best-guess from the datasheet when none exists. Put the supplier's part number on the BOM. Save every part model, purchased and fabricated, in a `parts/` folder inside the project.
 
 ## Folder notes
 Every folder the toolkit creates or uses (the parts home `~/cad-parts` root, its `_archive`, each `<job>`, `<job>/src`, `<job>/runs`, the models folder and each models job folder) has a README.md or AGENTS.md saying what is in it, who owns it, and where its paired folder is. An agent that creates a new job or folder adds one from `templates/notes/` (`tools/folder_notes.py` does it, add-only, never overwriting; it is the only writer of these notes, called by `setup.sh` and publish-to-models). Job folders are named `<name>_<MMDD>`; other folders are reported as warnings. `tools/folder_notes.py --check` lists folders missing one. This is the full rule.

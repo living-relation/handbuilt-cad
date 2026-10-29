@@ -1,0 +1,64 @@
+# automation.yml: every script, hook and setup job that runs on its own or writes outside a user's command.
+# Checked by scripts/registry-check.py (run from the commit-msg hook). Plain CLI tools (tools/, drawing/, sim/,
+# pipelines/fairsolid/) run only when someone calls them and write outside the repo, so they need no entry.
+generated_patterns: ["**/*.checks.json", "**/*_report.json", "**/*.pdf", "**/*.html", "**/*.xlsx"]
+ignore: ["tests/**", "pipelines/fairsolid/tests/**", "docs/history/**"]
+handmade: ["pipelines/fairsolid/docs/ui-mockup/**"]
+automations:
+  - id: commit-guard
+    script: [.githooks/pre-commit, .githooks/pre-merge-commit]
+    helpers: [scripts/guard-staged.sh, scripts/run-gitleaks.sh]
+    trigger: git pre-commit and pre-merge-commit (core.hooksPath .githooks, set by setup)
+    reads: [staged changes, .gitleaks.toml, .gitleaks-version]
+    writes: []
+    committed: no
+    auto_commit: false
+    enabled: true
+    run_cmd: sh .githooks/pre-commit
+    owner: maintainer
+  - id: state-check
+    script: .githooks/commit-msg
+    helpers: [scripts/state-check.sh, scripts/registry-check.py]
+    trigger: git commit-msg (core.hooksPath .githooks)
+    reads: [staged changes, commit message, .state-check-mode, automation.yml]
+    writes: []
+    committed: no
+    auto_commit: false
+    enabled: true
+    run_cmd: bash scripts/state-check.sh HEAD --staged
+    owner: maintainer
+  - id: skill-zips
+    script: .github/workflows/skill-zips.yml
+    helpers: [scripts/pack_skill_zips.py, scripts/stage-skill-zips.sh, scripts/pack-skill-zips.sh, scripts/pack-skill-zips.ps1]
+    trigger: pr-check (same-repo PRs touching skills/), push-main, workflow_dispatch
+    reads: ["skills/*/**", scripts/pack_skill_zips.py, scripts/stage-skill-zips.sh]
+    writes: ["skills/*.zip"]
+    committed: yes
+    auto_commit: true
+    enabled: true
+    bypass: "force-with-lease push to its own chore/skill-zips branch only (AGENTS.md rule 2); never pushes to main"
+    run_cmd: python scripts/pack_skill_zips.py
+    check_cmd: python scripts/pack_skill_zips.py --check-only
+    owner: maintainer
+  - id: setup
+    script: [setup.ps1, setup.sh, install.cmd]
+    helpers: [scripts/link-skills.ps1, scripts/fetch-gitleaks.sh, scripts/hbcad-env.sh, scripts/verify-install.sh, tools/folder_notes.py]
+    trigger: manual
+    reads: [uv.lock, .python-version, .gitleaks-version, apt-sim.txt, requirements-sim.txt, local.toml]
+    writes: [.venv/**, .tools/**]
+    committed: gitignored
+    auto_commit: false
+    enabled: true
+    run_cmd: install.cmd
+    check_cmd: bash scripts/verify-install.sh
+    owner: maintainer
+  - id: pull
+    script: pull.cmd
+    trigger: manual
+    reads: [origin/main]
+    writes: []
+    committed: no
+    auto_commit: false
+    enabled: true
+    run_cmd: pull.cmd
+    owner: maintainer

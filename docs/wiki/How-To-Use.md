@@ -159,6 +159,7 @@ If you're an AI helping someone with this repo:
 3. After every change: rebuild, run `tools/features.py --spec` and `tools/cnc_check.py` (with the minimum wall the owner gave). Run `tools/quick_fea.py` only after the owner approves the geometry, unless they ask for early tests. Report the numbers (mass, PASS/FAIL, safety factor once run), not just "done".
 4. Never scale scan data, never commit scans, secrets or big solver output, and never force-push. Keep personal part designs out of the public repo unless the owner says to share them.
 5. Use `.venv/bin/python` for CAD, `$SIM_VENV/bin/python` for meshing/FEA, and run heavy simulations in `~/sim-runs/`, not on `/mnt/c`.
+6. Questions to the maintainer are always multiple choice, labelled a1, a2, with a recommended answer when there is one.
 More detail: [For AI agents](AI-agents.md).
 
 ## Helpers: Fairsolid runs and new revs

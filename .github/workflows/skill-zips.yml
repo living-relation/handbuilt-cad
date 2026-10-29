@@ -17,6 +17,7 @@ on:
     paths:
       - "skills/**"
       - "!**/*.zip"
+      - "skills/EXCLUDE.txt"
       - "scripts/pack_skill_zips.py"
       - "scripts/pack-skill-zips.sh"
       - "scripts/pack-skill-zips.ps1"
@@ -28,6 +29,7 @@ on:
     paths:
       - "skills/**"
       - "!**/*.zip"
+      - "skills/EXCLUDE.txt"
       - "scripts/pack_skill_zips.py"
       - "scripts/pack-skill-zips.sh"
       - "scripts/pack-skill-zips.ps1"
@@ -98,7 +100,9 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             git commit -m "chore: rebuild Claude skill zips [skip ci]"
-            git -c "http.https://github.com/.extraheader=AUTHORIZATION: bearer ${GITHUB_TOKEN}" \
+            # GitHub git HTTP wants basic x-access-token (same as actions/checkout), not Bearer.
+            auth=$(printf 'x-access-token:%s' "${GITHUB_TOKEN}" | base64 | tr -d '\n')
+            git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${auth}" \
               push origin "HEAD:refs/heads/${HEAD_REF}"
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
@@ -123,7 +127,7 @@ jobs:
           python scripts/pack_skill_zips.py
           sh scripts/stage-skill-zips.sh
           git diff --cached --exit-code -- 'skills/*.zip'
-          python -m pytest -q tests/test_pack_skill_zips.py tests/test_guard_staged.py
+          python -m pytest -q tests/test_pack_skill_zips.py tests/test_guard_staged.py tests/test_link_skills_guard.py
 
   on-pr-fork:
     if: >-
@@ -189,7 +193,9 @@ jobs:
           sh scripts/fetch-gitleaks.sh
           sh scripts/run-gitleaks.sh
           git commit -m "chore: rebuild Claude skill zips [skip ci]"
-          git -c "http.https://github.com/.extraheader=AUTHORIZATION: bearer ${GITHUB_TOKEN}" \
+          # GitHub git HTTP wants basic x-access-token (same as actions/checkout), not Bearer.
+          auth=$(printf 'x-access-token:%s' "${GITHUB_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${auth}" \
             push --force-with-lease origin chore/skill-zips
           if gh pr list --head chore/skill-zips --state open --json number --jq 'length' | grep -qx 0; then
             gh pr create --base "${DEFAULT_BRANCH}" --head chore/skill-zips \
@@ -225,4 +231,4 @@ jobs:
           python scripts/pack_skill_zips.py
           sh scripts/stage-skill-zips.sh
           git diff --cached --exit-code -- 'skills/*.zip'
-          python -m pytest -q tests/test_pack_skill_zips.py tests/test_guard_staged.py
+          python -m pytest -q tests/test_pack_skill_zips.py tests/test_guard_staged.py tests/test_link_skills_guard.py

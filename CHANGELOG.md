@@ -4,6 +4,20 @@
 - Rule (AGENTS.md 19, `skills/publish-to-models` step 7, `skills/cnc-part-check`): The latest revision of a model always replaces the previous one. When a new rev is filed, delete the old rev's models and outputs (models folder and runs); keep only the latest rev. Never keep old revs side by side.
 - Docs and skills text only. `tools/rev.py` is unchanged: it still creates the new `rev<LETTER>` folder beside the old ones; the old ones are deleted after the new rev is filed and checked.
 
+## 2026-10-29: skill-zips CI git push auth
+- Zip commits use HTTP basic `x-access-token` (same as actions/checkout). Bearer was ignored, so the bot could not push rebuilt `skills/*.zip` files.
+
+## 2026-10-29: electrical plan, off-the-shelf CAD, questions to Dan
+- Every design with electronics has a plan document (wiring tables, schematic, electronics BOM). Wiring tables list every required wire; unplanned GPIO/PCB pins are TBA. Electrical designs use real gauges, connectors, routing and device specs. Off-the-shelf parts (dev boards, extrusion brackets, plates and similar hardware) use the supplier's official CAD model, or a labelled best-guess from the datasheet; put the supplier's part number on the BOM and save every part model, purchased and fabricated, in a `parts/` folder inside the project.
+- Questions to the maintainer are always multiple choice, labelled a1, a2, with a recommended answer when there is one.
+- Docs and skills only (`AGENTS.md` "Electrical and design plans", not CAD rule 19 — that number is reserved for PR 49).
+
+## 2026-10-28: one state file, decisions file and automation registry
+- New `STATE.md` (goal, open items, last cleanup) and `DECISIONS.md` (dated decisions). `AGENTS.md` points to both.
+- New `automation.yml` lists every hook, workflow and setup job; `scripts/registry-check.py` checks it.
+- New `.githooks/commit-msg` runs `scripts/state-check.sh` in comment mode (`.state-check-mode`): it warns when code changes without a state/decisions update. `[no-state]` in the message skips one commit. It uses the first Python that actually runs and warns (never goes silent) if the registry check fails.
+- Removed `docs/PRE-PUBLIC-CHECKLIST.md` (done when the repo went public). Fairsolid's surface-fit plan status updated.
+
 ## 2026-10-28: Claude skill zips next to each skill folder
 - One import zip per skill at `skills/<name>.zip`, rebuilt by `scripts/pack_skill_zips.py` (optional wrappers: `scripts/pack-skill-zips.sh`, `scripts/pack-skill-zips.ps1`).
 - GitHub Action `.github/workflows/skill-zips.yml` rebuilds on a same-repo PR whose head is not `main` and commits changed zips back to that branch, then runs the same pytest + zip-match checks as the verify job. On stale `main` it resets `chore/skill-zips` to `origin/main`, rebuilds the zips on that tree (`--force-with-lease` on that bot branch only), and opens a zip PR. It never pushes to `main`. GITHUB_TOKEN commits re-dispatch a verify run. Actor + `[skip ci]` prevent loops.
