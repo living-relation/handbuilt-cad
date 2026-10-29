@@ -12,13 +12,14 @@ This file is the single agent guide for this repo. `CLAUDE.md` and `.cursor/rule
 
 ## Before you change anything
 1. Read this file, `CONTRIBUTING.md`, and the hooks/CI that apply (`.githooks/`, `.pre-commit-config.yaml`, `.github/workflows/` if present). Follow them. If a planned step would bypass a hook or gate, stop and ask the maintainer.
-2. Never use `--no-verify`, never force-push, never push to `main`. Work on a branch and open a PR.
-3. Never commit or push generated or bot-owned files by hand; let the workflow that owns them regenerate them.
+2. Never use `--no-verify`, never force-push, never push to `main`. Work on a branch and open a PR. Exception: the skill-zips CI bot may force-push (with lease) its own `chore/skill-zips` branch only.
+3. Skill zips (`skills/<name>.zip`) are rebuilt automatically by CI; don't edit by hand. Never commit or push other generated or bot-owned files by hand; let the workflow that owns them regenerate them.
 4. One clone per machine. On Windows + WSL it is the Windows clone (`<projects>\active\handbuilt-cad`); WSL sees the same files through the link `~/projects/handbuilt-cad`, so there is no WSL clone to keep in sync. Run git from Windows; pull with `git pull --ff-only`, one repo at a time; no batch pull/push scripts. In WSL use the Linux venv (`$CAD_PY`, default `~/.venvs/handbuilt-cad/bin/python`), never the repo's Windows `.venv`.
 5. Use the repo's own venv (`.venv`, built by `setup.sh` from `uv.lock`). Don't install into system Python or into another project's venv. No code here imports from FreeCAD's bundled Python.
 
 ## Files that never go in this repo
 - Part/model files (STEP, STL, 3MF, F3D, FCStd, PLY, OBJ, IGES, BREP, GLB), solver outputs, archives, files over 1 MB. Finished models go to `$MODELS_DIR/<job>_<MMDD>/<rev>/` (see `skills/publish-to-models`).
+  Exception: Claude-importable skill zips at `skills/<skill-name>.zip`, rebuilt automatically by `.github/workflows/skill-zips.yml`. Do not add other archives.
 - Secrets, `.env` files, tokens, personal paths or personal data.
 
 ## CAD and drawing rules

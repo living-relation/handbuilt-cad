@@ -1,12 +1,11 @@
 ---
 name: sim-stack
 description: >-
-  Use for any strength, heat, multiphysics or CFD check of an approved CAD
-  part: a quick single linear-static check with tools/quick_fea.py, or a full
-  study with the WSL simulation stack (Gmsh, CalculiX, Elmer, OpenFOAM,
-  ParaView) in sim/SIM_TOOLS.md. Runs on the user's machine.
+  Use for any FEA, strength, heat, multiphysics or CFD check of an approved
+  CAD part: quick_fea.py or the WSL stack (Gmsh, CalculiX, Elmer, OpenFOAM).
+  Runs on the user's machine.
 ---
-The project's own rules win over this skill. Versions, smoke tests and solver commands are in `sim/SIM_TOOLS.md`.
+The project's own rules win over this skill. Versions, smoke tests and solver commands are in `sim/SIM_TOOLS.md`. A quick check is one linear-static load case with `tools/quick_fea.py`; a full study uses the WSL stack and post-processes in ParaView.
 
 ## When
 - Only after the user approves the geometry (cnc-part-check passed), unless they ask for early tests to check the design or find risks.

@@ -1,12 +1,13 @@
 ---
 name: primary-source-spec-check
 description: >-
-  Use whenever a design, drawing, BOM or answer needs a real spec value (thread
-  size, pinout, dimension, tolerance, rating, part number): get it from the
-  official standard, manual or datasheet, cite it, and mark anything unconfirmed
-  TBD instead of guessing.
+  Use whenever a design, drawing, BOM or answer needs a real spec value
+  (thread, pinout, dimension, tolerance, part number): cite the official
+  source; mark unknowns TBD.
 ---
 # Primary-source spec check
+
+Get the value from the official standard, manual or datasheet (including ratings). Mark anything unconfirmed TBD instead of guessing.
 
 1. List every spec value the task depends on (threads, pins, dimensions, tolerances, ratings, part numbers).
 2. For each, find the primary source: the official standard, OEM service/installation manual, or manufacturer datasheet. Forums, AI answers and reseller listings are leads only, not sources.

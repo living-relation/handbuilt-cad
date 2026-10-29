@@ -1,12 +1,11 @@
 ---
 name: scan-to-parametric
 description: >-
-  Use when turning a 3D scan (mesh) into a clean, editable, machinable CAD
-  model. Builds feature-based from exact hard points joined by a few named
-  sketched features. Never mesh-to-solid, hull or shrink-wrap. Runs on the
-  user's machine.
+  Use when turning a 3D scan or mesh into a clean, editable, machinable
+  parametric CAD model built from hard points and sketched features, never
+  mesh-to-solid.
 ---
-**Method: feature-based from hard points.** Measure the hard points exactly (bores, faces, holes, mounts), snap them to cited nominals, then join them with a few named, dimensioned, sketched features. Deliver a clean, closed, machinable solid. Never deliver a solidified mesh, a hull web or faceted faces.
+**Method: feature-based from hard points.** Measure the hard points exactly (bores, faces, holes, mounts), snap them to cited nominals, then join them with a few named, dimensioned, sketched features. Deliver a clean, closed, machinable solid. Never deliver a solidified mesh, a hull web or faceted faces. Never mesh-to-solid, hull or shrink-wrap. Runs on the user's machine.
 
 ## Always
 - **Method and tool up front** in every report and message, e.g. "Feature-based from hard points, Fusion". Every model or image caption names its tool: (Fusion), (build123d), (FreeCAD).
