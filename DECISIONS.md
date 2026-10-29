@@ -7,3 +7,4 @@ One dated line per decision, newest last. Rules that agents must follow live in 
 - 2026-10-28: `automation.yml` registers every hook and setup job; `scripts/registry-check.py` checks it from the commit-msg hook. (maintainer)
 - 2026-10-28: The pre-public checklist was done when the repo went public; `docs/PRE-PUBLIC-CHECKLIST.md` was removed. (maintainer)
 - 2026-10-28: The PR #42 follow-up (other skill copies replaced by links to `skills/`) is done. (maintainer)
+- 2026-10-29: Setup always links CAD skills into `~/.claude/skills` (Cursor reads that folder; do not duplicate into `~/.cursor/skills`). `-LinkSkills` / `--link-skills` stay as no-ops. After a Windows install, a popup reminds the user to upload skill zips in Claude desktop; `-NoPopup`/`-Quiet`/CI skip it.

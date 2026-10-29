@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-29: setup links skills by default; Windows skill-zip upload popup
+- Setup always links each CAD skill into `~/.claude/skills` (Windows junctions and WSL/Linux symlinks). Cursor reads that folder too, so skills are not also linked into `~/.cursor/skills`; old links this repo made there are removed (the link only). `-LinkSkills` / `--link-skills` stay as no-ops.
+- At the end of a Windows install (`setup.ps1`, including double-click `install.cmd`) a separate popup reminds you to upload new or changed CAD skill zips in the Claude desktop app for each Claude account (Skills settings), lists the zip names (or skill folders if there are no zips), and offers to open that folder in Explorer. `-NoPopup` / `-Quiet` skip it, as do CI env vars.
+
 ## 2026-10-28: one state file, decisions file and automation registry
 - New `STATE.md` (goal, open items, last cleanup) and `DECISIONS.md` (dated decisions). `AGENTS.md` points to both.
 - New `automation.yml` lists every hook, workflow and setup job; `scripts/registry-check.py` checks it.

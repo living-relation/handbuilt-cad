@@ -42,7 +42,7 @@ automations:
     owner: maintainer
   - id: setup
     script: [setup.ps1, setup.sh, install.cmd]
-    helpers: [scripts/link-skills.ps1, scripts/fetch-gitleaks.sh, scripts/hbcad-env.sh, scripts/verify-install.sh, tools/folder_notes.py]
+    helpers: [scripts/link-skills.ps1, scripts/skill-upload-popup.ps1, scripts/fetch-gitleaks.sh, scripts/hbcad-env.sh, scripts/verify-install.sh, tools/folder_notes.py]
     trigger: manual
     reads: [uv.lock, .python-version, .gitleaks-version, apt-sim.txt, requirements-sim.txt, local.toml]
     writes: [.venv/**, .tools/**]

@@ -46,16 +46,17 @@ def _run_step6(tmp_path, link):
     return home, r.stdout
 
 
-def test_skills_not_linked_by_default(tmp_path):
-    home, out = _run_step6(tmp_path, "0")
-    assert not (home / ".claude").exists() and not (home / ".cursor").exists()
-    assert "not linked" in out
+def test_skills_linked_by_default(tmp_path):
+    home, out = _run_step6(tmp_path, "0")  # LINK_SKILLS=0 must still link
+    assert (home / ".claude" / "skills" / "demo").is_symlink()
+    assert not (home / ".cursor" / "skills").exists()
+    assert "not linked" not in out
 
 
-def test_skills_linked_with_opt_in(tmp_path):
+def test_skills_linked_with_noop_flag(tmp_path):
     home, _ = _run_step6(tmp_path, "1")
     assert (home / ".claude" / "skills" / "demo").is_symlink()
-    assert (home / ".cursor" / "skills" / "demo").is_symlink()
+    assert not (home / ".cursor" / "skills" / "demo").exists()
 
 
 def test_skills_link_ignores_zips_readme_and_folders_without_skill_md(tmp_path):
@@ -67,15 +68,16 @@ def test_skills_link_ignores_zips_readme_and_folders_without_skill_md(tmp_path):
     (root / "skills" / "README.md").write_text("not a skill")
     (root / "skills" / "not-a-skill").mkdir()
     (root / "skills" / "not-a-skill" / "notes.md").write_text("x")
-    env = dict(os.environ, HOME=str(home), ROOT=str(root), LINK_SKILLS="1")
+    env = dict(os.environ, HOME=str(home), ROOT=str(root), LINK_SKILLS="0")
     script = "set -euo pipefail\n" + _block("# 6. skills", "# end 6")
     r = subprocess.run(["bash", "-c", script], env=env, capture_output=True, text=True)
     assert r.returncode == 0, r.stderr + r.stdout
-    for dest in (home / ".claude" / "skills", home / ".cursor" / "skills"):
-        assert (dest / "demo").is_symlink()
-        assert not (dest / "demo.zip").exists()
-        assert not (dest / "README.md").exists()
-        assert not (dest / "not-a-skill").exists()
+    dest = home / ".claude" / "skills"
+    assert (dest / "demo").is_symlink()
+    assert not (dest / "demo.zip").exists()
+    assert not (dest / "README.md").exists()
+    assert not (dest / "not-a-skill").exists()
+    assert not (home / ".cursor" / "skills" / "demo").exists()
 
 
 def test_dead_skill_links_pruned_only_when_ours(tmp_path):
@@ -88,29 +90,31 @@ def test_dead_skill_links_pruned_only_when_ours(tmp_path):
         (d / "elsewhere").symlink_to(other / "missing")        # not ours, dead
         (d / "keep").symlink_to(other / "keep")                # not ours
         (d / "real").mkdir()                                   # real folder
-    _, out = _run_step6(tmp_path, "1")
-    for t in (".claude", ".cursor"):
-        d = home / t / "skills"
-        assert not (d / "gone").is_symlink() and not (d / "gone").exists()
-        assert (d / "elsewhere").is_symlink() and (d / "keep").is_symlink() and (d / "real").is_dir()
-    assert (home / ".claude" / "skills" / "demo").is_symlink()
-    assert (home / ".cursor" / "skills" / "demo").is_symlink()
+    _, out = _run_step6(tmp_path, "0")
+    d = home / ".claude" / "skills"
+    assert not (d / "gone").is_symlink() and not (d / "gone").exists()
+    assert (d / "elsewhere").is_symlink() and (d / "keep").is_symlink() and (d / "real").is_dir()
+    assert (d / "demo").is_symlink()
+    c = home / ".cursor" / "skills"
+    assert not (c / "gone").exists() and not (c / "demo").exists()
+    assert (c / "elsewhere").is_symlink() and (c / "keep").is_symlink() and (c / "real").is_dir()
     assert "skill link pruned" in out
+    assert "skill link unlinked" in out
 
 
-def test_cursor_links_kept_and_others_untouched(tmp_path):
+def test_cursor_our_links_unlinked_others_untouched(tmp_path):
     home = tmp_path / "home"
     root = tmp_path / "clone"  # _run_step6 creates root/skills/demo
     other = tmp_path / "other"; (other / "keep").mkdir(parents=True)
     d = home / ".cursor" / "skills"; d.mkdir(parents=True)
-    (d / "demo").symlink_to(root / "skills" / "demo")  # ours, already linked
+    (d / "demo").symlink_to(root / "skills" / "demo")  # ours: unlink, do not duplicate
     (d / "keep").symlink_to(other / "keep")            # not ours
     (d / "real").mkdir()                               # real folder
-    _, out = _run_step6(tmp_path, "1")
-    assert (d / "demo").is_symlink() and (root / "skills" / "demo" / "SKILL.md").exists()
+    _, out = _run_step6(tmp_path, "0")
+    assert not (d / "demo").exists()
     assert (d / "keep").is_symlink() and (d / "real").is_dir()
     assert (home / ".claude" / "skills" / "demo").is_symlink()
-    assert "duplicate skill link removed" not in out
+    assert "skill link unlinked" in out
 
 
 def test_ps1_link_skills_prunes_only_dead_links_into_from():
@@ -120,24 +124,29 @@ def test_ps1_link_skills_prunes_only_dead_links_into_from():
     assert "'would-prune'" in ps1 and "Remove-Item" not in ps1
 
 
-def test_ps1_link_skills_claude_and_cursor():
+def test_ps1_link_skills_claude_only_unlinks_cursor():
     ps1 = (ROOT / "scripts" / "link-skills.ps1").read_text()
-    assert '[string[]]$Targets = @("$env:USERPROFILE\\.claude\\skills", "$env:USERPROFILE\\.cursor\\skills"),' in ps1
-    assert '[string[]]$Unlink = @(),' in ps1
+    assert '[string[]]$Targets = @("$env:USERPROFILE\\.claude\\skills"),' in ps1
+    assert '[string[]]$Unlink = @("$env:USERPROFILE\\.cursor\\skills"),' in ps1
+    assert "$env:USERPROFILE\\.cursor\\skills" not in ps1.split("[string[]]$Targets")[1].split("[string[]]$Unlink")[0]
     assert "'would-unlink'" in ps1 and "'unlinked'" in ps1 and ps1.count("[IO.Directory]::Delete($item.FullName, $false)") == 2
 
 
-def test_setup_sh_flag_and_ps1_opt_in():
+def test_setup_sh_flag_and_ps1_link_skills_noop():
     assert "--link-skills) LINK_SKILLS=1" in SETUP and "NO_SKILLS" not in SETUP
+    assert 'LINK_SKILLS=1' in SETUP.split("for a in")[0]
+    assert 'echo "skills: not linked' not in SETUP
     ps1 = (ROOT / "setup.ps1").read_text()
-    assert "[switch]$LinkSkills" in ps1 and "if (-not $LinkSkills)" in ps1 and "NoSkills" not in ps1
+    assert "[switch]$LinkSkills" in ps1 and "if (-not $LinkSkills)" not in ps1 and "NoSkills" not in ps1
+    assert r"scripts\link-skills.ps1" in ps1
 
 
 def test_ps1_runs_wsl_half():
     ps1 = (ROOT / "setup.ps1").read_text()
-    for s in ("[switch]$NoWsl", "wsl.exe -d $WslDistro", "bash setup.sh", "'--no-models'", "'--link-skills'",
+    for s in ("[switch]$NoWsl", "wsl.exe -d $WslDistro", "bash setup.sh", "'--no-models'",
               "wsl.exe not found", "not found (have:", "$LASTEXITCODE -ne 0"):
         assert s in ps1, s
+    assert "'--link-skills'" not in ps1
     assert ps1.index("if ($NoWsl)") < ps1.index("wsl.exe -d $WslDistro")
 
 
@@ -268,5 +277,25 @@ def test_install_cmd_is_setup_ps1_wrapper_passthrough():
     assert "powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1 %*" in cmd
     assert "Exit code:" in cmd and "pause" in cmd
     assert "-NoSim" not in cmd and "-LinkSkills" not in cmd and "-NoWsl" not in cmd
+    assert "-NoPopup" not in cmd and "-Quiet" not in cmd
     readme = (ROOT / "README.md").read_text()
     assert "`pull.cmd`" in readme and "`install.cmd`" in readme
+
+
+def test_ps1_skill_upload_popup_at_end():
+    ps1 = (ROOT / "setup.ps1").read_text()
+    pop = (ROOT / "scripts" / "skill-upload-popup.ps1").read_text()
+    assert "[switch]$NoPopup" in ps1 and "[switch]$Quiet" in ps1
+    assert r"scripts\skill-upload-popup.ps1" in ps1
+    assert ps1.index("link-skills.ps1") < ps1.index("skill-upload-popup.ps1")
+    assert ps1.index("skill-upload-popup.ps1") > ps1.index("Optional: setx MODELS_DIR")
+    reminder = "Upload new or changed CAD skill zips to the Claude desktop app for each Claude account (Skills settings)."
+    assert reminder in pop
+    assert "System.Windows.Forms" in pop and "WScript.Shell" in pop
+    assert "explorer.exe" in pop
+    assert "Open this folder in Explorer?" in pop
+    assert "-Filter '*.zip'" in pop and "'SKILL.md'" in pop
+    assert "$NoPopup -or $Quiet" in pop
+    assert "'CI', 'GITHUB_ACTIONS', 'TF_BUILD'" in pop
+    assert "skills popup: skipped (-NoPopup/-Quiet/CI)" in pop
+    assert "-NoPopup:$NoPopup -Quiet:$Quiet" in ps1
