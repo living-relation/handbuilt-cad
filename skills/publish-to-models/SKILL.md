@@ -8,7 +8,7 @@ description: >-
 ## When to use
 File into the user's single models home as a new versioned folder with SUMMARY.md, REVLOG.md, MADE-WITH.md, drawings, sources and intermediates, then hash-verify. Runs on the user's machine.
 
-Models home (the only one): `[paths] models_dir` in the toolkit repo's `local.toml` (or `MODELS_DIR`). Empty means `<Desktop>/models`, which the repo's setup step resolves from the system's Desktop folder (cloud-synced Desktops included) and creates if missing. Never hard-code a user or cloud-drive path; if the folder can't be resolved, stop and ask the user. Add-only: never archive, move, rename, clean or delete anything already in it.
+Models home (the only one): `[paths] models_dir` in the toolkit repo's `local.toml` (or `MODELS_DIR`). Empty means `<Desktop>/models`, which the repo's setup step resolves from the system's Desktop folder (cloud-synced Desktops included) and creates if missing. Never hard-code a user or cloud-drive path; if the folder can't be resolved, stop and ask the user. Add-only, with one exception: the latest rev replaces the previous one (step 7). Never archive, move, rename, clean or delete anything else already in it.
 
 The project's own rules (AGENTS.md, decision log, revision register) win over this skill wherever they differ.
 
@@ -18,10 +18,10 @@ The project's own rules (AGENTS.md, decision log, revision register) win over th
 Publish straight from the user's machine into the models home, never through the agent's own computer. If that machine is offline, stop and tell the user. On Windows + WSL, write from WSL out to `/mnt/c/...`; never write through `\\wsl.localhost` paths from Windows. If a file must be staged, use a dedicated temp folder outside models (`<cad_staging>/<job>`, from `[paths] cad_staging` / `CAD_STAGING`); only that folder is ever removed.
 
 ## Sources and runs
-Part build scripts live in the parts home (`HBCAD_PARTS_HOME`, default `~/cad-parts/<job>/src/`); copy the ones that built this rev into the rev's `src/`. Working outputs live in `~/cad-parts/<job>/runs/<stamp>/` and are not published, except the finished deliverables (final STEP, drawings, review views, final strength summary, SUMMARY.md). After a successful publish the run's regenerable outputs may be deleted; costly ones go to `~/cad-parts/_archive/<job>/`.
+Part build scripts live in the parts home (`HBCAD_PARTS_HOME`, default `~/cad-parts/<job>/src/`); copy the ones that built this rev into the rev's `src/`. Working outputs live in `~/cad-parts/<job>/runs/<stamp>/` and are not published, except the finished deliverables (final STEP, drawings, review views, final strength summary, SUMMARY.md). After a successful publish the run's regenerable outputs may be deleted; costly ones go to `~/cad-parts/_archive/<job>/`. Runs of an older rev are deleted when the new rev is filed (step 7).
 
 ## Files others add are expected
-Drawings, PDFs, photos or notes dropped into a job or rev folder are legitimate. Never delete, move, rename, overwrite or flag a file this run didn't write, and leave them out of checks.
+Drawings, PDFs, photos or notes dropped into a job or rev folder are legitimate. Never delete, move, rename, overwrite or flag a file this run didn't write, and leave them out of checks. The only exception is deleting a superseded rev (step 7).
 
 ## Steps
 1. Job folder. Existing folders are `<job>_<MMDD>`; keep them as they are. Reuse the existing folder for the same job even on a later day; MMDD is the first publish date. New multi-assembly projects use `<project>_<assembly>_<MMDD>`. If the same name exists from a different year, use `_<YYMMDD>`. Example: `bracket_billet_al_0312`, `rover_gearbox_0415`.
@@ -33,7 +33,7 @@ Drawings, PDFs, photos or notes dropped into a job or rev folder are legitimate.
    - Brand-new model with no earlier folders: starts at A. Rev A is only for brand-new models.
    - Job already has `rev<LETTER>` folders: take the next letter after the highest one.
    - Job has old `rev<number>` folders: don't convert the numbers (many were iterations, not releases). Count the model's real releases in the repo history, skipping I, L, O and Q, and the next letter follows that count. For past history with no repo record, count the saved versions in which the model changed. List those releases as evidence in the revision register and the new SUMMARY.md. If both numbered and lettered folders exist, the lettered ones win: take the next letter after the highest letter. Example: a model with 7 counted releases is at G, so its next release is H.
-   - Old `rev<number>` folders stay exactly as they are (add-only). Never rename or renumber them.
+   - Never rename or renumber old `rev<number>` folders. Count their releases first; once the new rev is filed they are deleted like any older rev (step 7).
    - Clerical rev (only for a drawing already released; an unreleased drawing keeps its counted letter): a drawing-only change that doesn't affect fit, form or function goes in `rev<LETTER>.<NN>` (e.g. `revD.01`, `revD.02`) under the current model letter. It holds only the new drawings, a SUMMARY.md and a manifest, never a model file. A changed model always means a new letter. Its SUMMARY.md points to the `rev<LETTER>` model folder and is the only place the clerical change is logged (it is not added to REVLOG.md).
    - Create the folder so the step fails if it already exists. If it fails, re-read the folders and recompute; never reuse a letter.
 4. Inside the rev folder:
@@ -49,7 +49,7 @@ Drawings, PDFs, photos or notes dropped into a job or rev folder are legitimate.
    - `MANIFEST.sha256`: every file this run wrote, including SUMMARY.md, but not the manifest itself; written on the user's machine after the copy
 5. Copy, confirm each file landed (cloud-synced online-only or locked files can fail; let them download, retry if locked), then SHA-256 check every copied file; on Windows + WSL re-check the hashes from Windows, since sync clients can lag. Stop on any mismatch.
 6. Copy vs move. From a live project folder always copy. Move only when the user asks; then remove only manifest sources whose hash matched. A source in a git repo is removed with a normal commit via safe-repo-preflight.
-7. Old revs are add-only: a missing SUMMARY.md or MANIFEST may be added, nothing existing is changed. Real changes go in a new rev.
+7. Latest rev replaces the previous one. The latest revision of a model always replaces the previous one. When a new rev is filed, delete the old rev's models and outputs (models folder and runs); keep only the latest rev. Never keep old revs side by side. Only after step 5 passes for the new rev: delete the older rev folders of that model in the job folder (`rev<LETTER>`, `rev<LETTER>.<NN>`, old `rev<number>`) and its older runs in `~/cad-parts/<job>/runs/`. The new rev's REVLOG.md and SUMMARY.md carry the history. Real changes always go in a new rev, never into the existing one.
 8. Folder notes: run `.venv/bin/python tools/folder_notes.py` (add-only) so a new job folder, and its parts-home `<job>/`, `src/` and `runs/`, each get a README.md from `templates/notes/`. Never edit an existing README.
 9. Report the rev path, the files and the check result.
 

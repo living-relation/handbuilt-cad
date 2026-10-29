@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-29: the latest rev replaces the previous one
+- Rule (AGENTS.md 19, `skills/publish-to-models` step 7, `skills/cnc-part-check`): The latest revision of a model always replaces the previous one. When a new rev is filed, delete the old rev's models and outputs (models folder and runs); keep only the latest rev. Never keep old revs side by side.
+- Docs and skills text only. `tools/rev.py` is unchanged: it still creates the new `rev<LETTER>` folder beside the old ones; the old ones are deleted after the new rev is filed and checked.
+
 ## 2026-10-28: Claude skill zips next to each skill folder
 - One import zip per skill at `skills/<name>.zip`, rebuilt by `scripts/pack_skill_zips.py` (optional wrappers: `scripts/pack-skill-zips.sh`, `scripts/pack-skill-zips.ps1`).
 - GitHub Action `.github/workflows/skill-zips.yml` rebuilds on a same-repo PR whose head is not `main` and commits changed zips back to that branch, then runs the same pytest + zip-match checks as the verify job. On stale `main` it resets `chore/skill-zips` to `origin/main`, rebuilds the zips on that tree (`--force-with-lease` on that bot branch only), and opens a zip PR. It never pushes to `main`. GITHUB_TOKEN commits re-dispatch a verify run. Actor + `[skip ci]` prevent loops.

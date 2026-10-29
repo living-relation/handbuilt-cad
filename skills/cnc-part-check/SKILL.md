@@ -61,5 +61,5 @@ Check the primary file(s) named in SUMMARY.md/MANIFEST.sha256 (assemblies: the a
 - Afterward, re-run the size/minimum-wall (including bolt-hole walls) and fit checks on the final solid. A new thin spot on a structural feature is a failure; any other new thin spot goes on the flag list.
 
 ## Notes
-- New revs follow publish-to-models: in the models home, new rev-letter folders (`rev<LETTER>`, clerical `rev<LETTER>.<NN>`); in a project repo with its own revision register, its rules win. Never overwrite an old rev.
+- New revs follow publish-to-models: in the models home, new rev-letter folders (`rev<LETTER>`, clerical `rev<LETTER>.<NN>`); in a project repo with its own revision register, its rules win. Never overwrite a rev; file a new one. The latest rev replaces the previous one: once it is filed, delete the old rev's models and outputs (models folder and runs). Never keep old revs side by side.
 - Drawings follow the drawing rules: no hidden lines, no mesh lines, the model drives the drawing. Workflow: redline the drawing, then change the model, then regenerate the drawing.
