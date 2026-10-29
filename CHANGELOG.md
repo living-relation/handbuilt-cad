@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-29: the latest rev replaces the previous one
+- Rule (AGENTS.md 19, `skills/publish-to-models` step 7, `skills/cnc-part-check`): The latest revision of a model always replaces the previous one. When a new rev is filed, delete the old rev's models and outputs (models folder and runs); keep only the latest rev. Never keep old revs side by side.
+- Docs and skills text only. `tools/rev.py` is unchanged: it still creates the new `rev<LETTER>` folder beside the old ones; the old ones are deleted after the new rev is filed and checked.
+
 ## 2026-10-29: skill-zips CI git push auth
 - Zip commits use HTTP basic `x-access-token` (same as actions/checkout). Bearer was ignored, so the bot could not push rebuilt `skills/*.zip` files.
 

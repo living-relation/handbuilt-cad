@@ -47,6 +47,7 @@ The drawing engine's full rule list (and which ones it enforces) is `drawing/DRA
 16. **Rev folders are lettered.** `tools/rev.py` makes `rev<LETTER>` (clerical `rev<LETTER>.<NN>`) folders by the rules above; it never converts old numeric `revN` folders.
 17. **Initials, never agent names.** DRAWN = the person on Rev A; rev-log BY = the person who requested the change (`drawing/DRAWING-RULES.md` rule 32). They come from `~/.drawing-initials` (or env `DRAWING_INITIALS`); if missing and you are an agent (no terminal) the tool stops - ask the maintainer for the requester's initials, never guess or use "Claude" / "SteveCAD".
 18. **Revision triangles.** Every full-letter rev puts its letter in a triangle next to each changed item (and the BOM row of a changed part number); .01 clerical revs have none and are not in the rev log (`drawing/DRAWING-RULES.md` rule 33, `drawing/revmarks.py`). Old triangles stay on later revs by default.
+19. **Latest rev replaces the previous one.** The latest revision of a model always replaces the previous one. When a new rev is filed, delete the old rev's models and outputs (models folder and runs); keep only the latest rev. Never keep old revs side by side. Delete only after the new rev is filed and hash-checked (`skills/publish-to-models` step 7). The rev log carries the history.
 
 ## Electrical and design plans
 1. **Plan document.** Every design with electronics includes a plan document with wiring tables, a schematic, and an electronics BOM.
