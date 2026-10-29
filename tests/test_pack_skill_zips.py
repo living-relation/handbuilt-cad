@@ -260,6 +260,8 @@ def test_workflow_commits_to_pr_branch_never_to_main():
     assert "[skip ci]" in yml
     assert "workflow_dispatch" in yml
     assert "persist-credentials: false" in yml
+    assert "AUTHORIZATION: bearer" not in yml
+    assert "x-access-token:" in yml
     assert "continue-on-error" not in yml
     assert "11bd71901bbe5b1630ceea73d27597364c9af683" in yml
     assert "github.head_ref != github.event.repository.default_branch" in yml
