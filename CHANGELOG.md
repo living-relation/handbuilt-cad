@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-29: setup links skills by default; Windows skill-zip upload popup
+- Setup always links each CAD skill into `~/.claude/skills` (Windows junctions and WSL/Linux symlinks). Cursor reads that folder too, so skills are not also linked into `~/.cursor/skills`; old links this repo made there are removed (the link only). `-LinkSkills` / `--link-skills` stay as no-ops.
+- At the end of a Windows install (`setup.ps1`, including double-click `install.cmd`) a separate popup reminds you to upload new or changed CAD skill zips in the Claude desktop app for each Claude account (Skills settings), lists the zip names (or skill folders if there are no zips), and offers to open that folder in Explorer. `-NoPopup` / `-Quiet` skip it, as do CI env vars.
+- Claude-app harness skills (`skills/EXCLUDE.txt` or `source: harness-design-app`) stay unlinked and are never moved, backed up, replaced or removed.
+
 ## 2026-10-29: the latest rev replaces the previous one
 - Rule (AGENTS.md 19, `skills/publish-to-models` step 7, `skills/cnc-part-check`): The latest revision of a model always replaces the previous one. When a new rev is filed, delete the old rev's models and outputs (models folder and runs); keep only the latest rev. Never keep old revs side by side.
 - Docs and skills text only. `tools/rev.py` is unchanged: it still creates the new `rev<LETTER>` folder beside the old ones; the old ones are deleted after the new rev is filed and checked.

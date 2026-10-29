@@ -8,3 +8,4 @@ One dated line per decision, newest last. Rules that agents must follow live in 
 - 2026-10-28: The pre-public checklist was done when the repo went public; `docs/PRE-PUBLIC-CHECKLIST.md` was removed. (maintainer)
 - 2026-10-28: The PR #42 follow-up (other skill copies replaced by links to `skills/`) is done. (maintainer)
 - 2026-10-29: skill-zips CI git push uses HTTP basic `x-access-token` (same as actions/checkout), not Bearer. `persist-credentials` stays false. Bearer was ignored and zip commits failed with "could not read Username".
+- 2026-10-29: Setup always links CAD skills into `~/.claude/skills` (Cursor reads that folder; do not duplicate into `~/.cursor/skills`). `-LinkSkills` / `--link-skills` stay as no-ops. After a Windows install, a popup reminds the user to upload skill zips in Claude desktop; `-NoPopup`/`-Quiet`/CI skip it. Claude-app harness skills (`skills/EXCLUDE.txt` / `source: harness-design-app`) stay unlinked and untouched.

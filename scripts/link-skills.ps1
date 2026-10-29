@@ -1,14 +1,15 @@
-# link-skills.ps1 - link handbuilt-cad's skills (skills\<name>\SKILL.md) into ~\.claude\skills and ~\.cursor\skills as junctions,
-# so a git pull here updates them. handbuilt-cad's setup.ps1 runs it; it owns these links (no other repo installs them).
+# link-skills.ps1 - link handbuilt-cad's skills (skills\<name>\SKILL.md) into ~\.claude\skills as junctions,
+# so a git pull here updates them. Cursor reads ~\.claude\skills too; do not also link into ~\.cursor\skills.
+# handbuilt-cad's setup.ps1 runs it; it owns these links (no other repo installs them).
 # Usage: .\scripts\link-skills.ps1 [-From <dir>] [-WhatIf]  (default -From = this clone's skills\)
 # A same-name skill that is not already this link is moved to -BackupRoot first; never touches other skills.
 # The only delete: a junction into -From whose skill is gone (renamed or removed) is removed - the link only.
-# -Unlink: folders (default none) where an old junction into -From is removed (the link only, never its target);
+# -Unlink: folders (default ~\.cursor\skills) where an old junction into -From is removed (the link only, never its target);
 # anything else there is never touched. A folder that is also in -Targets is never unlinked.
 [CmdletBinding(SupportsShouldProcess = $true)]
 param([string[]]$From = @((Join-Path (Split-Path $PSScriptRoot -Parent) 'skills')),
-      [string[]]$Targets = @("$env:USERPROFILE\.claude\skills", "$env:USERPROFILE\.cursor\skills"),
-      [string[]]$Unlink = @(),
+      [string[]]$Targets = @("$env:USERPROFILE\.claude\skills"),
+      [string[]]$Unlink = @("$env:USERPROFILE\.cursor\skills"),
       [string]$BackupRoot = "$env:USERPROFILE\.skills-backup")
 $ErrorActionPreference = 'Stop'
 # Claude-app-owned skills (harness.design plugin): names in <From>\EXCLUDE.txt, or any SKILL.md whose frontmatter has

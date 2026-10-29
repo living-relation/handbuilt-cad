@@ -1,7 +1,7 @@
 # Skills owned by the Claude app (harness.design plugin), not by this repo.
 # Names listed here (one per line), and any skill whose SKILL.md frontmatter has
 # `source: harness-design-app`, are never packed into zips and never linked.
-# scripts/link-skills.ps1 (setup.ps1 -LinkSkills) and setup.sh --link-skills never move,
+# scripts/link-skills.ps1 (setup.ps1) and setup.sh never move,
 # back up, replace or remove a folder or link with one of these names ('SKIP harness app skill').
 harness-design
 st185-build-harness-from-sot

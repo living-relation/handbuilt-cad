@@ -1,8 +1,9 @@
 # handbuilt-cad setup for the one Windows clone (the only clone; WSL reaches it through a link). Safe to re-run.
-#   powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1 [-NoModels] [-NoVenv] [-LinkSkills] [-NoSim] [-NoWsl] [-WslDistro Ubuntu] [-WslLink <wsl path>] [-FreeCADDir <dir>]
+#   powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1 [-NoModels] [-NoVenv] [-LinkSkills] [-NoSim] [-NoWsl] [-NoPopup] [-Quiet] [-WslDistro Ubuntu] [-WslLink <wsl path>] [-FreeCADDir <dir>]
 #   Also links this clone into WSL (~/projects/handbuilt-cad) and runs the WSL half (setup.sh) there, so this one command
-#   does the whole install. -NoWsl skips it.
-param([switch]$NoModels, [switch]$NoVenv, [switch]$LinkSkills, [switch]$NoSim, [switch]$NoWsl, [string]$WslDistro = 'Ubuntu', [string]$WslLink = '', [string]$FreeCADDir = '')
+#   does the whole install. -NoWsl skips it. -LinkSkills is a no-op (skills always go into ~\.claude\skills).
+#   -NoPopup / -Quiet skip the Claude skill-zip upload popup (also skipped in CI).
+param([switch]$NoModels, [switch]$NoVenv, [switch]$LinkSkills, [switch]$NoSim, [switch]$NoWsl, [switch]$NoPopup, [switch]$Quiet, [string]$WslDistro = 'Ubuntu', [string]$WslLink = '', [string]$FreeCADDir = '')
 $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
 Set-Location $Root
@@ -76,10 +77,11 @@ Write-Host "parts home: created by setup.sh in WSL (~/cad-parts, step 6 below), 
 # 4b. folder notes (models folder and parts home) have one writer, tools/folder_notes.py, run by setup.sh step 5d in WSL.
 if (-not $NoModels) { Write-Host "models notes: added by setup.sh in WSL (tools/folder_notes.py, step 6 below), not on Windows" }
 
-# 4c. skills: off by default. Only with -LinkSkills: junction skills\<name> into ~\.claude\skills and ~\.cursor\skills
-#     (a same-name folder is backed up to ~\.skills-backup first; nothing is deleted).
-if (-not $LinkSkills) { Write-Host 'skills: not linked (opt in with -LinkSkills)' }
-else { & "$Root\scripts\link-skills.ps1" | ForEach-Object { Write-Host "skill $($_.Action): $($_.Path)" } }
+# 4c. skills: always junction skills\<name> into ~\.claude\skills (Cursor reads that folder too;
+#     do not also link into ~\.cursor\skills). -LinkSkills is a no-op kept for old commands.
+#     A same-name folder is backed up to ~\.skills-backup first; nothing is deleted.
+if ($LinkSkills) { Write-Host 'skills: -LinkSkills is a no-op (already linked into ~/.claude/skills)' }
+& "$Root\scripts\link-skills.ps1" | ForEach-Object { Write-Host "skill $($_.Action): $($_.Path)" }
 
 # 5. FreeCAD launcher wrappers (only into an existing FreeCAD folder you name; never overwrites)
 if ($FreeCADDir) {
@@ -93,7 +95,8 @@ if ($FreeCADDir) {
 #    already points here is left as is. Never overwrites: if the path is a real folder/file (an old WSL clone?) or a
 #    link to somewhere else, it stops and changes nothing. The Linux venv goes to $UV_PROJECT_ENVIRONMENT
 #    (default ~/.venvs/handbuilt-cad), so it never clashes with the Windows .venv. Passes -NoModels -> --no-models,
-#    -LinkSkills -> --link-skills, -NoSim -> --no-sim. Skip with -NoWsl. Fails clearly if WSL or the distro is missing.
+#    -NoSim -> --no-sim. Skip with -NoWsl. Fails clearly if WSL or the distro is missing.
+#    Skills are always linked (WSL setup.sh does the same); -LinkSkills is a no-op.
 if ($NoWsl) { Write-Host "WSL setup: skipped (-NoWsl). Link this clone into WSL and run 'bash setup.sh' there yourself." }
 else {
   if (-not (Get-Command wsl.exe -ErrorAction SilentlyContinue)) { throw "WSL setup: wsl.exe not found. Install WSL ('wsl --install -d $WslDistro'), or re-run with -NoWsl." }
@@ -101,7 +104,6 @@ else {
   if ($distros -notcontains $WslDistro) { throw "WSL setup: distro '$WslDistro' not found (have: $($distros -join ', ')). Install it ('wsl --install -d $WslDistro'), pass -WslDistro <name>, or re-run with -NoWsl." }
   $shArgs = @()
   if ($NoModels) { $shArgs += '--no-models' }
-  if ($LinkSkills) { $shArgs += '--link-skills' }
   if ($NoSim) { $shArgs += '--no-sim' }   # sim tools (apt, sim venv) install by default; apt runs as root via wsl.exe, no password
   # bash single-quote a value: ' -> '\'' (so paths with spaces, $, quotes or backticks pass through literally)
   $sq = { param($x) "'" + ($x -replace "'", "'\''") + "'" }
@@ -142,3 +144,8 @@ else {
   if ($LASTEXITCODE -ne 0) { throw "WSL setup: failed in $WslDistro (exit $LASTEXITCODE). Fix the error above and re-run, or use -NoWsl." }
 }
 Write-Host "Optional: setx MODELS_DIR `"$models`"  (setup does not change user env vars)"
+# 7. Claude desktop skill-zip reminder (separate Windows popup). install.cmd runs this script, so
+#    double-click install and `setup.ps1` both show it. Skip with -NoPopup / -Quiet or when CI is set.
+#    A GUI failure must not fail the install.
+try { & "$Root\scripts\skill-upload-popup.ps1" -NoPopup:$NoPopup -Quiet:$Quiet }
+catch { Write-Host "skills popup: skipped ($($_.Exception.Message))" }
