@@ -98,7 +98,9 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             git commit -m "chore: rebuild Claude skill zips [skip ci]"
-            git -c "http.https://github.com/.extraheader=AUTHORIZATION: bearer ${GITHUB_TOKEN}" \
+            # GitHub git HTTP wants basic x-access-token (same as actions/checkout), not Bearer.
+            auth=$(printf 'x-access-token:%s' "${GITHUB_TOKEN}" | base64 | tr -d '\n')
+            git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${auth}" \
               push origin "HEAD:refs/heads/${HEAD_REF}"
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
@@ -189,7 +191,9 @@ jobs:
           sh scripts/fetch-gitleaks.sh
           sh scripts/run-gitleaks.sh
           git commit -m "chore: rebuild Claude skill zips [skip ci]"
-          git -c "http.https://github.com/.extraheader=AUTHORIZATION: bearer ${GITHUB_TOKEN}" \
+          # GitHub git HTTP wants basic x-access-token (same as actions/checkout), not Bearer.
+          auth=$(printf 'x-access-token:%s' "${GITHUB_TOKEN}" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${auth}" \
             push --force-with-lease origin chore/skill-zips
           if gh pr list --head chore/skill-zips --state open --json number --jq 'length' | grep -qx 0; then
             gh pr create --base "${DEFAULT_BRANCH}" --head chore/skill-zips \

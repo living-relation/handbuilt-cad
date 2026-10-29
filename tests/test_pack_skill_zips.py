@@ -260,6 +260,8 @@ def test_workflow_commits_to_pr_branch_never_to_main():
     assert "[skip ci]" in yml
     assert "workflow_dispatch" in yml
     assert "persist-credentials: false" in yml
+    assert "AUTHORIZATION: bearer" not in yml
+    assert "x-access-token:" in yml
     assert "continue-on-error" not in yml
     assert "11bd71901bbe5b1630ceea73d27597364c9af683" in yml
     assert "github.head_ref != github.event.repository.default_branch" in yml
@@ -293,6 +295,20 @@ def test_stage_skill_zips_uses_git_pathspec():
 def test_pyyaml_is_pinned():
     req = (ROOT / "scripts" / "pack-skill-zips.reqs.txt").read_text()
     assert "pyyaml==6.0.3" in req.lower() or "PyYAML==6.0.3" in req
+
+
+def test_electrical_plan_rules_are_their_own_section():
+    text = (ROOT / "AGENTS.md").read_text()
+    assert "## Electrical and design plans" in text
+    elec = text.split("## Electrical and design plans")[1].split("##")[0]
+    assert "wiring tables" in elec.lower()
+    assert "schematic" in elec.lower()
+    assert "TBA" in elec
+    assert "supplier's official CAD model" in elec
+    assert "extrusion brackets" in elec
+    assert "part number on the BOM" in elec
+    assert "`parts/` folder inside the project" in elec
+    assert "a1, a2" in text
 
 
 def test_rule_3_is_reworded_in_place():

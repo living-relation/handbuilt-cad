@@ -7,3 +7,4 @@ One dated line per decision, newest last. Rules that agents must follow live in 
 - 2026-10-28: `automation.yml` registers every hook and setup job; `scripts/registry-check.py` checks it from the commit-msg hook. (maintainer)
 - 2026-10-28: The pre-public checklist was done when the repo went public; `docs/PRE-PUBLIC-CHECKLIST.md` was removed. (maintainer)
 - 2026-10-28: The PR #42 follow-up (other skill copies replaced by links to `skills/`) is done. (maintainer)
+- 2026-10-29: skill-zips CI git push uses HTTP basic `x-access-token` (same as actions/checkout), not Bearer. `persist-credentials` stays false. Bearer was ignored and zip commits failed with "could not read Username".
