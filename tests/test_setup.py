@@ -102,6 +102,40 @@ def test_dead_skill_links_pruned_only_when_ours(tmp_path):
     assert "skill link unlinked" in out
 
 
+def test_harness_app_skills_never_linked_or_touched(tmp_path):
+    home = tmp_path / "home"
+    root = tmp_path / "clone"
+    (root / "skills" / "demo").mkdir(parents=True)
+    (root / "skills" / "demo" / "SKILL.md").write_text("x")
+    (root / "skills" / "harness-design").mkdir(parents=True)
+    (root / "skills" / "harness-design" / "SKILL.md").write_text("---\nname: harness-design\n---\n")
+    (root / "skills" / "marked-skill").mkdir(parents=True)
+    (root / "skills" / "marked-skill" / "SKILL.md").write_text(
+        "---\nname: marked-skill\nsource: harness-design-app\n---\n"
+    )
+    (root / "skills" / "EXCLUDE.txt").write_text("harness-design\n")
+    claude = home / ".claude" / "skills"
+    claude.mkdir(parents=True)
+    (claude / "harness-design").mkdir()
+    (claude / "harness-design" / "today.md").write_text("app edit\n")
+    cursor = home / ".cursor" / "skills"
+    cursor.mkdir(parents=True)
+    (cursor / "harness-design").mkdir()
+    (cursor / "harness-design" / "keep.md").write_text("app\n")
+    env = dict(os.environ, HOME=str(home), ROOT=str(root), LINK_SKILLS="0")
+    script = "set -euo pipefail\n" + _block("# 6. skills", "# end 6")
+    r = subprocess.run(["bash", "-c", script], env=env, capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr + r.stdout
+    assert "SKIP harness app skill" in r.stdout
+    assert (home / ".claude" / "skills" / "demo").is_symlink()
+    assert not (home / ".claude" / "skills" / "harness-design").is_symlink()
+    assert (claude / "harness-design" / "today.md").read_text() == "app edit\n"
+    assert not (home / ".claude" / "skills" / "marked-skill").exists()
+    assert not (home / ".cursor" / "skills" / "demo").exists()
+    assert (cursor / "harness-design" / "keep.md").read_text() == "app\n"
+    assert not (home / ".skills-backup").exists()
+
+
 def test_cursor_our_links_unlinked_others_untouched(tmp_path):
     home = tmp_path / "home"
     root = tmp_path / "clone"  # _run_step6 creates root/skills/demo

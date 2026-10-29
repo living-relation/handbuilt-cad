@@ -11,4 +11,4 @@ This repo is public so AI tools can read it. Start with [How to use](How-To-Use.
 3. **Change a part:** edit the named dimensions, rerun the script, re-check fit and run the CNC check (FEA for structural parts only after the owner approves the geometry), update the [Parts index](Parts.md) and add a dated line to `NOTES.md`.
 4. **Don't:** move existing folders, scale scans, commit scans/solver output/secrets, force-push, or edit Fairsolid here without reading [`docs/FAIRSOLID.md`](../FAIRSOLID.md) first (Fairsolid is `pipelines/fairsolid/` in this repo; the old fairsolid GitHub repo was deleted on 2026-10-21).
 5. **Public repo:** never write API keys, tokens, emails or personal paths into files here.
-6. **Ask the owner** before machining-critical changes to the final part versions (scripts in `$HBCAD_PARTS_HOME/<job>/src/`, part files in `$MODELS_DIR/<job>/`).
+6. **Ask the owner** before machining-critical changes to the final part versions (scripts in `$HBCAD_PARTS_HOME/<job>/src/`, part files in `$MODELS_DIR/<job>/`). Questions are always multiple choice, labelled a1, a2, with a recommended answer when there is one.

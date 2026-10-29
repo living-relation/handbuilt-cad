@@ -15,7 +15,7 @@ description: >-
 - **Off-repo CAD stays off-repo.** If the README says the CAD lives elsewhere (e.g. a runs folder, `[paths] fairsolid_runs` or similar), file it there, labelled, and never copy it into the repo.
 - **Use the user's names** for features. Ask them to define an ambiguous term before you use it.
 - **Look it up first.** Find the maker's drawings, datasheets and specs yourself (primary sources) before asking the user; ask only what they can't answer.
-- **Inside a project repo with its own rules, they win on asking** (for example: open questions go in its open-items list, no pickers; look up maker drawings and specs yourself first). Everywhere else, use clickable choices (step 8).
+- **Inside a project repo with its own rules, they win on asking** (for example: open questions go in its open-items list, no pickers; look up maker drawings and specs yourself first). Everywhere else, multiple choice labelled a1, a2, with a recommended answer when there is one (step 8).
 - **Look at the assembly first.** Before editing a part on its own, check how it sits and mates in the assembly.
 
 ## Where it runs
@@ -50,7 +50,7 @@ Ask once per job for anything not in the brief or SUMMARY.md: material, process,
    - Then run **cnc-part-check**. It must pass.
 6. **Edge breaks (optional, last).** Model them when the CAD does it cleanly, on a saved version after geometry passes, then re-check walls and fits. Otherwise add a drawing note. Either is fine. Don't force it.
 7. **Renders** from the delivered model only, shown as smooth solid bodies with mesh triangulation and polygon edges hidden, with the saved views plus the heatmap. Tool in each caption. Check that any marker lands on its feature before sending. Section views are capped (closed-surface clipping, solid cut faces), never open cut faces, which render as hollow shells.
-8. **Report.** Method and tool first, then fits, scale assumption, deviation, checks and open problems. Walk the user through open problems one decision at a time, each with a marked image and clickable choices (inside a project with an open-items rule: its list instead).
+8. **Report.** Method and tool first, then fits, scale assumption, deviation, checks and open problems. Walk the user through open problems one decision at a time, each with a marked image and multiple-choice answers labelled a1, a2, with a recommended answer when there is one (inside a project with an open-items rule: its list instead).
 9. **File.** Only after the user approves, file with **publish-to-models** (scan or a path to it goes in `reference\`). Record the scan file, commit and build switches in SUMMARY.md, and the tool in MADE-WITH.md. Copy any finished, reusable new script into the user's shared tools folder only if the project asks for it (copy-in only, no secrets, no models).
 10. No FEA until the user approves the geometry, unless they ask for it.
 

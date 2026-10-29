@@ -10,4 +10,4 @@ The one state file for this repo: current goal and open items. Decisions go in `
 - (2026-10-17) **Do non-ST185 parts get drawings?** Open with the maintainer.
 
 **Kept branches:** none
-**Last cleanup:** 2026-10-28 @ (merge commit of the cleanup PR, filled after merge)
+**Last cleanup:** 2026-10-29 (squash-merge of remaining open PRs #49 then #52)
