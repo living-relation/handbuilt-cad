@@ -36,10 +36,38 @@ DESC_WARN = 200
 DESC_MAX = 1024
 NAME_MAX = 64
 SKIP_NAMES = {"thumbs.db"}
+EXCLUDE_FILE = "EXCLUDE.txt"
+MARKER_RE = re.compile(r"(?m)^source:\s*['\"]?harness-design-app['\"]?\s*$")
 
 
 class PackError(Exception):
     """Fatal pack error. pack() prints it and returns 1."""
+
+
+def load_excluded(skills_root: Path) -> set[str]:
+    """Names in skills/EXCLUDE.txt (one per line, # comments): Claude-app-owned skills."""
+    f = skills_root / EXCLUDE_FILE
+    if not f.is_file():
+        return set()
+    out = set()
+    for line in f.read_text(encoding="utf-8").splitlines():
+        line = line.split("#", 1)[0].strip()
+        if line:
+            out.add(line)
+    return out
+
+
+def is_app_marked(skill_dir: Path) -> bool:
+    """True if SKILL.md frontmatter has `source: harness-design-app`."""
+    p = skill_dir / "SKILL.md"
+    if not p.is_file():
+        return False
+    text = p.read_text(encoding="utf-8", errors="replace")
+    if not text.startswith("---"):
+        return False
+    rest = text[3:].lstrip("\r\n")
+    m = re.search(r"(?m)^---\s*$", rest)
+    return bool(m and MARKER_RE.search(rest[: m.start()]))
 
 
 def iter_skill_dirs(skills_root: Path) -> list[Path]:
@@ -287,13 +315,22 @@ def emit_warning(skill_dir: Path, message: str) -> None:
 
 
 def pack(skills_root: Path, *, check: bool = True, write: bool = True) -> int:
-    skills = iter_skill_dirs(skills_root)
+    excluded = load_excluded(skills_root)
+    skills = []
+    for p in iter_skill_dirs(skills_root):
+        if p.name in excluded or is_app_marked(p):
+            excluded.add(p.name)
+            print(f"skip excluded {p.name} (harness app skill)")
+            continue
+        skills.append(p)
     wanted = {p.name for p in skills}
     changed = 0
     removed = 0
     if write:
         for z in sorted(skills_root.glob("*.zip")):
             if z.stem not in wanted:
+                if z.stem in excluded:
+                    continue  # excluded skills: never pack, never touch
                 z.unlink()
                 print(f"removed stale {z.relative_to(skills_root.parent)}")
                 removed += 1

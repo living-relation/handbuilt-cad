@@ -339,3 +339,42 @@ def test_name_regex_matches_claude_rule():
     assert not pack.NAME_RE.fullmatch("Bad_Name")
     assert not pack.NAME_RE.fullmatch("Has Space")
     assert not pack.NAME_RE.fullmatch("")
+
+
+def _exclude_repo(tmp_path):
+    skills = tmp_path / "skills"
+    _write_skill(skills / "keep-me", "keep-me", "Normal skill.")
+    _write_skill(skills / "harness-design", "harness-design", "App owned.")
+    m = skills / "marked-skill"
+    m.mkdir(parents=True)
+    (m / "SKILL.md").write_text(
+        "---\nname: marked-skill\ndescription: Marked.\nsource: harness-design-app\n---\nbody\n", encoding="utf-8"
+    )
+    (skills / "EXCLUDE.txt").write_text("# c\nharness-design\nst185-pick-parts\n", encoding="utf-8")
+    _git(tmp_path, "init", "-q")
+    _git(tmp_path, "add", "-A")
+    return skills
+
+
+def test_load_excluded_and_marker(tmp_path):
+    skills = _exclude_repo(tmp_path)
+    assert pack.load_excluded(skills) == {"harness-design", "st185-pick-parts"}
+    assert pack.is_app_marked(skills / "marked-skill")
+    assert not pack.is_app_marked(skills / "keep-me")
+
+
+def test_excluded_and_marked_not_packed_and_zips_kept(tmp_path):
+    skills = _exclude_repo(tmp_path)
+    (skills / "st185-pick-parts.zip").write_bytes(b"keep")
+    pack.pack(skills, check=False)
+    assert (skills / "keep-me.zip").is_file()
+    assert not (skills / "harness-design.zip").exists()
+    assert not (skills / "marked-skill.zip").exists()
+    assert (skills / "st185-pick-parts.zip").read_bytes() == b"keep"
+
+
+def test_repo_exclude_lists_harness_skills():
+    names = pack.load_excluded(SKILLS)
+    for n in ("harness-design", "st185-build-harness-from-sot", "st185-pick-parts",
+              "st185-ship-change", "st185-change-sot", "st185-apply-route-markup"):
+        assert n in names
