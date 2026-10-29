@@ -1,12 +1,10 @@
 ---
 name: cnc-part-check
 description: >-
-  Use when finishing or handing off any 3D CAD model (part or assembly) of a
-  CNC-made part, before calling it done, asking for approval, or running FEA:
-  valid bodies, STEP round-trip, size/weight/fit vs saved limits, structural-only minimum wall, machinability sanity check, saved review
-  views. Runs on the user's machine.
+  Use before calling a CNC part or assembly CAD model done, asking for
+  approval, handing it off or running FEA. Runs on the user's machine.
 ---
-Use for 3D CAD models (single parts or assemblies) of CNC-made parts, before calling a model done, ready for review, or ready for FEA. This skill checks the model only; drawings (11x17 PDF for every part, DXF for machined parts) are a separate step. The model always shows the finished part.
+Use for 3D CAD models (single parts or assemblies) of CNC-made parts, before calling a model done, ready for review, or ready for FEA. Checks include valid bodies, STEP round-trip, size/weight/fit vs saved limits, structural-only minimum wall, machinability sanity, and saved review views. This skill checks the model only; drawings (11x17 PDF for every part, DXF for machined parts) are a separate step. The model always shows the finished part.
 
 The project's own rules (AGENTS.md, decision log, revision register) win over this skill wherever they differ.
 

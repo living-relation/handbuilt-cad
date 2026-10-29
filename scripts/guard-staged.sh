@@ -2,6 +2,7 @@
 # Pre-commit guard: blocks part/model files, archives, files over 1 MB, and .env files.
 # Personal home paths are reported as warnings (blocking when .guard-strict exists).
 # Exceptions: one path per line in .guard-allow (exact path match).
+# Claude skill zips at skills/<name>.zip are allowed when skills/<name>/SKILL.md exists.
 set -u
 MAX=1048576
 fail=0; warn=0
@@ -11,7 +12,15 @@ while IFS= read -r f; do
   [ -n "$f" ] || continue
   if allow "$f"; then continue; fi
   lc=$(printf '%s' "$f" | tr 'A-Z' 'a-z')
+  blocked=1
   case "$lc" in
+    skills/*.zip)
+      stem=${lc#skills/}; stem=${stem%.zip}
+      case "$stem" in */*) ;; *)
+        if [ -f "skills/$stem/SKILL.md" ]; then blocked=0; fi
+      esac
+      if [ "$blocked" = 1 ]; then echo "guard: BLOCK part/model/archive file: $f"; fail=1; continue; fi
+      ;;
     *.step|*.stp|*.stl|*.3mf|*.f3d|*.fcstd|*.ply|*.obj|*.iges|*.igs|*.brep|*.glb|*.zip|*.7z|*.npz|*.npy|*.frd|*.vtu)
       echo "guard: BLOCK part/model/archive file: $f"; fail=1; continue;;
   esac

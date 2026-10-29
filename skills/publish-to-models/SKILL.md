@@ -1,11 +1,13 @@
 ---
 name: publish-to-models
 description: >-
-  Use when a CAD part, assembly or scan-to-CAD job is finished (or a new
-  revision is ready) and must be filed into the user's single models home as a
-  new versioned folder with SUMMARY.md, REVLOG.md, MADE-WITH.md, drawings,
-  sources and intermediates, then hash-verified. Runs on the user's machine.
+  Use when a CAD part, assembly or scan-to-CAD job (or new revision) is
+  finished and must be filed into the user's models home as a versioned,
+  hash-verified folder.
 ---
+## When to use
+File into the user's single models home as a new versioned folder with SUMMARY.md, REVLOG.md, MADE-WITH.md, drawings, sources and intermediates, then hash-verify. Runs on the user's machine.
+
 Models home (the only one): `[paths] models_dir` in the toolkit repo's `local.toml` (or `MODELS_DIR`). Empty means `<Desktop>/models`, which the repo's setup step resolves from the system's Desktop folder (cloud-synced Desktops included) and creates if missing. Never hard-code a user or cloud-drive path; if the folder can't be resolved, stop and ask the user. Add-only: never archive, move, rename, clean or delete anything already in it.
 
 The project's own rules (AGENTS.md, decision log, revision register) win over this skill wherever they differ.

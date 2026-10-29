@@ -34,6 +34,7 @@ CLAUDE.local.md
 *.frd
 *.vtu
 *.zip
+!/skills/*.zip
 *.7z
 # Part build scripts live in the parts home (~/cad-parts, HBCAD_PARTS_HOME), never in this repo
 /parts/

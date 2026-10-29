@@ -27,6 +27,19 @@ automations:
     enabled: true
     run_cmd: bash scripts/state-check.sh HEAD --staged
     owner: maintainer
+  - id: skill-zips
+    script: .github/workflows/skill-zips.yml
+    helpers: [scripts/pack_skill_zips.py, scripts/stage-skill-zips.sh, scripts/pack-skill-zips.sh, scripts/pack-skill-zips.ps1]
+    trigger: pr-check (same-repo PRs touching skills/), push-main, workflow_dispatch
+    reads: ["skills/*/**", scripts/pack_skill_zips.py, scripts/stage-skill-zips.sh]
+    writes: ["skills/*.zip"]
+    committed: yes
+    auto_commit: true
+    enabled: true
+    bypass: "force-with-lease push to its own chore/skill-zips branch only (AGENTS.md rule 2); never pushes to main"
+    run_cmd: python scripts/pack_skill_zips.py
+    check_cmd: python scripts/pack_skill_zips.py --check-only
+    owner: maintainer
   - id: setup
     script: [setup.ps1, setup.sh, install.cmd]
     helpers: [scripts/link-skills.ps1, scripts/fetch-gitleaks.sh, scripts/hbcad-env.sh, scripts/verify-install.sh, tools/folder_notes.py]

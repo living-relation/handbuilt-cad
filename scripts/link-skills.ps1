@@ -16,6 +16,7 @@ $seen = @{}
 $plan = @()
 foreach ($src in $From) {
   $src = (Resolve-Path -LiteralPath $src).Path
+  # Directories with SKILL.md only. Files (skills\<name>.zip, README.md) are not skills.
   foreach ($skill in Get-ChildItem -LiteralPath $src -Directory) {
     if (-not (Test-Path -LiteralPath (Join-Path $skill.FullName 'SKILL.md'))) { continue }
     if ($seen.ContainsKey($skill.Name)) { throw "skill '$($skill.Name)' is in both $($seen[$skill.Name]) and $src; fix one source first" }
