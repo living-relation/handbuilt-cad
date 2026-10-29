@@ -1,0 +1,11 @@
+{
+  "autodeskProduct": "Fusion",
+  "type": "addin",
+  "id": "513f307a-95a3-4cce-be94-703e8b4d6546",
+  "author": "handbuilt-cad",
+  "description": {"": "HB Export: export STEP, F3D, STL, 3MF, IGES, SAT and DXF in one click, to a folder you pick, overwriting in place."},
+  "version": "1.0.0",
+  "runOnStartup": true,
+  "supportedOS": "windows|mac",
+  "editEnabled": true
+}
