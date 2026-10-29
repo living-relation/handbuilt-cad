@@ -1,7 +1,7 @@
 # Changelog
 
 ## 2026-10-29: electrical plan, off-the-shelf CAD, questions to Dan
-- Every design with electronics has a plan document (wiring tables, schematic, electronics BOM). Wiring tables list every required wire; unplanned GPIO/PCB pins are TBA. Electrical designs use real gauges, connectors, routing and device specs. Off-the-shelf parts use the manufacturer CAD model, or a labelled best-guess from the datasheet.
+- Every design with electronics has a plan document (wiring tables, schematic, electronics BOM). Wiring tables list every required wire; unplanned GPIO/PCB pins are TBA. Electrical designs use real gauges, connectors, routing and device specs. Off-the-shelf parts (dev boards, extrusion brackets, plates and similar hardware) use the supplier's official CAD model, or a labelled best-guess from the datasheet; put the supplier's part number on the BOM and save every part model, purchased and fabricated, in a `parts/` folder inside the project.
 - Questions to the maintainer are always multiple choice, labelled a1, a2, with a recommended answer when there is one.
 - Docs and skills only (`AGENTS.md` "Electrical and design plans", not CAD rule 19 — that number is reserved for PR 49).
 

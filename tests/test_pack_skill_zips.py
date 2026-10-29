@@ -302,7 +302,10 @@ def test_electrical_plan_rules_are_their_own_section():
     assert "wiring tables" in elec.lower()
     assert "schematic" in elec.lower()
     assert "TBA" in elec
-    assert "manufacturer CAD model" in elec
+    assert "supplier's official CAD model" in elec
+    assert "extrusion brackets" in elec
+    assert "part number on the BOM" in elec
+    assert "`parts/` folder inside the project" in elec
     assert "a1, a2" in text
 
 

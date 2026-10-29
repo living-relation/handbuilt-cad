@@ -50,7 +50,7 @@ The drawing engine's full rule list (and which ones it enforces) is `drawing/DRA
 1. **Plan document.** Every design with electronics includes a plan document with wiring tables, a schematic, and an electronics BOM.
 2. **Wiring tables.** List every required wire for each device signal. If GPIO/PCB pins can't be planned yet, leave the pin as TBA instead of assigning one.
 3. **Real wiring.** Electrical designs carry real planned wiring (wire gauges, connectors, routing) and real device specs.
-4. **Off-the-shelf CAD.** Off-the-shelf parts, especially dev boards, use the manufacturer CAD model, or a clearly labelled best-guess model built from the datasheet when none exists.
+4. **Off-the-shelf CAD.** Off-the-shelf parts (dev boards, extrusion brackets, plates and similar hardware) use the supplier's official CAD model, or a clearly labelled best-guess from the datasheet when none exists. Put the supplier's part number on the BOM. Save every part model, purchased and fabricated, in a `parts/` folder inside the project.
 
 ## Folder notes
 Every folder the toolkit creates or uses (the parts home `~/cad-parts` root, its `_archive`, each `<job>`, `<job>/src`, `<job>/runs`, the models folder and each models job folder) has a README.md or AGENTS.md saying what is in it, who owns it, and where its paired folder is. An agent that creates a new job or folder adds one from `templates/notes/` (`tools/folder_notes.py` does it, add-only, never overwriting; it is the only writer of these notes, called by `setup.sh` and publish-to-models). Job folders are named `<name>_<MMDD>`; other folders are reported as warnings. `tools/folder_notes.py --check` lists folders missing one. This is the full rule.

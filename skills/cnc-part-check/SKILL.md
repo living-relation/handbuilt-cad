@@ -40,7 +40,7 @@ Check the primary file(s) named in SUMMARY.md/MANIFEST.sha256 (assemblies: the a
 - Before changing any part on its own, look at the assembly to see how it is oriented and what it mates with.
 - Machined bodies: all steps.
 - 3D-printed bodies: valid body, minimum wall on critical or structural features (step 3 rules; flag the rest), and hole sizes vs saved limits. Skip weight, machinability and setups.
-- Purchased or customer-supplied parts (screws, enclosures, circuit boards): valid body and no overlap only. Off-the-shelf parts, especially dev boards, use the manufacturer CAD model, or a clearly labelled best-guess model built from the datasheet when none exists.
+- Purchased or customer-supplied parts (screws, enclosures, circuit boards, extrusion brackets, plates): valid body and no overlap only. Off-the-shelf parts use the supplier's official CAD model, or a clearly labelled best-guess from the datasheet when none exists. Put the supplier's part number on the BOM. Save every part model, purchased and fabricated, in a `parts/` folder inside the project.
 
 ## Steps
 1. Valid bodies. A part is one valid solid; in an assembly every body is valid on its own.
