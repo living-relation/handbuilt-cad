@@ -104,9 +104,7 @@ class _Execute(adsk.core.CommandEventHandler):
 def run(context):
     try:
         ui = _ui()
-        cd = ui.commandDefinitions.itemById(CMD_ID)
-        if cd:
-            cd.deleteMe()
+        _remove_ui(ui)  # old buttons first: a button left behind points at a deleted command and does nothing
         cd = ui.commandDefinitions.addButtonDefinition(CMD_ID, 'HB Export', 'Export checked file types to one folder',
                                                        '')
         h = _Created()
@@ -114,25 +112,28 @@ def run(context):
         _handlers.append(h)
         for pid in PANEL_IDS:
             panel = ui.allToolbarPanels.itemById(pid)
-            if panel and not panel.controls.itemById(CMD_ID):
+            if panel:
                 ctl = panel.controls.addCommand(cd)
                 ctl.isPromoted = pid == 'SolidScriptsAddinsPanel'
-                break
     except Exception:
         _ui().messageBox('HB Export run failed:\n' + traceback.format_exc())
 
 
+def _remove_ui(ui):
+    for pid in PANEL_IDS:
+        panel = ui.allToolbarPanels.itemById(pid)
+        ctl = panel.controls.itemById(CMD_ID) if panel else None
+        while ctl:
+            ctl.deleteMe()
+            ctl = panel.controls.itemById(CMD_ID)
+    cd = ui.commandDefinitions.itemById(CMD_ID)
+    if cd:
+        cd.deleteMe()
+
+
 def stop(context):
     try:
-        ui = _ui()
-        for pid in PANEL_IDS:
-            panel = ui.allToolbarPanels.itemById(pid)
-            ctl = panel.controls.itemById(CMD_ID) if panel else None
-            if ctl:
-                ctl.deleteMe()
-        cd = ui.commandDefinitions.itemById(CMD_ID)
-        if cd:
-            cd.deleteMe()
+        _remove_ui(_ui())
         _handlers.clear()
     except Exception:
         pass
