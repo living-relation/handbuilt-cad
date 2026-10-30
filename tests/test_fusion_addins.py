@@ -112,3 +112,14 @@ def test_manifests_valid():
         with open(os.path.join(ROOT, name, name + '.manifest'), encoding='utf-8') as f:
             m = json.load(f)
         assert m['type'] == 'addin' and m['autodeskProduct'] == 'Fusion'
+
+
+def test_icons_present():
+    import pathlib
+    from PIL import Image
+    root = pathlib.Path(__file__).resolve().parents[1] / 'tools' / 'fusion_addins'
+    for a in ('HBExport', 'HBBom'):
+        d = root / a / 'resources' / 'icon'
+        for name, n in (('16x16', 16), ('32x32', 32)):
+            assert Image.open(d / f'{name}.png').size == (n, n)
+        assert "'resources', 'icon'" in (root / a / f'{a}.py').read_text()

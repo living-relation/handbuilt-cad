@@ -106,7 +106,7 @@ def run(context):
         ui = _ui()
         _remove_ui(ui)  # old buttons first: a button left behind points at a deleted command and does nothing
         cd = ui.commandDefinitions.addButtonDefinition(CMD_ID, 'HB Export', 'Export checked file types to one folder',
-                                                       '')
+                                                       os.path.join(_HERE, 'resources', 'icon'))
         h = _Created()
         cd.commandCreated.add(h)
         _handlers.append(h)
@@ -115,6 +115,7 @@ def run(context):
             if panel:
                 ctl = panel.controls.addCommand(cd)
                 ctl.isPromoted = pid == 'SolidScriptsAddinsPanel'
+                ctl.isPromotedByDefault = ctl.isPromoted
     except Exception:
         _ui().messageBox('HB Export run failed:\n' + traceback.format_exc())
 
