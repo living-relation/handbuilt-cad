@@ -171,7 +171,8 @@ def run(context):
     try:
         ui = _ui()
         _remove_ui(ui)  # old buttons first: a button left behind points at a deleted command and does nothing
-        cd = ui.commandDefinitions.addButtonDefinition(CMD_ID, 'HB BOM', 'Count parts, fill properties, export BOM', '')
+        cd = ui.commandDefinitions.addButtonDefinition(CMD_ID, 'HB BOM', 'Count parts, fill properties, export BOM',
+                                                       os.path.join(_HERE, 'resources', 'icon'))
         h = _Created()
         cd.commandCreated.add(h)
         _handlers.append(h)
@@ -180,6 +181,7 @@ def run(context):
             if panel:
                 ctl = panel.controls.addCommand(cd)
                 ctl.isPromoted = pid == 'SolidScriptsAddinsPanel'
+                ctl.isPromotedByDefault = ctl.isPromoted
     except Exception:
         _ui().messageBox('HB BOM run failed:\n' + traceback.format_exc())
 
