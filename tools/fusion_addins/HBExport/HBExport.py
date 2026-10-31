@@ -114,8 +114,9 @@ def run(context):
             panel = ui.allToolbarPanels.itemById(pid)
             if panel:
                 ctl = panel.controls.addCommand(cd)
-                ctl.isPromoted = pid == 'SolidScriptsAddinsPanel'
-                ctl.isPromotedByDefault = ctl.isPromoted
+                # Default pin only, set once on the new control; never isPromoted, so Fusion keeps the
+                # user's own pin/unpin choice across restarts.
+                ctl.isPromotedByDefault = pid == 'SolidScriptsAddinsPanel'
     except Exception:
         _ui().messageBox('HB Export run failed:\n' + traceback.format_exc())
 

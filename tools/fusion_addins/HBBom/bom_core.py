@@ -5,23 +5,125 @@ import json
 import zipfile
 from xml.sax.saxutils import escape
 
-# Column key, header. Fusion-writable: part_number, description, material (component), the rest are stored as
+# Column key, header, in BOM order. Item is auto-numbered (1, 2 / 1.1, 1.2) and never editable.
+# Fusion-writable: part_number, description, material (component); vendor/vendor_pn/notes are stored as
 # attributes (group 'handbuiltcad') because Fusion custom properties need a Pro/commercial plan.
 COLUMNS = [
+    ('item', 'Item'),
+    ('qty', 'QTY'),
+    ('part_number', 'Part Number'),
+    ('description', 'Part Description'),
     ('name', 'Component'),
-    ('qty', 'Qty'),
-    ('part_number', 'Part number'),
-    ('description', 'Description'),
     ('material', 'Material'),
     ('vendor', 'Vendor'),
     ('vendor_pn', 'Vendor part number'),
     ('notes', 'Notes'),
 ]
 KEYS = [k for k, _ in COLUMNS]
+HEADERS = dict(COLUMNS)
 EDITABLE = ['part_number', 'description', 'material', 'vendor', 'vendor_pn', 'notes']
 ATTR_KEYS = ['vendor', 'vendor_pn', 'notes']
 REQUIRED = ['part_number', 'description', 'material']
-DEFAULTS = {'folder': '', 'build_json': ''}
+DEFAULT_COLUMNS = ['item', 'qty', 'part_number', 'description', 'name', 'material']
+STYLES = [('top', 'Top level'), ('indented', 'Indented (layered)'), ('parts', 'Parts only')]
+DEFAULTS = {'folder': '', 'build_json': '', 'style': 'top', 'columns': DEFAULT_COLUMNS, 'thumbs': False}
+NODE_FIELDS = ['id', 'name', 'part_number', 'description', 'material', 'vendor', 'vendor_pn', 'notes', '_soft']
+
+
+def pick_columns(selected):
+    """Selected column keys in BOM order (unknown keys dropped; never empty)."""
+    sel = set(selected or [])
+    out = [k for k in KEYS if k in sel]
+    return out or list(DEFAULT_COLUMNS)
+
+
+def _group(nodes):
+    """[(first node, count)] grouping sibling occurrences by component id, first-seen order."""
+    order, first, count = [], {}, {}
+    for n in nodes:
+        i = n['id']
+        if i not in first:
+            order.append(i)
+            first[i] = n
+            count[i] = 0
+        count[i] += 1
+    return [(first[i], count[i]) for i in order]
+
+
+def _row(node, qty, item, level):
+    r = {k: (list(node[k]) if k == '_soft' else node[k]) for k in NODE_FIELDS if k in node}
+    r.update(item=item, qty=qty, level=level, top=level == 0, has_children=bool(node.get('children')))
+    r['_orig'] = {k: r.get(k, '') for k in EDITABLE}
+    return r
+
+
+def build_rows(tree, style='top'):
+    """tree: root's occurrences as nested dicts (NODE_FIELDS + 'children'). Styles:
+    top = root's direct children only, qty per assembly; indented = every level, item 1, 1.1, 1.1.1,
+    qty per one parent; parts = leaf parts only, total qty across the whole assembly."""
+    rows = []
+    if style == 'parts':
+        totals, first, order = {}, {}, []
+
+        def walk(nodes, mult):
+            for n, c in _group(nodes):
+                if n.get('children'):
+                    walk(n['children'], mult * c)
+                else:
+                    if n['id'] not in first:
+                        first[n['id']] = n
+                        order.append(n['id'])
+                        totals[n['id']] = 0
+                    totals[n['id']] += mult * c
+        walk(tree, 1)
+        return [_row(first[i], totals[i], str(k), 0) for k, i in enumerate(order, 1)]
+
+    def add(nodes, prefix, level):
+        for k, (n, c) in enumerate(_group(nodes), 1):
+            item = prefix + str(k)
+            rows.append(_row(n, c, item, level))
+            if style == 'indented' and n.get('children'):
+                add(n['children'], item + '.', level + 1)
+    add(tree, '', 0)
+    return rows
+
+
+def merge_edits(rows):
+    """One row per component id with the edited values (a component can show on several indented rows;
+    a cell that differs from its original value wins)."""
+    out, order = {}, []
+    for r in rows:
+        i = r.get('id')
+        if i not in out:
+            order.append(i)
+            out[i] = dict(r)
+            out[i].update(r.get('_orig') or {})
+        for k in EDITABLE:
+            if r.get(k, '') != (r.get('_orig') or {}).get(k, ''):
+                out[i][k] = r.get(k, '')
+    return [out[i] for i in order]
+
+
+def spread_edits(rows, merged):
+    """Copy merged values back onto every row of the same component."""
+    by = {m.get('id'): m for m in merged}
+    for r in rows:
+        m = by.get(r.get('id'))
+        if m:
+            for k in EDITABLE:
+                r[k] = m.get(k, '')
+    return rows
+
+
+def thumb_rows(rows):
+    """Rows that get a thumbnail: top-level items only, never children of an expanded subassembly."""
+    return [r for r in rows if r.get('top')]
+
+
+def cell(row, key):
+    v = row.get(key, '')
+    return v if v is not None else ''
+
 
 _ALIASES = {
     'name': ['name', 'component', 'part', 'part_name'],
@@ -106,12 +208,13 @@ def empty_cells(rows, required=REQUIRED):
     return [(r['name'], k) for r in rows for k in required if not str(r.get(k) or '').strip()]
 
 
-def to_csv(rows):
+def to_csv(rows, columns=None):
+    cols = pick_columns(columns or KEYS)
     buf = io.StringIO()
     w = csv.writer(buf, lineterminator='\n')
-    w.writerow([h for _, h in COLUMNS])
+    w.writerow([HEADERS[k] for k in cols])
     for r in rows:
-        w.writerow([r.get(k, '') for k in KEYS])
+        w.writerow([cell(r, k) for k in cols])
     return buf.getvalue()
 
 
@@ -124,9 +227,10 @@ def _col(i):
     return s
 
 
-def write_xlsx(path, rows, sheet='BOM'):
-    """Minimal standard .xlsx (stdlib only; Fusion's Python has no openpyxl)."""
-    table = [[h for _, h in COLUMNS]] + [[r.get(k, '') for k in KEYS] for r in rows]
+def write_xlsx(path, rows, sheet='BOM', columns=None):
+    """Minimal standard .xlsx (stdlib only; Fusion's Python has no openpyxl). Item is written as text."""
+    cols = pick_columns(columns or KEYS)
+    table = [[HEADERS[k] for k in cols]] + [[cell(r, k) for k in cols] for r in rows]
     xml_rows = []
     for ri, vals in enumerate(table, 1):
         cells = []
@@ -155,6 +259,7 @@ def write_xlsx(path, rows, sheet='BOM'):
 def report(rows, blocked, filled):
     """blocked: list of (row name, field, reason)."""
     lines = ['HB BOM report', '', 'Parts: %d rows, %d pieces' % (len(rows), sum(int(r.get('qty') or 0) for r in rows))]
+    rows = merge_edits(rows) if any('id' in r for r in rows) else rows
     if filled:
         lines += ['', 'Filled from build.json (%d):' % len(filled)] + ['  %s: %s' % f for f in filled]
     lines += ['', 'Blocked (%d):' % len(blocked)] + ['  %s: %s - %s' % b for b in blocked]

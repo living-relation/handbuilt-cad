@@ -1,4 +1,7 @@
 """Fusion-side BOM work: read components, count them, write fields back. Separate from the UI for testing."""
+import os
+import tempfile
+
 import adsk.core
 import adsk.fusion
 
@@ -23,28 +26,85 @@ def components_in_order(design):
     return [(comps[cid], n) for cid, n in counts.items()]
 
 
-def collect_rows(design):
-    rows = []
+def _fields(comp, root_mat):
+    soft = []
+    if (comp.partNumber or '') == comp.name:
+        soft.append('part_number')
+    if comp.material and comp.material.name == root_mat:
+        soft.append('material')
+    return {
+        '_soft': soft,
+        'id': comp.id,
+        'name': comp.name,
+        'part_number': comp.partNumber or '',
+        'description': comp.description or '',
+        'material': comp.material.name if comp.material else '',
+        'vendor': _attr(comp, 'vendor'),
+        'vendor_pn': _attr(comp, 'vendor_pn'),
+        'notes': _attr(comp, 'notes'),
+    }
+
+
+def collect_tree(design):
+    """Root's occurrences as nested dicts for bom_core.build_rows (read-only)."""
     root_mat = design.rootComponent.material.name if design.rootComponent.material else ''
-    for comp, n in components_in_order(design):
-        soft = []
-        if (comp.partNumber or '') == comp.name:
-            soft.append('part_number')
-        if comp.material and comp.material.name == root_mat:
-            soft.append('material')
-        rows.append({
-            '_soft': soft,
-            'id': comp.id,
-            'name': comp.name,
-            'qty': n,
-            'part_number': comp.partNumber or '',
-            'description': comp.description or '',
-            'material': comp.material.name if comp.material else '',
-            'vendor': _attr(comp, 'vendor'),
-            'vendor_pn': _attr(comp, 'vendor_pn'),
-            'notes': _attr(comp, 'notes'),
-        })
-    return rows
+    cache = {}
+
+    def walk(occs):
+        out = []
+        for i in range(occs.count):
+            occ = occs.item(i)
+            c = occ.component
+            if c.id not in cache:
+                cache[c.id] = _fields(c, root_mat)
+            node = dict(cache[c.id])
+            node['children'] = walk(occ.childOccurrences)
+            out.append(node)
+        return out
+    return walk(design.rootComponent.occurrences)
+
+
+def collect_rows(design, style='parts'):
+    return core.build_rows(collect_tree(design), style)
+
+
+THUMB_DIR = os.path.join(tempfile.gettempdir(), 'HandbuiltCAD', 'hbbom_thumbs')
+
+
+def _thumb_path(doc_name, comp_id):
+    safe = ''.join(ch if ch.isalnum() or ch in '-_' else '_' for ch in comp_id)
+    d = os.path.join(THUMB_DIR, ''.join(ch if ch.isalnum() else '_' for ch in doc_name))
+    os.makedirs(d, exist_ok=True)
+    return os.path.join(d, safe + '.png')
+
+
+def make_thumbnails(app, design, rows, refresh=False, size=96):
+    """{component id: png path} for top-level rows. Cached per document + component. To render, every other
+    top-level occurrence is hidden briefly, the view is fitted and saved, then visibility and the camera are put
+    back exactly as they were."""
+    doc = app.activeDocument.name
+    want = {r['id']: _thumb_path(doc, r['id']) for r in core.thumb_rows(rows)}
+    todo = {i: p for i, p in want.items() if refresh or not os.path.isfile(p)}
+    if todo:
+        vp = app.activeViewport
+        cam = vp.camera
+        occs = design.rootComponent.occurrences
+        saved = [(occs.item(i), occs.item(i).isLightBulbOn) for i in range(occs.count)]
+        try:
+            for cid, path in todo.items():
+                for o, _ in saved:
+                    on = o.component.id == cid
+                    if o.isLightBulbOn != on:
+                        o.isLightBulbOn = on
+                vp.fit()
+                vp.saveAsImageFile(path, size, size)
+        finally:
+            for o, was in saved:
+                if o.isLightBulbOn != was:
+                    o.isLightBulbOn = was
+            vp.camera = cam
+            vp.refresh()
+    return {i: p for i, p in want.items() if os.path.isfile(p)}
 
 
 def find_material(app, design, name):
@@ -72,7 +132,7 @@ def apply_rows(design, rows):
     by_id = {c.id: c for c, _ in components_in_order(design)}
     linked = {o.component.id for o in design.rootComponent.allOccurrences if o.isReferencedComponent}
     blocked = []
-    for r in rows:
+    for r in core.merge_edits(rows):
         comp = by_id.get(r.get('id'))
         if comp is None:
             blocked.append((r['name'], 'all', 'component not found'))
