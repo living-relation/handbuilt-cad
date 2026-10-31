@@ -8,7 +8,7 @@ The one state file for this repo: current goal and open items. Decisions go in `
 - (2026-10-17) **Local-only knuckle work in the old `handbuilt-models` WSL clone** (never pushed, kept local on purpose): six skip-worktree files (knuckle chunks 15-18), the local branch `backup/local-main-2026-10-10`, and git-ignored `knuckle_billet/` sources (`baseline_al`, `fab`, `loads17`, `final/middle-*`). Where it goes is the maintainer's call. Don't archive or delete `handbuilt-models` until that's settled.
 - (2026-10-17) **Models not yet in `$MODELS_DIR`:** `knuckle_billet/fab` A/B/C STEP (+STL), `bezel/bezel_hb.ply`. The bracket example outputs can be regenerated.
 - (2026-10-17) **Do non-ST185 parts get drawings?** Open with the maintainer.
-- (2026-10-29) **Fusion add-ins HB Export and HB BOM** (`tools/fusion_addins/`): PR open, not merged. Maintainer to install them from Scripts and Add-Ins '+' and try the dialogs by hand (the in-Fusion smoke test covers the work, not the dialog clicks).
+- (2026-10-30) **Fusion add-ins HB Export and HB BOM** (`tools/fusion_addins/`): merged and installed on both PCs. HB BOM now has columns Item, QTY, Part Number, Part Description (+ optional Component, Material, Vendor, Vendor PN, Notes), styles Top level / Indented / Parts only, and optional top-level thumbnails in the dialog. Maintainer to try the dialogs by hand. Fusion drawing-system idea: plan later.
 
 **Kept branches:** none
 **Last cleanup:** 2026-10-29 (squash-merge of remaining open PRs #49 then #52)
