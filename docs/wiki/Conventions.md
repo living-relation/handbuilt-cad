@@ -15,7 +15,8 @@
 - **Backups:** git history is the backup for anything in the repo. The projects `_archive` folder is only for obsolete work, and only with the owner's OK; no zip snapshots there before changes.
 - **STEP only:** STEP is the deliverable; STL only when a print job needs one.
 - **FEA after approval:** run strength checks (FEA) only after the owner approves the geometry, unless they ask for early tests.
-- **Minimum wall:** structural / critical features only, and never assumed: use the value the owner gave (`cnc_check.py --min-wall`, a walls config). Anything unclear is flagged for the owner.
+- **CNC machined parts:** follow [`CNC-MACHINING-RULES.md`](../CNC-MACHINING-RULES.md) (Xometry design guide). Project rules in [`AGENTS.md`](../../AGENTS.md) and [`DECISIONS.md`](../../DECISIONS.md) win where they're stricter.
+- **Minimum wall (3D printed parts):** structural / critical features only, and never assumed: use the value the owner gave (`cnc_check.py --min-wall`, a walls config). Anything unclear is flagged for the owner. CNC machined walls are the minimums in [`CNC-MACHINING-RULES.md`](../CNC-MACHINING-RULES.md): 0.030" (0.762 mm) metal, 0.060" (1.52 mm) plastic/composite.
 - **Capped sections:** every rendered section view is closed-surface clipped (cut faces filled), never open cut faces that look like hollow shells (`tools/render/section.py`).
 - **Keep out of git:** raw scans, solver output, venvs, secrets, personal files. Files over 50 MB are listed by name in `.gitignore`.
 - **Paths don't move.** Existing folders keep their names so scripts keep working; if something must move, update the scripts and leave a pointer.

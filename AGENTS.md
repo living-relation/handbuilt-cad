@@ -27,7 +27,7 @@ This file is the single agent guide for this repo. `CLAUDE.md` and `.cursor/rule
 - Secrets, `.env` files, tokens, personal paths or personal data.
 
 ## CAD and drawing rules
-The drawing engine's full rule list (and which ones it enforces) is `drawing/DRAWING-RULES.md`; rev letters come from `drawing/revs.py`.
+The drawing engine's full rule list (and which ones it enforces) is `drawing/DRAWING-RULES.md`; rev letters come from `drawing/revs.py`. CNC machined parts also follow `docs/CNC-MACHINING-RULES.md`. 3D printed parts use the wall rule in item 7.
 
 1. **Model drives the rev letter.** The model generates the drawing; model and drawing rev letters always match. Letters start at A, skip I, L, O and Q, then continue AA, AB, ... after Z. Rev A is only for new models; an existing model's letter comes from counting its past releases.
 2. **Clerical vs model revs.** Drawing-only edits that don't affect fit, form or function add a decimal (C -> C.01, C.02 ...). A model change bumps the letter for model and drawing (C.0x -> D) and resets the decimal.
@@ -35,7 +35,7 @@ The drawing engine's full rule list (and which ones it enforces) is `drawing/DRA
 4. **Rev log table** at the top-right of sheet 1: Rev, Description, By, Date (dd/mm/yy). One entry per PR/release, not per edit; clerical revs are not listed; Rev A is "Initial"; drop the oldest rows when it gets too long. Template: `drawing/templates/REVLOG.md`.
 5. **No hidden lines.** Center marks and center lines are fine.
 6. **Smooth bodies, no mesh** in renders or drawings.
-7. **Minimum wall thickness applies to critical or structural features only.** Anything questionable (e.g. a thin non-structural wall) is flagged for the maintainer to change or approve, never auto-fixed or auto-failed. No tool assumes a minimum: `tools/cnc_check.py` needs `--min-wall`, the spec's `min_wall_mm` or `--walls-config`, otherwise it reports walls as "not checked".
+7. **3D printed parts: minimum wall thickness applies to critical or structural features only.** Anything questionable (e.g. a thin non-structural wall) is flagged for the maintainer to change or approve, never auto-fixed or auto-failed. No tool assumes a minimum: `tools/cnc_check.py` needs `--min-wall`, the spec's `min_wall_mm` or `--walls-config`, otherwise it reports walls as "not checked". CNC machined parts use the wall minimums in `docs/CNC-MACHINING-RULES.md` (0.030" / 0.762 mm metal, 0.060" / 1.52 mm plastic or composite).
 8. **Edge breaks are optional.** If the CAD can't do them cleanly, use a drawing note instead.
 9. **Dimension each feature once.** Use an (xN) count for repeats, e.g. "Ø6.6 (x4)".
 10. **Correct view.** Put each dimension in the ASME/ISO-correct view; chain, baseline and ordinate styles are all fine.

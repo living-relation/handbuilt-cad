@@ -28,7 +28,7 @@ Rules for every drawing this engine makes. The engine enforces the ones marked *
 18. Name the tool that made the model in parentheses (e.g. "(Fusion)", "(build123d)").
 
 ## Edges and walls
-19. **Edge breaks are optional.** If the CAD can't model them cleanly, leave them off and add a drawing note, e.g. "BREAK SHARP EDGES 0.2-0.4".
+19. **Edge breaks are optional.** If the CAD can't model them cleanly, leave them off and add a drawing note, e.g. "BREAK SHARP EDGES 0.2-0.4". When an edge break is called out, use a 45° chamfer (`docs/CNC-MACHINING-RULES.md`).
 20. Fillets go last; any that fail are skipped and listed.
 21. Minimum wall thickness applies to critical or structural features only; anything questionable or unclear is flagged for change or approval.
 

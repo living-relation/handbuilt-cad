@@ -1,8 +1,10 @@
 # Wall-check config for tools/checks/check_printed_walls.py - one per project (or per job). Example values only.
+# 3D printed parts only. The minimum wall applies to critical or structural features only, and is never assumed.
+# CNC machined parts use the wall minimums in docs/CNC-MACHINING-RULES.md (0.030" metal, 0.060" plastic/composite).
 # The project's own rules (AGENTS.md, decision log, register) win over anything here.
 # Paths are relative to this file.
 
-min_wall = 2.0        # mm, REQUIRED: a structural / critical spot at or under this fails. No default: ask the user once.
+min_wall = 2.0        # mm, REQUIRED for 3D printed parts: a structural / critical spot at or under this fails. No default: ask the user once. CNC walls: docs/CNC-MACHINING-RULES.md.
 attach_min = 3.0      # mm, optional: features held on by less than this (A check). Leave out to skip the A check.
 step = 0.5            # mm, section spacing for the wall check
 pitch = 0.2           # mm, voxel size for the attachment check
