@@ -10,4 +10,4 @@ The one state file for this repo: current goal and open items. Decisions go in `
 - None right now.
 
 **Kept branches:** none
-**Last cleanup:** 2026-10-29 (squash-merge of remaining open PRs #49 then #52)
+**Last cleanup:** 2026-10-29 @ 94a7706
