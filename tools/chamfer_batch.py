@@ -1,4 +1,7 @@
-"""Batch edge-break chamfer of every sharp CONVEX edge of a finished solid (chamfers where fillets fail).
+"""Batch 45° edge-break chamfer of every sharp CONVEX edge of a finished solid.
+
+Never run this automatically (docs/CNC-MACHINING-RULES.md CNC-EDGE-BREAK). Use it only when the user
+explicitly asks to model edge breaks; prefer 45° chamfers, not fillets.
 
 Tries all edges at once, then splits the set in halves recursively; a single edge that will not chamfer is skipped
 and reported (never dropped silently). A result only counts when it is one valid solid that did not gain volume.

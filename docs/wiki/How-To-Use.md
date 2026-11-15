@@ -60,17 +60,18 @@ You should see the holes listed, then `PASS` for each line in `spec.json` and `A
 ```
 This is a quick "can it be milled?" screen. It prints, and saves as `bracket_cnc.txt` + `bracket_cnc.json`:
 1. **Setups**: which directions the cutter has to come from (every flat face reachable, every hole on-axis). It's a lower bound, because it doesn't know when one part of the model blocks another.
-2. **Inside corners** with no radius (sharp) or a radius smaller than your smallest cutter, with their x, y, z.
-3. **Vertical inside corners** a cutter coming straight down can't make (they come out at the tool radius).
-4. **Thin walls** under the minimum wall you gave, with locations. There is no default: with no `--min-wall`, spec `min_wall_mm` or `--walls-config`, item 4 says `Walls: not checked`.
+2. **Inside corners** that are sharp, smaller than your smallest cutter, under 1.3× the nearest standard tool radius, or exactly a standard tool size, with their x, y, z.
+3. **Vertical inside corners** a cutter coming straight down can't make (they come out at the tool radius — design them at 1.3× that tool, never an exact standard size).
+4. **Thin walls.** For CNC parts (the default) the wall floor is 0.030" (0.762 mm) metal or 0.060" (1.52 mm) plastic (`--material plastic`). A thinner wall is a **FAIL**. A stricter `--min-wall`, spec `min_wall_mm` or `--walls-config` is kept; a looser value is raised to the floor. For 3D printed parts (`--process printed`) there is no default: without `--min-wall` / spec / `--walls-config`, item 4 says `Walls: not checked`, and thin spots are candidates to classify (`tools/checks/check_printed_walls.py`), not automatic failures.
 
-For the bracket you should see 3 directions (bottom, top, and the side for the upright hole), no corners and no thin walls, then `Result: nothing flagged`.
+For the bracket you should see 3 directions (bottom, top, and the side for the upright hole), no guide-rule corners and no thin walls, then `Result: nothing flagged`. The inside corner is 6.5 mm, 1.3× the 5 mm tool in `cnc_spec.json`.
 `cnc_spec.json` lists the cutters you have and your minimum wall. Every key is optional; the defaults are:
 ```json
-{"tool_radii_mm": [3.0, 5.0, 6.0], "lip_max_mm": 0.1, "min_wall_mm": null, "spindle_axis": "z", "wall_samples": 20000,
- "reach_samples": 20000, "reach_min_gain_pct": 0.25, "ray_chunk": 1000, "mesh_tol_mm": 0.02, "max_listed": 25}
+{"tool_radii_mm": [3.0, 5.0, 6.0], "lip_max_mm": 0.1, "process": "machined", "material": "metal", "min_wall_mm": null,
+ "spindle_axis": "z", "wall_samples": 20000, "reach_samples": 20000, "reach_min_gain_pct": 0.25, "ray_chunk": 1000,
+ "mesh_tol_mm": 0.02, "max_listed": 25}
 ```
-The bracket's `cnc_spec.json` sets `min_wall_mm` to 1.5 as its owner's choice; never assume one for your part (ask the owner once and save it). The minimum applies to structural / critical features only, so thin spots are candidates to classify (`tools/checks/check_printed_walls.py` with a walls config), not automatic failures. Add `--strict` to make it exit with an error when anything is flagged (handy in scripts), and `--out PREFIX` to put the report somewhere else. Round holes (half a circle or more) count as drilled or bored, so they aren't reported as corners.
+The bracket's `cnc_spec.json` sets `min_wall_mm` to 1.5 as a stricter owner's choice (above the 0.762 mm metal floor). Add `--strict` to make it exit with an error when anything is flagged or failed (handy in scripts), and `--out PREFIX` to put the report somewhere else. Round holes (half a circle or more) count as drilled or bored, so they aren't reported as corners.
 
 **Lips.** A concave edge next to a face narrower than `lip_max_mm` (0.1 mm), where the faces on both sides of that sliver are within 15 deg of tangent, is a **lip**: a tiny step, not a corner (a `tools/blend.py` blend leaves a 0.015 mm step along each edge of the blend, one per lofted strip, which used to add hundreds of "sharp corners"). Lips are counted on their own line under item 2 and listed under `lips` in the JSON; they don't make the check fail. A sliver face inside a real corner (the faces either side turn more than 15 deg, e.g. a failed tiny fillet or a boolean seam) is still reported as a sharp corner, marked "split by a sliver face". Set `"lip_max_mm": 0` to count every concave edge as before.
 
@@ -124,7 +125,7 @@ Rename things, change the shape and sizes, and update `spec.json` with the holes
 | Command | What it does |
 |---|---|
 | `.venv/bin/python tools/features.py part.step [--spec spec.json]` | Lists round holes/bosses (diameter, axis, position) and checks them against a spec |
-| `.venv/bin/python tools/cnc_check.py part.step [--min-wall MM \| --walls-config TOML] [--spec cnc_spec.json] [--strict] [--out PREFIX] [--stl part.stl] [--reach [DIRS]]` | CNC screen: setup directions, sharp or too-small inside corners (tiny blend run-out steps counted separately as lips), vertical corners, thin walls (only with a minimum wall given; never assumed); `--reach` = line-of-sight surface coverage and fewest directions. Writes `_cnc.txt` + `_cnc.json` |
+| `.venv/bin/python tools/cnc_check.py part.step [--process machined\|printed] [--material metal\|plastic] [--min-wall MM \| --walls-config TOML] [--spec cnc_spec.json] [--strict] [--out PREFIX] [--stl part.stl] [--reach [DIRS]]` | CNC screen: setup directions, inside corners (sharp, under the smallest tool, under 1.3×, or an exact standard size; lips counted separately), vertical corners, thin walls (CNC floor by default, FAIL if under; printed: only with a minimum given); `--reach` = line-of-sight surface coverage. Writes `_cnc.txt` + `_cnc.json` |
 | `$SIM_VENV/bin/python tools/quick_fea.py part.step --fix AX:min --load AX:max --force X,Y,Z [--E --nu --yield --size]` | Quick linear strength check. Units: mm, N, MPa |
 | `.venv/bin/python tools/views.py part.step\|part.stl [-o sheet.png] [--six] [--name NAME]` | 6-view + iso picture sheet; `--six` = only the 6 labelled plain-grey views |
 | `.venv/bin/python tools/viewer.py part.step [more.step] -o view.html` | Interactive 3D viewer in one HTML file (STEP or STL) |
@@ -132,7 +133,7 @@ Rename things, change the shape and sizes, and update `spec.json` with the holes
 | `.venv/bin/python tools/an_fitting.py --size 10\|6 [-o end.step] [--stl] [--no-bore] [--lead MM]` | Male AN / JIC 37° flare fitting end with a real UNF thread; checks it's one valid solid (exit 1 if not) |
 | `.venv/bin/python tools/an_fitting.py --selfcheck [--json rows.json]` | Measures built `-6` and `-10` ends against MS33656 / AS4395 / ISO 8434-2 and UNF-2A; exit 1 on any miss |
 | `.venv/bin/python tools/blend.py pair A.step B.step --r 6 [--base body.step] [-o OUT] [--path crease.step]` | Rolling-ball blend (fillet) between two solids where `fillet()` fails; fuses it and checks valid, one solid, STEP re-import and fillet volume (the gain is measured locally as pieces minus base, never as the difference of two big part volumes; exit 1 on a miss). `demo --angle 45` and `compare` show it on a tilted cylinder |
-| `.venv/bin/python tools/chamfer_batch.py in.step out.step [--size 0.8] [--min-angle 25] [--time 600]` | Edge-break chamfer on every sharp convex edge where fillets fail: all at once, then halves, then one by one; an edge that will not chamfer is skipped and listed (`WARNING` lines, `out.step.chamfer.json`) |
+| `.venv/bin/python tools/chamfer_batch.py in.step out.step [--size 0.8] [--min-angle 25] [--time 600]` | 45° edge-break chamfer, **only when the user explicitly asks to model breaks** (never auto-run): every sharp convex edge, all at once, then halves, then one by one; an edge that will not chamfer is skipped and listed (`WARNING` lines, `out.step.chamfer.json`) |
 | `from sketch_blend import capsule, round_outline, plan_union, poly_face, prism, skirt, strict_fuse, strict_cut, round_edges` | Helpers for clean CNC sketch bodies: true line + arc outlines, rounded plan outlines, concave blend skirts, and joins / cuts / edge rounds that fail loudly instead of silently skipping (tests: `tests/test_sketch_tools.py`) |
 | `bash setup.sh --check` | What's installed |
 

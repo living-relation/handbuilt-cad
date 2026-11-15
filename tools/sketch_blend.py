@@ -98,17 +98,25 @@ def skirt(face, z0, r, support=None, down=False, inset=0.0):
         sk = _one(sk.intersect(prism(sup, z0 - r - 1, z0 + r + 1)))
     return sk
 
-def round_edges(solid, radii=(4.0, 3.0, 2.0, 1.5), select=None, name="", log=print, chamfers=(1.5, 1.0, 0.5)):
-    """Edge-round ONE region on its own (before any join), where the kernel copes: all edges, or those `select(edge)` keeps.
-    Tries each radius; returns (solid, radius) - radius None when nothing worked (caller reports it)."""
+def round_edges(solid, radii=(4.0, 3.0, 2.0, 1.5), select=None, name="", log=print, chamfers=(1.5, 1.0, 0.5),
+                prefer="fillet"):
+    """Round ONE region on its own (before any join), where the kernel copes: all edges, or those `select(edge)` keeps.
+
+    This is not an automatic edge-break pass (docs/CNC-MACHINING-RULES.md CNC-EDGE-BREAK). Call it only for
+    requested feature rounds. prefer="fillet" (default) tries fillets then 45° chamfers — use that for
+    functional outside rounds. prefer="chamfer" tries 45° chamfers only — use that when the user asked
+    to model edge breaks. Returns (solid, radius) — radius None when nothing worked (caller reports it).
+    """
     es = [e for e in solid.edges() if select is None or select(e)]
     if not es: return solid, None
+    if prefer == "chamfer":
+        radii = ()
     for r in radii:
         try:
             s = solid.fillet(r, es)
             if s.is_valid and len(s.solids()) == 1: return s.solids()[0], r
         except Exception: pass
-    for c in chamfers:          # fallback (the owner): break the outside edges with a small 45 deg chamfer instead
+    for c in chamfers:          # 45 deg chamfer (preferred for requested edge breaks; fallback for feature rounds)
         try:
             s = solid.chamfer(c, None, es)
             if s.is_valid and len(s.solids()) == 1: log("  %s: fillet failed -> chamfer %.1f x 45" % (name, c)); return s.solids()[0], "ch%.1f" % c

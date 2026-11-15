@@ -1,5 +1,9 @@
-"""F10: 0.3 x 45 deg edge break on convex edges of machined enclosure parts, excluding sealing faces
-(body rim top + O-ring groove, lid underside contact face, HD34 sealing face) and edges shorter than 1 mm."""
+"""F10 helper: 0.3 x 45 deg chamfer on convex edges of machined enclosure parts, excluding sealing faces
+(body rim top + O-ring groove, lid underside contact face, HD34 sealing face) and edges shorter than 1 mm.
+
+Never run this automatically (docs/CNC-MACHINING-RULES.md CNC-EDGE-BREAK). Call apply() only when the user
+explicitly asks to model edge breaks. 45° chamfers, not fillets.
+"""
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 from build123d import *

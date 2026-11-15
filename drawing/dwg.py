@@ -31,9 +31,10 @@ DXF_LAYER={'vis':('VISIBLE','CONTINUOUS',7),'hid':('HIDDEN','HIDDEN',8),'ctr':('
      'dim':('DIM','CONTINUOUS',3),'border':('BORDER','CONTINUOUS',7),'tb':('TITLE','CONTINUOUS',7),'phantom':('PHANTOM','PHANTOM',6),
      'expl':('EXPLODE','DOT',6),'cut':('CUTPLANE','DASHDOT',1),'detail':('DETAIL','DASHED',5),'tan':('TANGENT','CONTINUOUS',7)}
 TH=3.0  # standard text height mm
-# the "unless otherwise specified" block; a spec's 'tol' replaces it (e.g. a project that bans notes about
-# features that are not in the model drops the edge-break line)
-DEFAULT_TOL="DIMENSIONS ARE IN MILLIMETERS\nTOLERANCES:\n  X     ±0.5      X.X  ±0.2\n  X.XX  ±0.05    ANGLES ±0.5°\nBREAK SHARP EDGES 0.2-0.4\nSURFACE FINISH Ra 3.2 µm\nINTERPRET PER ASME Y14.5-2018"
+# the "unless otherwise specified" block; a spec's 'tol' replaces it.
+# Edge-break notes do not belong here (docs/CNC-MACHINING-RULES.md CNC-EDGE-BREAK, DRAWING-RULES 19):
+# never auto-applied, and only a leader note after the user approves one.
+DEFAULT_TOL="DIMENSIONS ARE IN MILLIMETERS\nTOLERANCES:\n  X     ±0.5      X.X  ±0.2\n  X.XX  ±0.05    ANGLES ±0.5°\nSURFACE FINISH Ra 3.2 µm\nINTERPRET PER ASME Y14.5-2018"
 
 class Sheet:
     def __init__(s): s.items=[]; s.rects=[]; s.anch=dict(balloon={},bom={},note={},view={})   # anch: where things are, for revmarks

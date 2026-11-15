@@ -14,3 +14,8 @@ Rules for agents and people:
 - Publish with the handbuilt-cad `publish-to-models` skill.
 - This note is written by handbuilt-cad `tools/folder_notes.py`, run by setup and by publish-to-models. It's add-only: written only when missing, never overwritten.
 - To change these rules, open a handbuilt-cad PR (`templates/models-folder/`).
+
+## CNC machining rules
+
+Any agent designing CNC-machined parts, even without using the rest of handbuilt-cad, must follow the CNC rules in the handbuilt-cad file [`docs/CNC-MACHINING-RULES.md`](https://github.com/living-relation/handbuilt-cad/blob/main/docs/CNC-MACHINING-RULES.md) and the source Xometry PDF in this folder at `references/xometry-design-guide-cnc-machining-2025-04-16.pdf`.
+

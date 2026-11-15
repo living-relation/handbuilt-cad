@@ -1,6 +1,6 @@
 # Wall-check config for tools/checks/check_printed_walls.py - one per project (or per job). Example values only.
 # 3D printed parts only. The minimum wall applies to critical or structural features only, and is never assumed.
-# CNC machined parts use the wall minimums in docs/CNC-MACHINING-RULES.md (0.030" metal, 0.060" plastic/composite).
+# CNC machined parts: walls under the minimums in docs/CNC-MACHINING-RULES.md (0.030" / 0.762 mm metal, 0.060" / 1.52 mm plastic) FAIL. This file is for 3D printed wall checks.
 # The project's own rules (AGENTS.md, decision log, register) win over anything here.
 # Paths are relative to this file.
 
