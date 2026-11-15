@@ -1,6 +1,6 @@
 # CNC machining design rules
 
-Shop-practice and project rules for CNC machined parts. Source: **Xometry, "Design Guide: CNC Machining"** (38 pages, PDF dated 16 Apr 2025). Page numbers are the guide's own ("N of 38").
+Shop-practice and project rules for CNC machined parts. Source: **Xometry, "Design Guide: CNC Machining"** (38 pages, PDF dated 16 Apr 2025). Page numbers are the guide's own ("N of 38"). The in-repo source is the text conversion [`docs/references/xometry-design-guide-cnc-machining-2025-04-16.md`](references/xometry-design-guide-cnc-machining-2025-04-16.md) (page markers `<!-- pN -->` / `## pN`).
 
 **Scope:** CNC machined parts only. 3D printed parts use the repo's structural-or-critical wall rule, which is never assumed.
 
@@ -10,12 +10,12 @@ Shop-practice and project rules for CNC machined parts. Source: **Xometry, "Desi
 - Project rules in the section below, `AGENTS.md` and `DECISIONS.md` win over the guide.
 - These are manufacturability guidelines from one shop, not a standard. The guide's p9 "ISO 2768" label is `unverified:` — the printed table is not ISO 2768-1 medium.
 - Rows marked **fail** are failures. Rows marked **flag** are reported for a decision; never auto-fixed, and not an automatic fail.
-- The PDF is not in this repo (files over 1 MB are blocked). It lives in the models folder: `$MODELS_DIR/references/xometry-design-guide-cnc-machining-2025-04-16.pdf`.
+- The in-repo source is `docs/references/xometry-design-guide-cnc-machining-2025-04-16.md`. The full PDF is not in this repo (files over 1 MB are blocked). It lives in the models folder: `$MODELS_DIR/references/xometry-design-guide-cnc-machining-2025-04-16.pdf`.
 
 ## Project rules (Daniel)
 
 - **CNC-CORNER-R (project):** inside vertical corners are never left sharp. Put the radius in the pocket or profile (tool radius at 1.3× the nearest standard tool, never an exact standard tool size). Do not run a fillet along inside edges or floors unless the function needs a floor radius. (Daniel, 2026-11-14; guide p14, p36)
-- **CNC-THREAD-DEPTH (project):** tapped holes are **1.5× the screw diameter** deep. Matching holes use the same depth. Deeper than **2× diameter** is a **flag** (shop max, p20, p36). No torque or threadlocker notes unless the user asks.
+- **CNC-THREAD-DEPTH (project):** **1.5× the screw diameter** is the **minimum** thread engagement for tapped holes. Matching holes use the same depth. Under 1.5× is a **flag** in the model check, never a reason to change the drawing. Deeper than **2× diameter** is also a **flag** (shop max, p20, p36) and likewise must not change drawing text. Drawings always call out the actual modeled thread depth on every blind tapped hole. When the drill/hole is deeper than the thread, both depths are called out. Through holes (plain and tapped) are `THRU` with no depth; depth is only called out for blind holes. If thread depth is unknown, flag it; do not invent a number. No torque or threadlocker notes unless the user asks.
 - **CNC-EDGE-BREAK (project):** never auto-apply edge breaks. If chamfers or fillets are already modeled: no prompt and no general note; the drawing annotates their actual dimensions. If they are not modeled and the model has exposed sharp edges that could cut hands, the agent prompts the user. Only if the user approves does the drawing get a leader pointing at those edges: `BREAK ALL EDGES, STD`, or a user-given chamfer length. When breaks are modeled, prefer **45° chamfers**, not fillets. (Daniel, 2026-11-14; guide p36)
 - **CNC-TOL (project):** the drawing title-block defaults in `drawing/dwg.py` (`X ±0.5`, `X.X ±0.2`, `X.XX ±0.05` mm, angles `±0.5°`, Ra 3.2 µm, ASME Y14.5-2018) are the project default. The Xometry table is the shop default if a drawing is silent. A tolerance tighter than **±0.005" (±0.127 mm)** is a **cost flag**, not a fail. Do not call the Xometry table ISO 2768.
 - **CNC-INSERT (project):** keep inserts in the assembly and `parts/` model for fit. The STEP sent to the shop is the part without inserts; call out SKU, orientation, depth, face and count on the drawing. (guide p29)
@@ -33,7 +33,7 @@ Shop-practice and project rules for CNC machined parts. Source: **Xometry, "Desi
 | CNC-HOLE-WALL | Holes and pockets **≥ 0.030" (1/32", 0.762 mm)** from walls in metal; **≥ 0.060" (1.52 mm)** in plastic / composite. | **flag** | p18 |
 | CNC-HOLE-PARTIAL | Keep **≥ 75%** of a partial hole inside the part edge. | **flag** | p18 |
 | CNC-HOLE-BLIND | Blind holes: add **25%** extra drill depth for the point and chips. Prefer through holes. | **flag** | p18 |
-| CNC-THREAD-DEPTH | Project target **1.5× screw diameter**; matching holes the same depth. Shop max **≤ 2×** hole diameter in metal — over 2× is a **flag**. | target / **flag** > 2× | project; p20, p36 |
+| CNC-THREAD-DEPTH | Minimum engagement **1.5× screw diameter**; matching holes the same depth. Shop max **≤ 2×** hole diameter in metal. Under 1.5× or over 2× is a **flag** only — drawings still show the actual depths. | **flag** if under 1.5× or over 2× | project; p20, p36 |
 | CNC-THREAD-RELIEF | Blind tap: unthreaded depth **≥ 0.5× diameter** past the threads. Mark drill relief allowable on the drawing; need not model it. | **flag** | p20, p36 |
 | CNC-CAVITY | Ideal cavity depth **< 4× width**; over **6× width** is too deep. Use dog-bones / corner reliefs for a square part in a pocket. | **flag** | p19, p36 |
 | CNC-EDGE-BREAK | Never auto-applied. Modeled breaks: annotate actual size, no general note. Unmodeled cut-risk edges: prompt; if approved, leader `BREAK ALL EDGES, STD` or a given length. Prefer 45° chamfers. | see project rule | project; p8, p36 |
@@ -115,7 +115,7 @@ The project title block stays as in `drawing/dwg.py` (`X ±0.5`, `X.X ±0.2`, `X
 
 ## Threads and tapped holes
 
-- **CNC-THREAD-DEPTH (project):** design thread engagement to **1.5× the screw diameter**. Matching holes are the same depth. The shop guideline is **≤ 2× hole diameter** in metal (p20, p36); deeper than 2× is a **flag**. `drawing/part.py` must not invent a callout deeper than 2× when `thread_depth` is missing; it prefers 1.5× when the modeled bore allows it.
+- **CNC-THREAD-DEPTH (project):** **1.5× the screw diameter** is the **minimum** thread engagement. Matching holes are the same depth. The shop guideline is **≤ 2× hole diameter** in metal (p20, p36). Under 1.5× or over 2× is a **flag** in the model check (`drawing/part.py` `hole_flags`, and the skill). Drawings always report actual geometry: every blind tapped hole is called out at its real thread depth (from the modeled thread or `spec['thread_depth']`), even if it is under 1.5× or over 2×. When the hole/drill is deeper than the thread, both are called out, e.g. `M4x0.7-6H ↧6` and `⌀3.3 ↧8`. Through holes, plain or tapped, are `THRU` with no depth. Depth is only called out for blind holes. If `thread_depth` is missing and no modeled thread length is available, flag the user; do not invent a depth from the bore or from 1.5×/2×.
 - **CNC-THREAD-RELIEF:** blind tapped holes add unthreaded depth **≥ 0.5× diameter** past the threads. Combined with 1.5× engagement, drill depth is at least **2.0× diameter**, plus the 25% chip/point allowance on the drill (CNC-HOLE-BLIND). Drill relief need not be modelled, but mark it allowable on the drawing. (p18, p20, p36)
 - Use the largest thread the design allows; taps break more **below M2 / #0-80 UNC**. (p20)
 - Avoid uncommon / custom threads. (p20)
@@ -180,7 +180,7 @@ The project title block stays as in `drawing/dwg.py` (`X ±0.5`, `X.X ±0.2`, `X
 | `tools/cnc_check.py` (process `machined`, default) | CNC wall floor (metal 0.762 mm / plastic 1.52 mm, or a stricter `--min-wall`); inside corners under 1.3× nearest standard/configured tool radius; exact standard tool sizes; sharp concave corners; setups | hole and cavity ratios, hole-to-wall, thread depth, 45° edge breaks, text, undercuts |
 | `tools/cnc_check.py` (process `printed`) | no default wall; `--min-wall` / spec / walls config required or walls are "not checked"; thin spots are candidates to classify | same geometric screen otherwise |
 | `skills/cnc-part-check` | CNC walls under the floor **fail**; printed structural/critical walls fail, others flagged; judge the part against this file in step 6 | — |
-| `drawing/part.py` | default blind-thread callout prefers 1.5×D and will not invent a depth over 2×D | matching-hole same-depth is an agent/project rule |
+| `drawing/part.py` `hole_callouts` | actual thread and hole depths on the drawing; through = `THRU` with no depth; missing `thread_depth` flagged, not invented; under 1.5×D or over 2×D recorded in `hole_flags` / `<pdf>.checks.json` | matching-hole same-depth is an agent/project rule |
 | `tools/checks/holefix.py`, `skills/scan-to-parametric` | thread engagement ≥ 1.5×D | shop max 2×D |
 
 `--strict` still makes `cnc_check.py` exit 1 when anything is flagged or failed. Failures are labelled FAIL in the report even without `--strict`.

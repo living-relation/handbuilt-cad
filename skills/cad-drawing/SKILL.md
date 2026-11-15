@@ -34,4 +34,5 @@ A finished, checked STEP, using the handbuilt-cad drawing engine (`drawing/part.
 5. After approval, file it: publish-to-models (`drawings/` in the rev folder), or the project's own filing rule and a PR.
 
 ## Notes
-- Tests: `tests/test_revs.py`, `tests/test_drawing_settings.py`, `tests/test_sections.py`.
+- Tests: `tests/test_revs.py`, `tests/test_drawing_settings.py`, `tests/test_sections.py`, `tests/test_hole_callouts.py`.
+- Hole and thread callouts (`drawing/part.py` `hole_callouts`, DRAWING-RULES 21a): through holes (plain or tapped) are `THRU` with no depth. Depth is only for blind holes. Blind taps use the actual `spec['thread_depth']` (or a modeled thread). When the hole is deeper than the thread, both are called out, e.g. `M4x0.7-6H ↧6` and `⌀3.3 ↧8`. If thread depth is unknown, flag it; do not invent 1.5×D or 2×D. Those limits are model-check flags only.
