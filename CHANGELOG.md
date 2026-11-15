@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-15: thread callouts are actual depths; in-repo Xometry guide text
+
+- 1.5×D is the minimum thread engagement (flag if under). The guide's ≤ 2×D shop note is quoted with its page cite; the project never flags deeper threads. `drawing/part.py` no longer invents or caps a thread depth. Blind taps are called out at the actual `thread_depth` (or flagged if missing). When the hole is deeper than the thread, both depths are called out (`M4x0.7-6H ↧6` and `⌀3.3 ↧8`). Through holes, plain or tapped, are `THRU` with no depth.
+- In-repo source for the 38-page Xometry guide: `docs/references/xometry-design-guide-cnc-machining-2025-04-16.md` (text conversion for agents; the PDF stays in the models folder).
+
+
 ## 2026-11-14: CNC rules for agents, cnc_check 1.3× and wall floors
 
 - `docs/CNC-MACHINING-RULES.md` rebuilt for agents: quick-lookup table, project rules, page cites, unverified marks, and a script/skill checker map. Source is Xometry "Design Guide: CNC Machining" (38 pp, 16 Apr 2025) plus Daniel's 2026-11-14 decisions. The PDF stays out of the repo (1 MB guard) and lives in the models folder `references/`.

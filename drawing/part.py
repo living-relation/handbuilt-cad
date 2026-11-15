@@ -22,10 +22,32 @@ def text_rect(x,y,t,h,ha,va):
     x0={'left':x,'right':x-w,'center':x-w/2}[ha]; y0={'bottom':y,'top':y-H,'center':y-H/2}[va]
     return (x0,y0,x0+w,y0+H)
 
+
+def _thread_major_mm(tn, tapd, d0):
+    """Major diameter (mm) from a name like M4x0.7; else the tap drill or hole dia."""
+    import re
+    m=re.search(r'M\s*([0-9]+(?:\.[0-9]+)?)', tn or '', re.I)
+    if m: return float(m.group(1))
+    return float(tapd if tapd else d0)
+
+def _lookup_thread_depth(spec, *keys):
+    """Actual thread depth from spec['thread_depth'] only. Never invent one. None if unknown."""
+    td=spec.get('thread_depth') or {}
+    for k in keys:
+        if k is None: continue
+        if k in td: return float(td[k])
+        try: kf=float(k)
+        except (TypeError, ValueError): continue
+        for kk,vv in td.items():
+            try:
+                if abs(float(kk)-kf)<0.051: return float(vv)
+            except (TypeError, ValueError): pass
+    return None
+
 def hole_callouts(solid,process,spec):
     holes,radii,_=feat.analyze(solid)
     tmap=spec.get('threads',{})
-    groups=defaultdict(list)
+    groups=defaultdict(list); flags=[]
     for h in holes:
         ks=sorted(h['segs']); r0=ks[0]; d0=2*r0
         t0,t1=h['segs'][r0]
@@ -71,25 +93,25 @@ def hole_callouts(solid,process,spec):
             # depth measured from entry for the small bore
             pass
         if thr:
-            tn,p=thr; tdep=spec.get('thread_depth',{}).get(dk)
-            if h['through'] or (cb and abs(depth-cb[1])>0 and h['through']): lines.append(f"{tn}-6H THRU")
+            tn,p=thr
+            tdep=_lookup_thread_depth(spec, dk, d0, tapd)
+            if h['through']:
+                # Through holes: THRU only, no depth (plain or tapped).
+                lines.append(f"{tn}-6H THRU")
             else:
-                # Nominal screw diameter: M6x1.0 -> 6, else the tap-drill group key.
-                major=None
-                if isinstance(tn,str) and tn[:1] in 'Mm':
-                    try: major=float(''.join(ch if ch.isdigit() or ch=='.' else ' ' for ch in tn.split('x')[0][1:]).split()[0])
-                    except (ValueError, IndexError): major=None
-                D=major if major else (tapd if tapd else d0)
+                # Blind: always the actual thread depth. Never invent or cap at 1.5D/2D.
+                D=_thread_major_mm(tn, tapd, d0)
                 if tdep is None:
-                    # Project target 1.5×D; never invent a callout past the shop max of 2×D
-                    # (docs/CNC-MACHINING-RULES.md CNC-THREAD-DEPTH). Usable ≈ bore minus ~3 pitches.
-                    usable=max(depth-3*p, p*3)
-                    target=1.5*D
-                    shop_max=2.0*D
-                    tdep=min(target, usable, shop_max)
-                    tdep=max(round(tdep*2)/2, p*3)
-                    tdep=min(tdep, shop_max)
-                lines.append(f"⌀{fmt(tapd,2)} ↧{fmt(depth,1)}"); lines.append(f"{tn}-6H ↧{fmt(tdep,1)}")
+                    flags.append(dict(kind='missing_thread_depth',thread=tn,dia=d0,hole_depth=depth,axis=ax))
+                    lines.append(f"{tn}-6H")
+                    lines.append(f"⌀{fmt(tapd,2)} ↧{fmt(depth,1)}")
+                else:
+                    lines.append(f"{tn}-6H ↧{fmt(tdep,1)}")
+                    # When hole depth differs from thread depth, call out both.
+                    if fmt(depth,1)!=fmt(tdep,1):
+                        lines.append(f"⌀{fmt(tapd,2)} ↧{fmt(depth,1)}")
+                    if tdep+1e-9 < 1.5*D:
+                        flags.append(dict(kind='thread_under_1_5D',thread=tn,thread_depth=tdep,major=D,min=1.5*D,axis=ax))
         else:
             lines.append(f"⌀{fmt(d0,2)} " + ("THRU" if h['through'] else f"↧{fmt(depth,1)}"))
         if cb: lines.append(f"⌴ ⌀{fmt(cb[0],2)} ↧{fmt(cb[1],1)}")
@@ -110,7 +132,8 @@ def hole_callouts(solid,process,spec):
         if rr<0.6: continue
         a,b=r['segs'][rr]
         rgroups[(r['axis'],round(rr,2))].append(dict(base=r['base'],t=b,face=r))
-    return groups,rgroups
+    spec['_hole_flags']=flags
+    return groups,rgroups,flags
 
 def place_leaders(sh,occ,pending,ymin=66):
     from shapely.geometry import box as B, LineString as L
@@ -283,7 +306,10 @@ def make_part(spec,out_pdf,out_dxf=None,png_prefix=None):
         elif kind=='text':
             _,x,y,text=d[:4]; sh.txt(x,y,text,h=d[4] if len(d)>4 else TH,ha='left',va='top')
     # holes
-    groups,rgroups=hole_callouts(solid,proc,spec)
+    groups,rgroups,hole_flags=hole_callouts(solid,proc,spec)
+    for f in hole_flags:
+        if f.get('kind')=='missing_thread_depth':
+            print(f"WARNING: {spec.get('pn','')}: blind {f['thread']} is missing thread_depth; callout has no invented depth")
     ordpts=defaultdict(list); pending=[]; marked=defaultdict(list)
     callout_n=0
     gl=sorted(groups.items(),key=lambda kv:(kv[0][0],-kv[1][0]['r']))
@@ -423,6 +449,7 @@ def make_part(spec,out_pdf,out_dxf=None,png_prefix=None):
     _RM.warn_if_missing(spec,rev,rm)
     render(sheets,out_pdf,out_dxf,png_prefix)
     extra=dict(tangent_lines_trimetric=len(V['iso'].tan),**rm)
+    if spec.get('_hole_flags'): extra['hole_flags']=spec['_hole_flags']
     if log is not None:
         want=[it['item'] for it in spec['stage_items'] if it.get('shapes') and not it.get('no_balloon')]
         extra['not_ballooned']=[i for i in want if i not in log.ballooned]

@@ -17,5 +17,5 @@ Rules for agents and people:
 
 ## CNC machining rules
 
-Any agent designing CNC-machined parts, even without using the rest of handbuilt-cad, must follow the CNC rules in the handbuilt-cad file [`docs/CNC-MACHINING-RULES.md`](https://github.com/living-relation/handbuilt-cad/blob/main/docs/CNC-MACHINING-RULES.md) and the source Xometry PDF in this folder at `references/xometry-design-guide-cnc-machining-2025-04-16.pdf`.
+Any agent designing CNC-machined parts, even without using the rest of handbuilt-cad, must follow the CNC rules in the handbuilt-cad file [`docs/CNC-MACHINING-RULES.md`](https://github.com/living-relation/handbuilt-cad/blob/main/docs/CNC-MACHINING-RULES.md) the in-repo text conversion [`docs/references/xometry-design-guide-cnc-machining-2025-04-16.md`](https://github.com/living-relation/handbuilt-cad/blob/main/docs/references/xometry-design-guide-cnc-machining-2025-04-16.md), and the source Xometry PDF in this folder at `references/xometry-design-guide-cnc-machining-2025-04-16.pdf`.
 
