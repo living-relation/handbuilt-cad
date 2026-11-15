@@ -112,8 +112,6 @@ def hole_callouts(solid,process,spec):
                         lines.append(f"⌀{fmt(tapd,2)} ↧{fmt(depth,1)}")
                     if tdep+1e-9 < 1.5*D:
                         flags.append(dict(kind='thread_under_1_5D',thread=tn,thread_depth=tdep,major=D,min=1.5*D,axis=ax))
-                    if tdep-1e-9 > 2.0*D:
-                        flags.append(dict(kind='thread_over_2D',thread=tn,thread_depth=tdep,major=D,max=2.0*D,axis=ax))
         else:
             lines.append(f"⌀{fmt(d0,2)} " + ("THRU" if h['through'] else f"↧{fmt(depth,1)}"))
         if cb: lines.append(f"⌴ ⌀{fmt(cb[0],2)} ↧{fmt(cb[1],1)}")

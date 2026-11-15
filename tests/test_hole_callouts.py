@@ -38,7 +38,6 @@ def test_blind_tap_shallower_than_1_5D_actual_depth_flagged():
     assert 'THRU' not in t
     kinds = [f['kind'] for f in flags]
     assert 'thread_under_1_5D' in kinds
-    assert 'thread_over_2D' not in kinds
 
 def test_blind_hole_deeper_than_thread_calls_out_both():
     # thread at the 1.5xD target (6), hole 8 — both depths, no engagement flag
@@ -49,7 +48,7 @@ def test_blind_hole_deeper_than_thread_calls_out_both():
     assert 'M4x0.7-6H ↧6' in t
     assert '⌀3.3 ↧8' in t
     assert 'THRU' not in t
-    assert not any(f['kind'] in ('thread_under_1_5D', 'thread_over_2D') for f in flags)
+    assert not any(f['kind'] == 'thread_under_1_5D' for f in flags)
 
 def test_through_tapped_is_thru_no_depth():
     solid = _box_hole(size_z=10, hole_d=3.3, hole_len=10, through=True)
@@ -80,8 +79,8 @@ def test_missing_thread_depth_not_invented():
     assert '⌀3.3 ↧8' in t
     assert any(f['kind'] == 'missing_thread_depth' for f in flags)
 
-def test_over_2D_still_called_out_and_flagged():
-    # 2xD=8; thread 10, hole 12 — actual depths on the drawing, flag only
+def test_over_2D_still_called_out_not_flagged():
+    # 2xD=8; thread 10, hole 12 — actual depths on the drawing; never a flag
     solid = _box_hole(size_z=20, hole_d=3.3, hole_len=12, through=False)
     spec = dict(threads=M4, thread_depth={3.3: 10.0})
     groups, rgroups, flags = P.hole_callouts(solid, 'machined', spec)
@@ -89,5 +88,5 @@ def test_over_2D_still_called_out_and_flagged():
     assert 'M4x0.7-6H ↧10' in t
     assert '⌀3.3 ↧12' in t
     kinds = [f['kind'] for f in flags]
-    assert 'thread_over_2D' in kinds
+    assert 'thread_over_2D' not in kinds
     assert 'thread_under_1_5D' not in kinds
