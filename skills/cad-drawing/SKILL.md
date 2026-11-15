@@ -19,7 +19,7 @@ A finished, checked STEP, using the handbuilt-cad drawing engine (`drawing/part.
 - A STEP that passed cnc-part-check. The model drives the drawing: redline the drawing, change the model, then regenerate. Never make a drawing differ from its model.
 - A spec dict per part. Required: `file`, `pn`, `title`, `material`, `process`. Common: `views`, `iso`, `scale`, `dims`, `ordinates`, `holes`/`threads`, `section`, `details`, `notes`, `center_marks`. `project` and `drawn` come from the spec, then `DRAWING_PROJECT` / `DRAWING_DRAWN`, then `local.toml` `[drawing]`.
 - `<part no>.REVLOG.md` beside the model (template `drawing/templates/REVLOG.md`); the engine draws it as the Rev log table at the top right of sheet 1. Letters come from `drawing/revs.py` only. Initials come from `~/.drawing-initials` / `DRAWING_INITIALS`; if missing, ask the user for the requester's initials (AGENTS.md "Initials, never agent names").
-- Notes the model can't carry: skipped fillets from the build report, edge breaks left out of the model (BREAK SHARP EDGES note), approved thin spots if the drawing should show them.
+- Notes the model can't carry: skipped fillets from the build report, approved edge-break leaders (`BREAK ALL EDGES, STD` or a user-given length; only after the user approves — never a default title-block note), approved thin spots if the drawing should show them.
 
 ## Steps
 1. `part.make_part(spec, out_pdf, out_dxf, png_prefix)` per part; `asm.make_assembly(spec, out_pdf, png_prefix)` for assemblies (balloons, BOM).

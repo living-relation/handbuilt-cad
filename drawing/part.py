@@ -74,7 +74,21 @@ def hole_callouts(solid,process,spec):
             tn,p=thr; tdep=spec.get('thread_depth',{}).get(dk)
             if h['through'] or (cb and abs(depth-cb[1])>0 and h['through']): lines.append(f"{tn}-6H THRU")
             else:
-                if tdep is None: tdep=max(round((depth-3*p)*2)/2, p*3)
+                # Nominal screw diameter: M6x1.0 -> 6, else the tap-drill group key.
+                major=None
+                if isinstance(tn,str) and tn[:1] in 'Mm':
+                    try: major=float(''.join(ch if ch.isdigit() or ch=='.' else ' ' for ch in tn.split('x')[0][1:]).split()[0])
+                    except (ValueError, IndexError): major=None
+                D=major if major else (tapd if tapd else d0)
+                if tdep is None:
+                    # Project target 1.5×D; never invent a callout past the shop max of 2×D
+                    # (docs/CNC-MACHINING-RULES.md CNC-THREAD-DEPTH). Usable ≈ bore minus ~3 pitches.
+                    usable=max(depth-3*p, p*3)
+                    target=1.5*D
+                    shop_max=2.0*D
+                    tdep=min(target, usable, shop_max)
+                    tdep=max(round(tdep*2)/2, p*3)
+                    tdep=min(tdep, shop_max)
                 lines.append(f"⌀{fmt(tapd,2)} ↧{fmt(depth,1)}"); lines.append(f"{tn}-6H ↧{fmt(tdep,1)}")
         else:
             lines.append(f"⌀{fmt(d0,2)} " + ("THRU" if h['through'] else f"↧{fmt(depth,1)}"))

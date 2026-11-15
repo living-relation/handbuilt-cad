@@ -1,20 +1,24 @@
-"""Edge break: fillet the straight edges of a solid one at a time, keeping only results that stay one valid solid.
+"""Edge break: 45° chamfer the straight edges of a solid one at a time, keeping only results that stay one valid solid.
 
-Kernel fillet() on all edges at once often fails on real parts. This tries each straight edge on its own,
-so a few bad edges don't block the rest.
+Never run this automatically (docs/CNC-MACHINING-RULES.md CNC-EDGE-BREAK). Use it only when the user
+explicitly asks to model edge breaks. Prefer 45° chamfers; --fillet is a fallback, not the default.
 
-usage: python tools/edge_break.py <in.step> <out_stem> <radius_mm> [--min-len 4] [--time-cap 600] [--density 2.81e-6] [--stl] [--allow-multi]
+Kernel chamfer()/fillet() on all edges at once often fails on real parts. This tries each straight edge
+on its own, so a few bad edges don't block the rest.
+
+usage: python tools/edge_break.py <in.step> <out_stem> <size_mm> [--fillet] [--min-len 4] [--time-cap 600] [--density 2.81e-6] [--stl] [--allow-multi]
 writes <out_stem>.step (plus <out_stem>.stl only with --stl) and prints edges ok / failed, volume and (with --density, kg/mm^3) mass.
 """
 import argparse
 import time
 
-from build123d import GeomType, export_step, export_stl, fillet, import_step
+from build123d import GeomType, chamfer, export_step, export_stl, fillet, import_step
 
 
-def edge_break(part, radius, min_len=4.0, time_cap=600.0, match_tol=0.05, allow_multi=False):
-    """Return (part, ok, failed). Straight edges longer than min_len are filleted one by one; a fillet is kept only if
-    the result is a single valid solid. Edges are re-found by their centre after each change (tolerance match_tol)."""
+def edge_break(part, radius, min_len=4.0, time_cap=600.0, match_tol=0.05, allow_multi=False, use_fillet=False):
+    """Return (part, ok, failed). Straight edges longer than min_len are chamfered (or filleted if use_fillet) one by one;
+    a change is kept only if the result is a single valid solid. Edges are re-found by their centre after each change
+    (tolerance match_tol). Default is a 45° chamfer. Never call this unless the user asked to model edge breaks."""
     if hasattr(part, "solids") and part.solids():
         sols = part.solids()
         if len(sols) > 1:
@@ -33,7 +37,7 @@ def edge_break(part, radius, min_len=4.0, time_cap=600.0, match_tol=0.05, allow_
         if not edges:
             continue
         try:
-            trial = fillet(edges, radius)
+            trial = fillet(edges, radius) if use_fillet else chamfer(edges, radius)
             if len(trial.solids()) == 1 and trial.is_valid:
                 part = trial.solids()[0]
                 ok += 1
@@ -48,7 +52,8 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("src")
     ap.add_argument("out_stem")
-    ap.add_argument("radius", type=float)
+    ap.add_argument("radius", type=float, help="chamfer size (mm), or fillet radius with --fillet")
+    ap.add_argument("--fillet", action="store_true", help="use a fillet instead of a 45° chamfer (not preferred for edge breaks)")
     ap.add_argument("--min-len", type=float, default=4.0, help="only straight edges longer than this (mm)")
     ap.add_argument("--time-cap", type=float, default=600.0, help="stop trying new edges after this many seconds")
     ap.add_argument("--density", type=float, default=None, help="kg/mm^3 for a mass printout, e.g. 2.81e-6 for 7075")
@@ -56,7 +61,7 @@ def main(argv=None):
     ap.add_argument("--allow-multi", action="store_true", help="input with several solids: warn and use the largest instead of stopping")
     a = ap.parse_args(argv)
     try:
-        part, ok, failed = edge_break(import_step(a.src), a.radius, a.min_len, a.time_cap, allow_multi=a.allow_multi)
+        part, ok, failed = edge_break(import_step(a.src), a.radius, a.min_len, a.time_cap, allow_multi=a.allow_multi, use_fillet=a.fillet)
     except ValueError as ex:
         raise SystemExit(f"edge_break: {ex}")
     msg = f"edge breaks ok {ok} failed {failed} vol {part.volume:.1f}"

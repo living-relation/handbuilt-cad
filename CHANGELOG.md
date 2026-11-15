@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-11-14: CNC rules for agents, cnc_check 1.3× and wall floors
+
+- `docs/CNC-MACHINING-RULES.md` rebuilt for agents: quick-lookup table, project rules, page cites, unverified marks, and a script/skill checker map. Source is Xometry "Design Guide: CNC Machining" (38 pp, 16 Apr 2025) plus Daniel's 2026-11-14 decisions. The PDF stays out of the repo (1 MB guard) and lives in the models folder `references/`.
+- Inside corners: 1.3× the nearest standard tool radius, never an exact standard tool size. `tools/cnc_check.py` now flags both (the 2026-11-04 "documented only" clause is superseded). The sample bracket inside corner is 6.5 mm (1.3× its 5 mm tool).
+- CNC walls under 0.030" (0.762 mm) metal or 0.060" (1.52 mm) plastic **fail**. `cnc_check.py` defaults to the metal floor; `--process printed` keeps the never-assumed structural-only rule. DRAWING-RULES 21, How-To-Use, the cnc-part-check skill and AGENTS.md agree.
+- Edge breaks are never auto-applied. Default title-block line `BREAK SHARP EDGES 0.2-0.4` removed. If breaks are modeled, dimension them; if not, prompt only for cut-risk sharp edges and add a leader (`BREAK ALL EDGES, STD` or a given length) only after approval. Chamfer tools run only on explicit request; `edge_break.py` defaults to 45° chamfers.
+- Tapped holes: 1.5× screw diameter, matching holes the same depth, flag over 2×D. `drawing/part.py` will not invent a thread callout past 2×D.
+- Inserts stay in the assembly model; the shop STEP omits them. Title-block tolerances stay the project default; the Xometry table is the shop default if silent (not ISO 2768).
+
+
 ## 2026-10-29: setup links skills by default; Windows skill-zip upload popup
 - Setup always links each CAD skill into `~/.claude/skills` (Windows junctions and WSL/Linux symlinks). Cursor reads that folder too, so skills are not also linked into `~/.cursor/skills`; old links this repo made there are removed (the link only). `-LinkSkills` / `--link-skills` stay as no-ops.
 - At the end of a Windows install (`setup.ps1`, including double-click `install.cmd`) a separate popup reminds you to upload new or changed CAD skill zips in the Claude desktop app for each Claude account (Skills settings), lists the zip names (or skill folders if there are no zips), and offers to open that folder in Explorer. `-NoPopup` / `-Quiet` skip it, as do CI env vars.
