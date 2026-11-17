@@ -24,6 +24,7 @@ This file is the single agent guide for this repo. `CLAUDE.md` and `.cursor/rule
 ## Files that never go in this repo
 - Part/model files (STEP, STL, 3MF, F3D, FCStd, PLY, OBJ, IGES, BREP, GLB), solver outputs, archives, files over 1 MB. Finished models go to `$MODELS_DIR/<job>_<MMDD>/<rev>/` (see `skills/publish-to-models`).
   Exception: Claude-importable skill zips at `skills/<skill-name>.zip`, rebuilt automatically by `.github/workflows/skill-zips.yml`. Do not add other archives.
+- Plugin manifests may be committed: `.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`, and `.cursor-plugin/marketplace.json`. They have no `version` field. Skills stay in `skills/<name>/SKILL.md`. The plugin ships no hooks, no MCP server, and no `bin/`.
 - Secrets, `.env` files, tokens, personal paths or personal data.
 
 ## CAD and drawing rules
