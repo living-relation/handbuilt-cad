@@ -2,7 +2,7 @@
 
 ## Read first, before starting work or asking
 Before starting work or asking the maintainer anything, read in order: (1) this repo's agent guide
-(`AGENTS.md` / `CLAUDE.md`), (2) its binding rules / decisions file if it has one (`CONTRIBUTING.md`, `drawing/DRAWING-RULES.md`), (3) the shared
+(`AGENTS.md`), (2) its binding rules / decisions file if it has one (`CONTRIBUTING.md`, `drawing/DRAWING-RULES.md`), (3) the shared
 working memory `%USERPROFILE%\.claude\working-memory\<project>\INDEX.md` (WSL:
 `/mnt/c/Users/<user>/.claude/working-memory/<project>/INDEX.md`), (4) the newest handoff note if one
 exists (none yet; see `handoff/` if present). If a rule or note already answers a question, act on it and cite it - never ask the
@@ -10,7 +10,7 @@ maintainer something the rules already answer. When you do ask (Dan): always mul
 choice, labelled with one letter plus a number (a1, a2), with a recommended answer when
 there is one.
 
-This file is the single agent guide for this repo. `CLAUDE.md` and `.cursor/rules/cad.mdc` only point here.
+This file is the single agent guide for this repo. `.cursor/rules/cad.mdc` only points here.
 
 **State and decisions:** current goal and open items live only in `STATE.md`; dated decisions in `DECISIONS.md`. Scripts and hooks are registered in `automation.yml`. The `commit-msg` hook warns when code changes without one of these being updated (skip one commit with `[no-state]`).
 
