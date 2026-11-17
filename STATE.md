@@ -8,6 +8,8 @@ The one state file for this repo: current goal and open items. Decisions go in `
 
 **Plugin (2026-11-17):** Phase 1 adds `.claude-plugin/plugin.json` and `.cursor-plugin/` (`plugin.json` plus a one-entry marketplace, `"source": "."`). No `version` field. Skills stay in `skills/`. `plugin-validate` CI runs `claude plugin validate .` (no `--strict`, because a missing `version` is only a warning) and checks the Cursor JSON. Cursor's live import of `"source": "."` is not verified.
 
+**Agent guide (2026-11-17):** Root `CLAUDE.md` contained only `@AGENTS.md`. That line duplicated this guide, so no extra rules were copied and the file was deleted. `no-claude-md` CI fails if a tracked file is named `CLAUDE.md` or `CLAUDE.local.md`, or is `.claude/CLAUDE.md`.
+
 ## Open
 - Dan merges the phase 1 plugin PR. Later phases stay unstarted.
 

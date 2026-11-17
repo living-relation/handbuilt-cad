@@ -74,3 +74,15 @@ automations:
     run_cmd: claude plugin validate .
     check_cmd: python3 scripts/check_cursor_plugin.py
     owner: maintainer
+  - id: no-claude-md
+    script: .github/workflows/no-claude-md.yml
+    helpers: [scripts/check_no_claude_md.py]
+    trigger: pull_request and push to main
+    reads: [scripts/check_no_claude_md.py, ".github/workflows/no-claude-md.yml"]
+    writes: []
+    committed: no
+    auto_commit: false
+    enabled: true
+    run_cmd: python3 scripts/check_no_claude_md.py
+    check_cmd: python3 scripts/check_no_claude_md.py
+    owner: maintainer

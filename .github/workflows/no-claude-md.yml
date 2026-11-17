@@ -1,0 +1,27 @@
+# Fail if git tracks a CLAUDE guide file.
+# A tracked file named CLAUDE.md or CLAUDE.local.md, or .claude/CLAUDE.md,
+# must be folded into AGENTS.md and deleted in a PR. This job only checks.
+name: no-claude-md
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: no-claude-md-${{ github.head_ref || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Reject tracked CLAUDE guide files
+        run: python3 scripts/check_no_claude_md.py
