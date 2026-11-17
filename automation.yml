@@ -62,3 +62,15 @@ automations:
     enabled: true
     run_cmd: pull.cmd
     owner: maintainer
+  - id: plugin-validate
+    script: .github/workflows/plugin-validate.yml
+    helpers: [scripts/check_cursor_plugin.py]
+    trigger: pull_request and push to main
+    reads: [".claude-plugin/**", ".cursor-plugin/**", "skills/**", scripts/check_cursor_plugin.py]
+    writes: []
+    committed: no
+    auto_commit: false
+    enabled: true
+    run_cmd: claude plugin validate .
+    check_cmd: python3 scripts/check_cursor_plugin.py
+    owner: maintainer

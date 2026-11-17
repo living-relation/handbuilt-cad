@@ -1,0 +1,12 @@
+{
+  "name": "handbuilt-cad",
+  "owner": {
+    "name": "living-relation"
+  },
+  "plugins": [
+    {
+      "name": "handbuilt-cad",
+      "source": "."
+    }
+  ]
+}

@@ -20,3 +20,4 @@ One dated line per decision, newest last. Rules that agents must follow live in 
 - 2026-11-06: Drawings are made only when asked for, never automatically. (maintainer)
 - 2026-11-06: Agents delete their own leftovers (merged local branches, worktree folders, temp files) at the end of every task without asking. (maintainer)
 - 2026-11-06: Knuckle and bezel sources are in the models folder and old handbuilt-models is gone; the HB Export/HB BOM hand test is closed. (maintainer)
+- 2026-11-17: handbuilt-cad is a Claude and Cursor plugin. Manifests are `.claude-plugin/plugin.json` and `.cursor-plugin/plugin.json`, plus `.cursor-plugin/marketplace.json` with one entry whose `source` is `.` (the repo root). No `version` field, so each commit on main is the update. Skills stay in `skills/<name>/SKILL.md`. No hooks, MCP, or `bin/` in the plugin. Cursor live import of `source` `.` was not run. (maintainer, 2026-11-16 plugin plan, phase 1)
