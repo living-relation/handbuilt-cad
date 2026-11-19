@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-19: four install routes
+
+- `INSTALL.md` and `SETUP-PROMPT.txt` document the shortcut (`install.cmd`), single-line README commands, an agent prompt, and Plugins-menu clicks. README points at the plugin. The catalog is not in this repo.
+- Setup still does not link skills. There is still no zip-upload popup.
+
 ## 2026-11-19: plugin is the only skill delivery path
 
 - Skills reach Claude Chat, Cowork and Claude Code through the handbuilt-cad plugin; no zip upload. `setup.ps1` / `setup.sh` no longer link skills into `~/.claude/skills`; `-LinkSkills` / `--link-skills` opt in (and `setup.ps1 -LinkSkills` passes `--link-skills` to WSL). Existing links are left alone.

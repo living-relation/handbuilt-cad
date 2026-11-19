@@ -12,8 +12,10 @@ The one state file for this repo: current goal and open items. Decisions go in `
 
 **Skill delivery (2026-11-19):** Skills reach Claude Chat, Cowork and Claude Code through the handbuilt-cad plugin; no zip upload. Setup links skills only with `-LinkSkills` / `--link-skills`; the upload popup is gone.
 
+**Install routes (2026-11-19):** [INSTALL.md](INSTALL.md) has the four ways: `install.cmd`, single-line commands in the README, [SETUP-PROMPT.txt](SETUP-PROMPT.txt), and Plugins-menu clicks. The catalog is not in this repo. It is `living-relation-plugins` in living-relation/workstation (`workstation-core` at `./`, handbuilt-cad by GitHub source). Setup still does not link skills. Plugin updates stay a Plugins-menu action.
+
 ## Open
-- Dan merges the phase 1 plugin PR. Later phases stay unstarted.
+- Confirm a live install of handbuilt-cad from the workstation catalog on a PC (Claude Code, claude.ai, and Cursor). The install-docs change did not run those clicks.
 
 **Kept branches:** none
 **Last cleanup:** 2026-10-29 @ 94a7706

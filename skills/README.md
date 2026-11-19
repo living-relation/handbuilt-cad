@@ -1,7 +1,6 @@
 # skills/
 
-Agent skills for CAD work. Claude, Cursor and bots install them from here
-(they reach Claude Chat, Cowork and Claude Code through the handbuilt-cad plugin, with no zip upload; see Installing).
+Agent skills for CAD work. Claude Chat, Cowork, Claude Code, and Cursor get them only by installing the handbuilt-cad plugin ([INSTALL.md](../INSTALL.md)). There is no zip upload.
 
 - cnc-part-check
 - publish-to-models
@@ -18,13 +17,13 @@ sim-stack covers both the quick single-load-case check (`tools/quick_fea.py`, fo
 
 Every CAD skill follows the repo rules on capped sections (AGENTS.md "Capped sections only") and lettered revs ("Rev folders are lettered"). Electrical and plan rules are in AGENTS.md "Electrical and design plans". Questions to the maintainer are multiple choice (a1, a2).
 
-**Single home.** This folder is the only place CAD skills are edited. Agents (Claude, Cursor, Grok Bot and any other) load them from here or link to them (see Installing); they never edit a copy kept anywhere else. A change to a CAD skill is a PR to this folder.
+**Single home.** This folder is the only place CAD skills are edited. Agents load the installed plugin, not a second copy. They never edit a copy kept anywhere else. A change to a CAD skill is a PR to this folder.
 
 Changes go through a PR reviewed by the maintainer.
 
 ## Claude import zips
 
-Each skill folder has a sibling zip `skills/<skill-name>.zip` for import into Claude. The zip is one top folder named after the skill, with `SKILL.md` directly inside. Only directories that contain `SKILL.md` are packed; the zips themselves, `README.md`, and folders without `SKILL.md` are ignored.
+CI still builds a sibling zip `skills/<skill-name>.zip` for each skill. The zip is one top folder named after the skill, with `SKILL.md` directly inside. Only directories that contain `SKILL.md` are packed; the zips themselves, `README.md`, and folders without `SKILL.md` are ignored. Do not upload these zips. Install the plugin instead ([INSTALL.md](../INSTALL.md)).
 
 CI rebuilds them on a same-repo pull request whose head is not `main` and commits any changed zips back onto that PR branch (never onto `main`). Actor guard + `[skip ci]` + zip path filter prevent a loop. If `main` is stale, CI resets `chore/skill-zips` to `origin/main` and opens or updates a zip-only PR. That needs **Allow GitHub Actions to create and approve pull requests**. GITHUB_TOKEN commits do not start checks; the workflow re-dispatches a verify run on the new commit. The local pack script is optional:
 
@@ -40,5 +39,5 @@ Do not edit the zip bytes. The packer reports Claude name/description limit viol
 
 ## Installing
 
-Skills reach Claude Chat, Cowork and Claude Code through the handbuilt-cad plugin; no zip upload. Linking is opt-in: `setup.ps1 -LinkSkills` and `bash setup.sh --link-skills` junction/symlink each `skills/<name>` into `~/.claude/skills` (`scripts/link-skills.ps1` on Windows). Cursor reads that folder too, so skills are not also linked into `~/.cursor/skills`; old links this repo made there are removed (the link only). A same-name folder is backed up to `~/.skills-backup` first. Re-running also removes links it made whose skill was renamed or removed (the link only); nothing else is deleted. Skills listed in `EXCLUDE.txt` and any `SKILL.md` with `source: harness-design-app` are never linked or touched. No other repo installs these skills.
+Install the handbuilt-cad plugin. The four ways are in [INSTALL.md](../INSTALL.md). Setup does not link these skills. `-LinkSkills` and `--link-skills` are an opt-in local link, not the install path. Do not pass them. A setup run without that flag leaves existing links alone. Skills listed in `EXCLUDE.txt` are never linked. Do not upload the zips.
 
