@@ -64,7 +64,7 @@ bash setup.sh
 
 ```
 [ok]   model venv  .../handbuilt-cad/.venv  (build123d 0.13.0)
-[ok]   sim venv    /home/you/simvenv  (gmsh 4.15.2)
+[ok]   sim venv    ~/simvenv  (gmsh 4.15.2)
 [ok]   CalculiX    /usr/bin/ccx
 ```
 
