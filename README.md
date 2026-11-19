@@ -7,7 +7,7 @@ and docs only** - no part models. Finished models live in a `models` folder outs
 
 ## Setup (about 5 minutes)
 
-Skills reach Claude Chat, Cowork, Claude Code, and Cursor only by installing the **handbuilt-cad** plugin. Setup does not link skills, and there is no zip upload. The four ways (shortcut, these commands, an agent prompt, and Plugins-menu clicks) are in [INSTALL.md](INSTALL.md). Plugin updates are the Plugins menu. The Claude catalog in this repo is named `handbuilt-cad-plugins`. It lists only this plugin.
+Claude Chat, Cowork, and Claude Code get skills when you add this repo's catalog on claude.ai and turn on the **handbuilt-cad** plugin. That is the only Claude route. Cursor is separate. Setup does not copy skills onto this machine, and there is no zip upload. The four ways (shortcut, these commands, an agent prompt, and the clicks in INSTALL.md) are in [INSTALL.md](INSTALL.md). The catalog in this repo is named `handbuilt-cad-plugins`. It lists only this plugin. On claude.ai you paste `living-relation/handbuilt-cad` and leave Sync automatically off.
 
 `<projects>` is your Projects folder. Each block below is one command.
 
@@ -29,7 +29,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1
 as is. If `~/projects/handbuilt-cad` is a real folder (an old WSL clone) or a link to somewhere else,
 it stops and changes nothing; move the old folder to an archive yourself and re-run. Windows uses
 `<repo>\.venv`; the Linux venv lives outside the repo at `~/.venvs/handbuilt-cad` (`UV_PROJECT_ENVIRONMENT`).
-`-NoWsl` skips WSL. `-NoModels` and `-NoSim` pass through. Do not pass `-LinkSkills`.
+`-NoWsl` skips WSL. `-NoModels` and `-NoSim` pass through. Setup does not copy skills onto this machine.
 
 **Plain Linux, normal terminal (not root):**
 
@@ -47,17 +47,19 @@ bash setup.sh
 
 `.gitattributes` keeps LF in the repo (CRLF only for .bat/.cmd/.ps1).
 
-**Plugin, normal terminal (not Administrator and not root).** Skip this if your claude.ai account already has the plugin, or Claude Code will load it twice. Leave marketplace auto-update off. Details and the other routes are in [INSTALL.md](INSTALL.md).
+**Plugin on claude.ai. Windows PowerShell, normal window (not Administrator).** This opens the Plugins page and prints the clicks. It does not add the plugin. You still click. Leave Sync automatically off. One account covers chat, Cowork, and Claude Code. Details and Cursor are in [INSTALL.md](INSTALL.md).
 
-```bash
-claude plugin marketplace add living-relation/handbuilt-cad
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install-plugins.ps1
 ```
 
+**Plugin on claude.ai. Plain Linux, normal terminal (not root).**
+
 ```bash
-claude plugin install handbuilt-cad@handbuilt-cad-plugins
+bash install-plugins.sh
 ```
 
-Double-click `pull.cmd` in the clone (or run it from a prompt) to `git pull --ff-only` this repo only. Double-click `install.cmd` (or run it from a normal prompt, not Administrator; extra args pass through, e.g. `install.cmd -NoSim`) to run `setup.ps1`. That shortcut installs the toolkit only. It does not install the plugin.
+Double-click `pull.cmd` in the clone (or run it from a prompt) to `git pull --ff-only` this repo only. Double-click `install.cmd` (or run it from a normal prompt, not Administrator; extra args pass through, e.g. `install.cmd -NoSim`) to run `setup.ps1`. That shortcut installs the toolkit only. It does not add the plugin and it does not open a browser. Double-click `install-plugins.cmd` when you want the claude.ai page. That runs only because you started it.
 
 Then use the venv: `$CAD_PY tools/cnc_check.py --help` (`setup.sh` prints the `CAD_PY` to export: `.venv/bin/python`, or `~/.venvs/handbuilt-cad/bin/python` in WSL).
 

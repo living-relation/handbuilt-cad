@@ -3,8 +3,9 @@
 # uv's Python store, and (unless --no-models) creates <Desktop>/models if it is missing. By default it also installs
 # the sim tools (apt-sim.txt via sudo apt-get, the sim venv), uv in ~/.local/bin, and an env file loaded by login
 # shells; then scripts/verify-install.sh checks everything and fails loudly if anything is missing.
-#   bash setup.sh [--no-models] [--with-fairsolid] [--no-sim] [--no-profile] [--link-skills]
-#   --link-skills links skills/<name> into ~/.claude/skills. Off by default: Skills reach Claude Chat, Cowork and Claude Code through the handbuilt-cad plugin; no zip upload.
+#   bash setup.sh [--no-models] [--with-fairsolid] [--no-sim] [--no-profile]
+#   Chat, Cowork, and Claude Code get skills when handbuilt-cad is on for the claude.ai account.
+#   This script does not add that plugin and does not copy skills onto this machine.
 set -euo pipefail
 cd "$(dirname "$0")"
 ROOT=$PWD
@@ -20,10 +21,9 @@ esac
 export UV_PROJECT_ENVIRONMENT="$VENV" CAD_PY="$VENV/bin/python"   # every uv call below (and child scripts) uses this venv
 UV_VERSION=0.13.0
 UV_SHA=1468ebd5a5541121837c5a2817b9972ba6090fa6caa3d142620850a47fb75154  # uv-x86_64-unknown-linux-gnu.tar.gz
-NO_MODELS=0; WITH_FS=0; SIM=1; PROFILE=1; LINK_SKILLS=0
+NO_MODELS=0; WITH_FS=0; SIM=1; PROFILE=1
 # --sim is the default now; still accepted so old commands keep working.
-# --link-skills opts in to linking skills (step 6).
-for a in "$@"; do case $a in --no-models) NO_MODELS=1;; --with-fairsolid) WITH_FS=1;; --sim) SIM=1;; --no-sim) SIM=0;; --no-profile) PROFILE=0;; --link-skills) LINK_SKILLS=1;; *) echo "unknown option $a"; exit 2;; esac; done
+for a in "$@"; do case $a in --no-models) NO_MODELS=1;; --with-fairsolid) WITH_FS=1;; --sim) SIM=1;; --no-sim) SIM=0;; --no-profile) PROFILE=0;; *) echo "unknown option $a"; exit 2;; esac; done
 
 # 1. pinned uv (use the one on PATH if it is the pinned version, else fetch into .tools/)
 UV=$(command -v uv || true)
@@ -143,53 +143,33 @@ if [ "$NO_MODELS" != 1 ] && [ -d "$MODELS" ]; then fn_args+=(--models "$MODELS")
 HBCAD_PARTS_HOME="$PARTS" "$VENV/bin/python" tools/folder_notes.py "${fn_args[@]}"
 # end 5d
 
-# 6. skills: opt-in (--link-skills). The handbuilt-cad plugin delivers the skills to every app, so a linked copy
-#    would load twice. With --link-skills: symlink skills/<name> into ~/.claude/skills (Cursor reads that folder too;
-#    do not also link into ~/.cursor/skills).
-#    A same-name entry is moved to ~/.skills-backup/<stamp>/ first. The only delete: a symlink
-#    into this clone's skills/ whose skill is gone is removed (the link only). Old links this
-#    repo made in ~/.cursor/skills are removed (the link only). On Windows, setup.ps1 does the
-#    same with junctions (scripts/link-skills.ps1).
-#    Claude-app-owned skills (skills/EXCLUDE.txt, or SKILL.md frontmatter `source: harness-design-app`):
-#    never linked, and a same-name entry in ~/.claude/skills or ~/.cursor/skills is never moved,
-#    backed up, replaced or removed.
-if [ "${LINK_SKILLS:-0}" != 1 ]; then
-  echo "skills: not linked (the handbuilt-cad plugin delivers them; pass --link-skills to link)"
-else
-stamp=$(date +%Y%m%d-%H%M%S)
-hb_app_skill() { # $1 name, $2 dir (may be missing)
-  if [ -f "$ROOT/skills/EXCLUDE.txt" ] && sed 's/#.*//; s/[[:space:]]//g' "$ROOT/skills/EXCLUDE.txt" | grep -qxF "$1"; then return 0; fi
-  [ -f "$2/SKILL.md" ] && sed -n '1{/^---/!q;d};/^---/q;p' "$2/SKILL.md" | grep -Eq "^source:[[:space:]]*['\"]?harness-design-app['\"]?[[:space:]]*$"
+# 6. plugin on claude.ai. This script cannot add it. It does not copy skills onto this machine.
+# A local settings file can show the plugin after Claude Code has signed in to that account.
+# No settings file is not proof either way, so the line tells you to add it on claude.ai.
+plugin_on_claude_ai() {
+  if ! python3 - "$HOME" <<'PY'
+import json, os, sys
+home = sys.argv[1]
+plugin_id = "handbuilt-cad@handbuilt-cad-plugins"
+ok = "The handbuilt-cad plugin is present on claude.ai."
+missing = "WARN: The handbuilt-cad plugin is not added on claude.ai yet. Add catalog living-relation/handbuilt-cad and turn on handbuilt-cad."
+path = os.path.join(home, ".claude", "settings.json")
+try:
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    enabled = data.get("enabledPlugins")
+    if isinstance(enabled, dict) and enabled.get(plugin_id) is True:
+        print(ok)
+        raise SystemExit(0)
+except (OSError, json.JSONDecodeError, AttributeError, TypeError):
+    pass
+print(missing)
+PY
+  then
+    echo "WARN: The handbuilt-cad plugin is not added on claude.ai yet. Add catalog living-relation/handbuilt-cad and turn on handbuilt-cad."
+  fi
 }
-# Directories with SKILL.md only. Files (skills/<name>.zip, README.md) are not skills.
-for s in "$ROOT"/skills/*/; do
-  s=${s%/}; [ -f "$s/SKILL.md" ] || continue; name=$(basename "$s")
-  if hb_app_skill "$name" "$s"; then echo "SKIP harness app skill: $s"; continue; fi
-  t="$HOME/.claude/skills"
-  mkdir -p "$t"; d="$t/$name"
-  if hb_app_skill "$name" "$d"; then echo "SKIP harness app skill: $d"; continue; fi
-  if [ -L "$d" ] && [ "$(readlink -f "$d")" = "$(readlink -f "$s")" ]; then continue; fi
-  if [ -e "$d" ] || [ -L "$d" ]; then b="$HOME/.skills-backup/$stamp/$(basename "$(dirname "$t")")"; mkdir -p "$b"; mv "$d" "$b/"; echo "skill backed up: $b/$name"; fi
-  ln -s "$s" "$d"; echo "skill linked: $d -> $s"
-done
-t="$HOME/.claude/skills"
-for d in "$t"/*; do
-  [ -L "$d" ] || continue; l=$(readlink "$d")
-  if hb_app_skill "$(basename "$d")" "$d"; then echo "SKIP harness app skill: $d"; continue; fi
-  case "$l" in "$ROOT"/skills/*) [ -f "$l/SKILL.md" ] || { rm "$d"; echo "skill link pruned: $d"; } ;;
-    # stale link from an old handbuilt-cad clone (e.g. the retired ~/handbuilt-cad WSL clone): broken links only
-    */handbuilt-cad/skills/*|*/handbuilt-cad-*/skills/*) [ -e "$d" ] || { rm "$d"; echo "stale skill link pruned: $d -> $l"; } ;;
-  esac
-done
-# Unlink our old duplicates from ~/.cursor/skills (the link only, never the target).
-t="$HOME/.cursor/skills"
-for d in "$t"/*; do
-  [ -L "$d" ] || continue; l=$(readlink "$d")
-  if hb_app_skill "$(basename "$d")" "$d"; then echo "SKIP harness app skill: $d"; continue; fi
-  case "$l" in "$ROOT"/skills/*) rm "$d"; echo "skill link unlinked: $d" ;;
-  esac
-done
-fi
+plugin_on_claude_ai
 # end 6
 
 # 7. env file for every shell, including agents' non-interactive 'wsl bash -lc'. Setup rewrites

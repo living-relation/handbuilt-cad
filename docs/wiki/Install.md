@@ -2,7 +2,7 @@
 
 [← Home](../../README.md) · next: [Setup](Setup.md) · [How to use](How-To-Use.md)
 
-Skills are not installed by the steps below. They come from the handbuilt-cad plugin. The shortcut, the commands, the agent prompt, and the click steps are in [INSTALL.md](../../INSTALL.md). Do not upload skill zips. Do not link skills.
+Skills are not installed by the steps below. They come from the handbuilt-cad plugin on claude.ai. The shortcut, the commands, the agent prompt, and the click steps are in [INSTALL.md](../../INSTALL.md). Do not upload skill zips. Do not copy skills onto this machine.
 
 ## The whole thing in 3 steps
 
@@ -58,7 +58,7 @@ cd ~/projects/handbuilt-cad
 bash setup.sh
 ```
 
-**On Windows, use one clone, in Windows, instead of the lines above.** Clone in PowerShell to `<projects>\active\handbuilt-cad` and run `setup.ps1` there. It links that folder into WSL as `~/projects/handbuilt-cad` (or `-WslLink` / `[paths] wsl_link` in `local.toml`) and runs this WSL step for you (`wsl -d Ubuntu`) through the link. It never makes a second clone. If the link is already there and points to the clone, it's left as is. If that path is a real folder (an old WSL clone) or a link to somewhere else, it stops and changes nothing: move the old folder to an archive (e.g. `~/cad-parts/_archive/handbuilt-cad-wsl-<date>`) and re-run. The Linux venv goes to `~/.venvs/handbuilt-cad` so it never clashes with the Windows `.venv`. Skills reach Claude Chat, Cowork and Claude Code through the handbuilt-cad plugin; no zip upload. It links CAD skills into `~/.claude/skills` only with `-LinkSkills` (Cursor reads that folder too). It passes `-NoModels` through as `--no-models`, stops with a clear error if WSL or Ubuntu is missing, and `-NoWsl` skips it. `setup.sh` does everything (see [Setup](Setup.md) for what it installs). Before that it installs the sim programs (`apt-sim.txt`) as root through `wsl -u root`, so no WSL password is needed; `-NoSim` skips them. It takes about **5-15 minutes** the first time.
+**On Windows, use one clone, in Windows, instead of the lines above.** Clone in PowerShell to `<projects>\active\handbuilt-cad` and run `setup.ps1` there. It links that folder into WSL as `~/projects/handbuilt-cad` (or `-WslLink` / `[paths] wsl_link` in `local.toml`) and runs this WSL step for you (`wsl -d Ubuntu`) through the link. It never makes a second clone. If the link is already there and points to the clone, it's left as is. If that path is a real folder (an old WSL clone) or a link to somewhere else, it stops and changes nothing: move the old folder to an archive (e.g. `~/cad-parts/_archive/handbuilt-cad-wsl-<date>`) and re-run. The Linux venv goes to `~/.venvs/handbuilt-cad` so it never clashes with the Windows `.venv`. Chat, Cowork, and Claude Code get skills when handbuilt-cad is on for the claude.ai account; no zip upload. Setup does not copy skills onto this machine. It passes `-NoModels` through as `--no-models`, stops with a clear error if WSL or Ubuntu is missing, and `-NoWsl` skips it. `setup.sh` does everything (see [Setup](Setup.md) for what it installs). Before that it installs the sim programs (`apt-sim.txt`) as root through `wsl -u root`, so no WSL password is needed; `-NoSim` skips them. It takes about **5-15 minutes** the first time.
 
 **You should see** green `[ok]` lines at the end, like:
 

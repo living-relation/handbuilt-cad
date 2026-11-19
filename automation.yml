@@ -41,8 +41,8 @@ automations:
     check_cmd: python scripts/pack_skill_zips.py --check-only
     owner: maintainer
   - id: setup
-    script: [setup.ps1, setup.sh, install.cmd]
-    helpers: [scripts/link-skills.ps1, scripts/fetch-gitleaks.sh, scripts/hbcad-env.sh, scripts/verify-install.sh, tools/folder_notes.py]
+    script: [setup.ps1, setup.sh, install.cmd, install-plugins.ps1, install-plugins.cmd, install-plugins.sh]
+    helpers: [scripts/fetch-gitleaks.sh, scripts/hbcad-env.sh, scripts/verify-install.sh, tools/folder_notes.py]
     trigger: manual
     reads: [uv.lock, .python-version, .gitleaks-version, apt-sim.txt, requirements-sim.txt, local.toml]
     writes: [.venv/**, .tools/**]

@@ -1,10 +1,10 @@
 # handbuilt-cad setup for the one Windows clone (the only clone; WSL reaches it through a link). Safe to re-run.
-#   powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1 [-NoModels] [-NoVenv] [-LinkSkills] [-NoSim] [-NoWsl] [-NoPopup] [-Quiet] [-WslDistro Ubuntu] [-WslLink <wsl path>] [-FreeCADDir <dir>]
+#   powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1 [-NoModels] [-NoVenv] [-NoSim] [-NoWsl] [-NoPopup] [-Quiet] [-WslDistro Ubuntu] [-WslLink <wsl path>] [-FreeCADDir <dir>]
 #   Also links this clone into WSL (~/projects/handbuilt-cad) and runs the WSL half (setup.sh) there, so this one command
-#   does the whole install. -NoWsl skips it. Skills reach Claude Chat, Cowork and Claude Code through the handbuilt-cad plugin; no zip upload.
-#   -LinkSkills opts in to linking skills into ~\.claude\skills (and ~/.claude/skills in WSL). -NoPopup / -Quiet are
-#   accepted and ignored (there is no popup any more).
-param([switch]$NoModels, [switch]$NoVenv, [switch]$LinkSkills, [switch]$NoSim, [switch]$NoWsl, [switch]$NoPopup, [switch]$Quiet, [string]$WslDistro = 'Ubuntu', [string]$WslLink = '', [string]$FreeCADDir = '')
+#   does the whole toolkit install. -NoWsl skips it. Chat, Cowork, and Claude Code get skills when the handbuilt-cad
+#   plugin is on for the claude.ai account. This script does not add that plugin and does not copy skills onto this machine.
+#   -NoPopup / -Quiet are accepted and ignored (there is no popup any more).
+param([switch]$NoModels, [switch]$NoVenv, [switch]$NoSim, [switch]$NoWsl, [switch]$NoPopup, [switch]$Quiet, [string]$WslDistro = 'Ubuntu', [string]$WslLink = '', [string]$FreeCADDir = '')
 $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
 Set-Location $Root
@@ -78,11 +78,26 @@ Write-Host "parts home: created by setup.sh in WSL (~/cad-parts, step 6 below), 
 # 4b. folder notes (models folder and parts home) have one writer, tools/folder_notes.py, run by setup.sh step 5d in WSL.
 if (-not $NoModels) { Write-Host "models notes: added by setup.sh in WSL (tools/folder_notes.py, step 6 below), not on Windows" }
 
-# 4c. skills: opt-in (-LinkSkills). The handbuilt-cad plugin delivers the skills to every app, so a linked copy would
-#     load twice. With -LinkSkills: junction skills\<name> into ~\.claude\skills (Cursor reads that folder too; do not
-#     also link into ~\.cursor\skills). A same-name folder is backed up to ~\.skills-backup first; nothing is deleted.
-if ($LinkSkills) { & "$Root\scripts\link-skills.ps1" | ForEach-Object { Write-Host "skill $($_.Action): $($_.Path)" } }
-else { Write-Host 'skills: not linked (the handbuilt-cad plugin delivers them; pass -LinkSkills to link)' }
+# 4c. claude.ai plugin. This script cannot add it and does not copy skills onto this machine.
+#     A true enabledPlugins entry can show the plugin after Claude Code has signed in to that account.
+function Get-HandbuiltClaudeAiLine {
+  $id = 'handbuilt-cad@handbuilt-cad-plugins'
+  $ok = 'The handbuilt-cad plugin is present on claude.ai.'
+  $missing = 'WARN: The handbuilt-cad plugin is not added on claude.ai yet. Add catalog living-relation/handbuilt-cad and turn on handbuilt-cad.'
+  $settings = Join-Path $env:USERPROFILE '.claude\settings.json'
+  if (Test-Path -LiteralPath $settings) {
+    try {
+      $j = Get-Content -LiteralPath $settings -Raw -ErrorAction Stop | ConvertFrom-Json
+      $ep = $j.enabledPlugins
+      if ($null -ne $ep -and $ep.PSObject.Properties.Name -contains $id) {
+        $val = $ep.PSObject.Properties[$id].Value
+        if ($val -eq $true) { return $ok }
+      }
+    } catch {}
+  }
+  return $missing
+}
+Write-Host (Get-HandbuiltClaudeAiLine)
 
 # 5. FreeCAD launcher wrappers (only into an existing FreeCAD folder you name; never overwrites)
 if ($FreeCADDir) {
@@ -97,7 +112,7 @@ if ($FreeCADDir) {
 #    link to somewhere else, it stops and changes nothing. The Linux venv goes to $UV_PROJECT_ENVIRONMENT
 #    (default ~/.venvs/handbuilt-cad), so it never clashes with the Windows .venv. Passes -NoModels -> --no-models,
 #    -NoSim -> --no-sim. Skip with -NoWsl. Fails clearly if WSL or the distro is missing.
-#    -LinkSkills -> --link-skills (skills are not linked by default, in Windows or WSL).
+#    Skills are not copied onto this machine, in Windows or WSL.
 if ($NoWsl) { Write-Host "WSL setup: skipped (-NoWsl). Link this clone into WSL and run 'bash setup.sh' there yourself." }
 else {
   if (-not (Get-Command wsl.exe -ErrorAction SilentlyContinue)) { throw "WSL setup: wsl.exe not found. Install WSL ('wsl --install -d $WslDistro'), or re-run with -NoWsl." }
@@ -105,7 +120,6 @@ else {
   if ($distros -notcontains $WslDistro) { throw "WSL setup: distro '$WslDistro' not found (have: $($distros -join ', ')). Install it ('wsl --install -d $WslDistro'), pass -WslDistro <name>, or re-run with -NoWsl." }
   $shArgs = @()
   if ($NoModels) { $shArgs += '--no-models' }
-  if ($LinkSkills) { $shArgs += '--link-skills' }
   if ($NoSim) { $shArgs += '--no-sim' }   # sim tools (apt, sim venv) install by default; apt runs as root via wsl.exe, no password
   # bash single-quote a value: ' -> '\'' (so paths with spaces, $, quotes or backticks pass through literally)
   $sq = { param($x) "'" + ($x -replace "'", "'\''") + "'" }

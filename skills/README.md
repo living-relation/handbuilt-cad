@@ -1,6 +1,6 @@
 # skills/
 
-Agent skills for CAD work. Claude Chat, Cowork, Claude Code, and Cursor get them only by installing the handbuilt-cad plugin ([INSTALL.md](../INSTALL.md)). There is no zip upload.
+Agent skills for CAD work. Claude Chat, Cowork, and Claude Code get them when handbuilt-cad is turned on for the claude.ai account. Cursor gets its own copy of the plugin. See [INSTALL.md](../INSTALL.md). There is no zip upload.
 
 - cnc-part-check
 - publish-to-models
@@ -39,5 +39,5 @@ Do not edit the zip bytes. The packer reports Claude name/description limit viol
 
 ## Installing
 
-Install the handbuilt-cad plugin. The four ways are in [INSTALL.md](../INSTALL.md). Setup does not link these skills. `-LinkSkills` and `--link-skills` are an opt-in local link, not the install path. Do not pass them. A setup run without that flag leaves existing links alone. Skills listed in `EXCLUDE.txt` are never linked. Do not upload the zips.
+Turn on the handbuilt-cad plugin on claude.ai. The four ways are in [INSTALL.md](../INSTALL.md). Setup does not copy these skills onto this machine. Skills listed in `EXCLUDE.txt` stay untouched. Do not upload the zips.
 

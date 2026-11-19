@@ -1,5 +1,5 @@
 """setup.sh / setup.ps1 behaviour that can be checked without running the install."""
-import os, subprocess
+import json, os, subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -35,130 +35,64 @@ def test_toml_paths_matches_paths_py(tmp_path):
     assert _toml_paths(tmp_path, toml, "parts_home") == paths._local("parts_home", tmp_path / "local.toml") == "/b"
 
 
-def _run_step6(tmp_path, link):
+PLUGIN_OK = "The handbuilt-cad plugin is present on claude.ai."
+PLUGIN_MISSING = (
+    "WARN: The handbuilt-cad plugin is not added on claude.ai yet. "
+    "Add catalog living-relation/handbuilt-cad and turn on handbuilt-cad."
+)
+
+
+def _run_step6(tmp_path):
     home = tmp_path / "home"; home.mkdir(exist_ok=True)
     root = tmp_path / "clone"; (root / "skills" / "demo").mkdir(parents=True)
     (root / "skills" / "demo" / "SKILL.md").write_text("x")
-    env = dict(os.environ, HOME=str(home), ROOT=str(root), LINK_SKILLS=link)
-    script = "set -euo pipefail\n" + _block("# 6. skills", "# end 6")
+    env = dict(os.environ, HOME=str(home), ROOT=str(root))
+    script = "set -euo pipefail\n" + _block("# 6. plugin", "# end 6")
     r = subprocess.run(["bash", "-c", script], env=env, capture_output=True, text=True)
-    assert r.returncode == 0, r.stderr
+    assert r.returncode == 0, r.stderr + r.stdout
     return home, r.stdout
 
 
-def test_skills_not_linked_by_default(tmp_path):
-    home, out = _run_step6(tmp_path, "0")
+def test_plugin_missing_does_not_copy_skills(tmp_path):
+    home, out = _run_step6(tmp_path)
     assert not (home / ".claude" / "skills").exists()
     assert not (home / ".cursor" / "skills").exists()
-    assert "skills: not linked" in out
+    assert PLUGIN_MISSING in out
+    assert PLUGIN_OK not in out
+    assert "link" not in out.lower()
 
 
-def test_default_leaves_existing_links_alone(tmp_path):
+def test_plugin_present_when_settings_say_so(tmp_path):
+    home = tmp_path / "home"
+    (home / ".claude").mkdir(parents=True)
+    (home / ".claude" / "settings.json").write_text(json.dumps({
+        "enabledPlugins": {"handbuilt-cad@handbuilt-cad-plugins": True}
+    }))
+    _, out = _run_step6(tmp_path)
+    assert PLUGIN_OK in out
+    assert PLUGIN_MISSING not in out
+    assert "link" not in out.lower()
+
+
+def test_plugin_explicit_off_is_the_missing_line(tmp_path):
+    home = tmp_path / "home"
+    (home / ".claude").mkdir(parents=True)
+    (home / ".claude" / "settings.json").write_text(json.dumps({
+        "enabledPlugins": {"handbuilt-cad@handbuilt-cad-plugins": False}
+    }))
+    _, out = _run_step6(tmp_path)
+    assert PLUGIN_MISSING in out
+    assert PLUGIN_OK not in out
+
+
+def test_step6_leaves_existing_skill_dirs_alone(tmp_path):
     home = tmp_path / "home"
     root = tmp_path / "clone"
     d = home / ".claude" / "skills"; d.mkdir(parents=True)
     (d / "gone").symlink_to(root / "skills" / "gone")
-    _, out = _run_step6(tmp_path, "0")
+    _, out = _run_step6(tmp_path)
     assert (d / "gone").is_symlink()
-    assert "skill link" not in out
-
-
-def test_skills_linked_with_flag(tmp_path):
-    home, _ = _run_step6(tmp_path, "1")
-    assert (home / ".claude" / "skills" / "demo").is_symlink()
-    assert not (home / ".cursor" / "skills" / "demo").exists()
-
-
-def test_skills_link_ignores_zips_readme_and_folders_without_skill_md(tmp_path):
-    home = tmp_path / "home"; home.mkdir()
-    root = tmp_path / "clone"
-    (root / "skills" / "demo").mkdir(parents=True)
-    (root / "skills" / "demo" / "SKILL.md").write_text("x")
-    (root / "skills" / "demo.zip").write_bytes(b"PK")
-    (root / "skills" / "README.md").write_text("not a skill")
-    (root / "skills" / "not-a-skill").mkdir()
-    (root / "skills" / "not-a-skill" / "notes.md").write_text("x")
-    env = dict(os.environ, HOME=str(home), ROOT=str(root), LINK_SKILLS="1")
-    script = "set -euo pipefail\n" + _block("# 6. skills", "# end 6")
-    r = subprocess.run(["bash", "-c", script], env=env, capture_output=True, text=True)
-    assert r.returncode == 0, r.stderr + r.stdout
-    dest = home / ".claude" / "skills"
-    assert (dest / "demo").is_symlink()
-    assert not (dest / "demo.zip").exists()
-    assert not (dest / "README.md").exists()
-    assert not (dest / "not-a-skill").exists()
-    assert not (home / ".cursor" / "skills" / "demo").exists()
-
-
-def test_dead_skill_links_pruned_only_when_ours(tmp_path):
-    home = tmp_path / "home"
-    root = tmp_path / "clone"
-    other = tmp_path / "other"; (other / "keep").mkdir(parents=True)
-    for t in (".claude", ".cursor"):
-        d = home / t / "skills"; d.mkdir(parents=True)
-        (d / "gone").symlink_to(root / "skills" / "gone")      # ours, dead
-        (d / "elsewhere").symlink_to(other / "missing")        # not ours, dead
-        (d / "keep").symlink_to(other / "keep")                # not ours
-        (d / "real").mkdir()                                   # real folder
-    _, out = _run_step6(tmp_path, "1")
-    d = home / ".claude" / "skills"
-    assert not (d / "gone").is_symlink() and not (d / "gone").exists()
-    assert (d / "elsewhere").is_symlink() and (d / "keep").is_symlink() and (d / "real").is_dir()
-    assert (d / "demo").is_symlink()
-    c = home / ".cursor" / "skills"
-    assert not (c / "gone").exists() and not (c / "demo").exists()
-    assert (c / "elsewhere").is_symlink() and (c / "keep").is_symlink() and (c / "real").is_dir()
-    assert "skill link pruned" in out
-    assert "skill link unlinked" in out
-
-
-def test_harness_app_skills_never_linked_or_touched(tmp_path):
-    home = tmp_path / "home"
-    root = tmp_path / "clone"
-    (root / "skills" / "demo").mkdir(parents=True)
-    (root / "skills" / "demo" / "SKILL.md").write_text("x")
-    (root / "skills" / "harness-design").mkdir(parents=True)
-    (root / "skills" / "harness-design" / "SKILL.md").write_text("---\nname: harness-design\n---\n")
-    (root / "skills" / "marked-skill").mkdir(parents=True)
-    (root / "skills" / "marked-skill" / "SKILL.md").write_text(
-        "---\nname: marked-skill\nsource: harness-design-app\n---\n"
-    )
-    (root / "skills" / "EXCLUDE.txt").write_text("harness-design\n")
-    claude = home / ".claude" / "skills"
-    claude.mkdir(parents=True)
-    (claude / "harness-design").mkdir()
-    (claude / "harness-design" / "today.md").write_text("app edit\n")
-    cursor = home / ".cursor" / "skills"
-    cursor.mkdir(parents=True)
-    (cursor / "harness-design").mkdir()
-    (cursor / "harness-design" / "keep.md").write_text("app\n")
-    env = dict(os.environ, HOME=str(home), ROOT=str(root), LINK_SKILLS="1")
-    script = "set -euo pipefail\n" + _block("# 6. skills", "# end 6")
-    r = subprocess.run(["bash", "-c", script], env=env, capture_output=True, text=True)
-    assert r.returncode == 0, r.stderr + r.stdout
-    assert "SKIP harness app skill" in r.stdout
-    assert (home / ".claude" / "skills" / "demo").is_symlink()
-    assert not (home / ".claude" / "skills" / "harness-design").is_symlink()
-    assert (claude / "harness-design" / "today.md").read_text() == "app edit\n"
-    assert not (home / ".claude" / "skills" / "marked-skill").exists()
-    assert not (home / ".cursor" / "skills" / "demo").exists()
-    assert (cursor / "harness-design" / "keep.md").read_text() == "app\n"
-    assert not (home / ".skills-backup").exists()
-
-
-def test_cursor_our_links_unlinked_others_untouched(tmp_path):
-    home = tmp_path / "home"
-    root = tmp_path / "clone"  # _run_step6 creates root/skills/demo
-    other = tmp_path / "other"; (other / "keep").mkdir(parents=True)
-    d = home / ".cursor" / "skills"; d.mkdir(parents=True)
-    (d / "demo").symlink_to(root / "skills" / "demo")  # ours: unlink, do not duplicate
-    (d / "keep").symlink_to(other / "keep")            # not ours
-    (d / "real").mkdir()                               # real folder
-    _, out = _run_step6(tmp_path, "1")
-    assert not (d / "demo").exists()
-    assert (d / "keep").is_symlink() and (d / "real").is_dir()
-    assert (home / ".claude" / "skills" / "demo").is_symlink()
-    assert "skill link unlinked" in out
+    assert "link" not in out.lower()
 
 
 def test_ps1_link_skills_prunes_only_dead_links_into_from():
@@ -176,13 +110,14 @@ def test_ps1_link_skills_claude_only_unlinks_cursor():
     assert "'would-unlink'" in ps1 and "'unlinked'" in ps1 and ps1.count("[IO.Directory]::Delete($item.FullName, $false)") == 2
 
 
-def test_setup_sh_and_ps1_link_skills_opt_in():
-    assert "--link-skills) LINK_SKILLS=1" in SETUP and "NO_SKILLS" not in SETUP
-    assert 'LINK_SKILLS=0' in SETUP.split("for a in")[0]
+def test_setup_does_not_offer_a_skill_switch():
+    assert "--link-skills" not in SETUP and "LINK_SKILLS" not in SETUP and "NO_SKILLS" not in SETUP
+    assert "skills: not linked" not in SETUP
+    assert PLUGIN_MISSING in SETUP and PLUGIN_OK in SETUP
     ps1 = (ROOT / "setup.ps1").read_text()
-    assert "[switch]$LinkSkills" in ps1 and "NoSkills" not in ps1
-    assert ps1.index("if ($LinkSkills)") < ps1.index(r"scripts\link-skills.ps1")
-    assert "skills: not linked" in ps1
+    assert "LinkSkills" not in ps1 and "link-skills.ps1" not in ps1 and "NoSkills" not in ps1
+    assert "skills: not linked" not in ps1
+    assert PLUGIN_MISSING in ps1 and PLUGIN_OK in ps1
 
 
 def test_ps1_runs_wsl_half():
@@ -190,7 +125,7 @@ def test_ps1_runs_wsl_half():
     for s in ("[switch]$NoWsl", "wsl.exe -d $WslDistro", "bash setup.sh", "'--no-models'",
               "wsl.exe not found", "not found (have:", "$LASTEXITCODE -ne 0"):
         assert s in ps1, s
-    assert "if ($LinkSkills) { $shArgs += '--link-skills' }" in ps1
+    assert "--link-skills" not in ps1 and "LinkSkills" not in ps1
     assert ps1.index("if ($NoWsl)") < ps1.index("wsl.exe -d $WslDistro")
 
 

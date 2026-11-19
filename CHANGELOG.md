@@ -1,9 +1,18 @@
 # Changelog
 
+## 2026-11-19: claude.ai is the only Claude install route
+
+- Chat, Cowork, and Claude Code use one route: on claude.ai, Customize, Plugins, add catalog `living-relation/handbuilt-cad` (name `handbuilt-cad-plugins`) and turn on handbuilt-cad. Leave Sync automatically off.
+- `install-plugins.ps1`, `install-plugins.cmd`, and `install-plugins.sh` open that page and print the clicks only when you run them. They do not add the plugin, schedule anything, or copy skills.
+- Claude Code command-line plugin install is not an install choice. The sections "Plugin (Claude Code shell)" and "Claude Code session" are gone.
+- Setup no longer takes a skill switch. It does not copy skills onto the machine.
+- Cursor individual accounts: copy the plugin to `~/.cursor/plugins/local/handbuilt-cad`.
+- `docs/TOOLS.md` says those outside tools are pinned outside this repo.
+
 ## 2026-11-19: four install routes
 
-- `INSTALL.md` and `SETUP-PROMPT.txt` document the shortcut (`install.cmd`), single-line README commands, an agent prompt, and Plugins-menu clicks. README points at the plugin. The catalog is not in this repo.
-- Setup still does not link skills. There is still no zip-upload popup.
+- `INSTALL.md` and `SETUP-PROMPT.txt` document the shortcut (`install.cmd`), single-line README commands, an agent prompt, and Plugins-menu clicks. README points at the plugin. The catalog file in this repo is `.claude-plugin/marketplace.json`, named `handbuilt-cad-plugins`.
+- Setup still does not copy skills onto the machine. There is still no zip-upload popup.
 
 ## 2026-11-19: plugin is the only skill delivery path
 
