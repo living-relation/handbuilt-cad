@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-19: install-plugins copies the Cursor plugin
+
+- `install-plugins.ps1`, `install-plugins.cmd`, and `install-plugins.sh` copy `.cursor-plugin` and `skills` to `~/.cursor/plugins/local/handbuilt-cad` and replace that copy each time you run them. They still open the claude.ai Plugins page and print the clicks only when you run them. They do not turn the plugin on, and they do not schedule anything.
+- They do not copy skills into `~/.claude/skills` or `~/.cursor/skills`. Setup still does not copy skills onto the machine.
+- The missing-plugin line is: handbuilt-cad plugin not added on claude.ai yet: add catalog `living-relation/handbuilt-cad` and turn on handbuilt-cad.
+
 ## 2026-11-19: claude.ai is the only Claude install route
 
 - Chat, Cowork, and Claude Code use one route: on claude.ai, Customize, Plugins, add catalog `living-relation/handbuilt-cad` (name `handbuilt-cad-plugins`) and turn on handbuilt-cad. Turn Sync automatically on. Updates arrive automatically after merges to main. Check for updates in the catalog forces it sooner. The Cursor local copy still updates by re-running the install-plugins script. Where that switch sits is unverified until someone clicks through Customize.

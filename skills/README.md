@@ -39,5 +39,5 @@ Do not edit the zip bytes. The packer reports Claude name/description limit viol
 
 ## Installing
 
-Turn on the handbuilt-cad plugin on claude.ai. Turn Sync automatically on. Updates arrive automatically after merges to main. Check for updates in the catalog forces it sooner. The Cursor local copy still updates by re-running the install-plugins script. The four ways are in [INSTALL.md](../INSTALL.md). Setup does not copy these skills onto this machine. Skills listed in `EXCLUDE.txt` stay untouched. Do not upload the zips. Where the Sync automatically switch sits on the page is unverified until someone clicks through Customize.
+Turn on the handbuilt-cad plugin on claude.ai. Turn Sync automatically on. Updates arrive automatically after merges to main. Check for updates in the catalog forces it sooner. The install-plugins script copies `.cursor-plugin` and `skills` to `~/.cursor/plugins/local/handbuilt-cad` and replaces the old copy. The Cursor local copy still updates by re-running the install-plugins script. The four ways are in [INSTALL.md](../INSTALL.md). Setup does not copy these skills into `~/.claude/skills` or `~/.cursor/skills`. Skills listed in `EXCLUDE.txt` stay untouched. Do not upload the zips. Where the Sync automatically switch sits on the page is unverified until someone clicks through Customize.
 

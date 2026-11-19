@@ -152,7 +152,7 @@ import json, os, sys
 home = sys.argv[1]
 plugin_id = "handbuilt-cad@handbuilt-cad-plugins"
 ok = "The handbuilt-cad plugin is present on claude.ai."
-missing = "WARN: The handbuilt-cad plugin is not added on claude.ai yet. Add catalog living-relation/handbuilt-cad and turn on handbuilt-cad."
+missing = "WARN: handbuilt-cad plugin not added on claude.ai yet: add catalog living-relation/handbuilt-cad and turn on handbuilt-cad."
 path = os.path.join(home, ".claude", "settings.json")
 try:
     with open(path, encoding="utf-8") as f:
@@ -166,7 +166,7 @@ except (OSError, json.JSONDecodeError, AttributeError, TypeError):
 print(missing)
 PY
   then
-    echo "WARN: The handbuilt-cad plugin is not added on claude.ai yet. Add catalog living-relation/handbuilt-cad and turn on handbuilt-cad."
+    echo "WARN: handbuilt-cad plugin not added on claude.ai yet: add catalog living-relation/handbuilt-cad and turn on handbuilt-cad."
   fi
 }
 plugin_on_claude_ai

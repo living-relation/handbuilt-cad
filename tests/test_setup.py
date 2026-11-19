@@ -37,8 +37,8 @@ def test_toml_paths_matches_paths_py(tmp_path):
 
 PLUGIN_OK = "The handbuilt-cad plugin is present on claude.ai."
 PLUGIN_MISSING = (
-    "WARN: The handbuilt-cad plugin is not added on claude.ai yet. "
-    "Add catalog living-relation/handbuilt-cad and turn on handbuilt-cad."
+    "WARN: handbuilt-cad plugin not added on claude.ai yet: "
+    "add catalog living-relation/handbuilt-cad and turn on handbuilt-cad."
 )
 
 

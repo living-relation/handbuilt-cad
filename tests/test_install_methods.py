@@ -46,6 +46,7 @@ def test_prompt_matches_setup_prompt_file():
     assert "Updates arrive automatically after merges to main." in prompt
     assert "Check for updates in the catalog forces it sooner." in prompt
     assert "still updates by re-running the install-plugins script" in prompt
+    assert "copies .cursor-plugin and skills to ~/.cursor/plugins/local/handbuilt-cad and replaces the old copy" in prompt
     assert "https://claude.ai/customize/plugins" in prompt
     assert "Do not create a CLAUDE.md." in prompt
     assert "claude plugin marketplace add" not in prompt
@@ -89,6 +90,13 @@ def test_four_routes_and_readme_points_at_the_plugin():
     assert "Turn Sync automatically on" in (ROOT / "skills" / "README.md").read_text(encoding="utf-8")
     assert "still updates by re-running" in (ROOT / "skills" / "README.md").read_text(encoding="utf-8")
     assert "handbuilt-cad-plugins" in readme
+    copy_line = "copies .cursor-plugin and skills to ~/.cursor/plugins/local/handbuilt-cad and replaces the old copy"
+    assert copy_line in install.replace("`", "")
+    assert copy_line in readme.replace("`", "")
+    assert "cd <projects>\\active\\handbuilt-cad" in install
+    assert "cd ~/projects/handbuilt-cad" in install
+    assert "cd <projects>\\active\\handbuilt-cad" in readme
+    assert "cd ~/projects/handbuilt-cad" in readme
     for banned_cmd in (
         "claude plugin marketplace add",
         "claude plugin install",
@@ -136,7 +144,10 @@ def test_own_catalog_and_nothing_claude_removed_is_back():
         assert "still updates by re-running this script" in text
         assert "where that switch sits" in text.lower()
         assert "The handbuilt-cad plugin is present on claude.ai." in text
-        assert "not added on claude.ai yet" in text
+        assert "handbuilt-cad@handbuilt-cad-plugins" in text
+        assert "WARN: handbuilt-cad plugin not added on claude.ai yet: add catalog living-relation/handbuilt-cad and turn on handbuilt-cad." in text
+        assert "copies .cursor-plugin and skills to ~/.cursor/plugins/local/handbuilt-cad and replaces the old copy" in text
+        assert ".cursor/plugins/local/handbuilt-cad" in text
         assert "claude plugin marketplace add" not in text
         assert "claude plugin install" not in text
         assert "Register-ScheduledTask" not in text
@@ -164,12 +175,137 @@ def test_install_plugins_sh_prints_clicks_and_asks_to_open_the_page(tmp_path):
     assert "Catalog to paste: living-relation/handbuilt-cad" in r.stdout
     assert "Turn Sync automatically on." in r.stdout
     assert "Sync automatically off" not in r.stdout
-    assert "WARN: The handbuilt-cad plugin is not added on claude.ai yet." in r.stdout
+    assert "WARN: handbuilt-cad plugin not added on claude.ai yet: add catalog living-relation/handbuilt-cad and turn on handbuilt-cad." in r.stdout
+    dest = home / ".cursor" / "plugins" / "local" / "handbuilt-cad"
+    assert (dest / ".cursor-plugin" / "plugin.json").is_file()
+    assert (dest / "skills" / "cad-drawing" / "SKILL.md").is_file()
+    assert not (dest / "README.md").exists()
+    assert not (dest / ".git").exists()
+    assert not (home / ".cursor" / "skills").exists()
+    assert "Copied handbuilt-cad to" in r.stdout
+    assert "Nothing was scheduled." in r.stdout
     assert "link" not in r.stdout.lower()
     assert log.read_text(encoding="utf-8").strip() == "https://claude.ai/customize/plugins"
     assert not (home / ".claude").exists()
     refused = subprocess.run(["bash", str(script), "extra"], env=env, capture_output=True, text=True)
     assert refused.returncode == 2
+
+
+def test_install_plugins_sh_replaces_the_old_copy(tmp_path):
+    home = tmp_path / "home"
+    dest = home / ".cursor" / "plugins" / "local" / "handbuilt-cad"
+    stale = dest / "stale.txt"
+    stale.parent.mkdir(parents=True)
+    stale.write_text("old", encoding="utf-8")
+    (dest / "skills" / "gone").mkdir(parents=True)
+    (dest / "skills" / "gone" / "SKILL.md").write_text("gone", encoding="utf-8")
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    opener = bin_dir / "xdg-open"
+    opener.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    opener.chmod(0o755)
+    env = dict(os.environ, HOME=str(home), PATH=f"{bin_dir}{os.pathsep}{os.environ.get('PATH', '')}")
+    r = subprocess.run(["bash", str(ROOT / "install-plugins.sh")], env=env, capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr + r.stdout
+    assert not stale.exists()
+    assert not (dest / "skills" / "gone").exists()
+    copied = (dest / "skills" / "cad-drawing" / "SKILL.md").read_text(encoding="utf-8")
+    assert copied == (ROOT / "skills" / "cad-drawing" / "SKILL.md").read_text(encoding="utf-8")
+    (dest / "skills" / "cad-drawing" / "SKILL.md").write_text("STALE", encoding="utf-8")
+    r2 = subprocess.run(["bash", str(ROOT / "install-plugins.sh")], env=env, capture_output=True, text=True)
+    assert r2.returncode == 0, r2.stderr + r2.stdout
+    assert (dest / "skills" / "cad-drawing" / "SKILL.md").read_text(encoding="utf-8") == copied
+
+
+def test_install_plugins_sh_what_if_copies_nothing(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    log = tmp_path / "open.log"
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    opener = bin_dir / "xdg-open"
+    opener.write_text("#!/bin/sh\nprintf '%s\\n' \"$1\" > \"$OPEN_LOG\"\n", encoding="utf-8")
+    opener.chmod(0o755)
+    env = dict(os.environ, HOME=str(home), PATH=f"{bin_dir}{os.pathsep}{os.environ.get('PATH', '')}", OPEN_LOG=str(log))
+    r = subprocess.run(["bash", str(ROOT / "install-plugins.sh"), "--what-if"], env=env, capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr + r.stdout
+    assert "WhatIf: browser was not opened. Nothing was copied. Nothing was scheduled." in r.stdout
+    assert "WARN: handbuilt-cad plugin not added on claude.ai yet:" in r.stdout
+    assert not (home / ".cursor").exists()
+    assert not log.exists()
+
+
+def test_install_plugins_sh_user_home_skips_the_browser_and_reads_the_plugin_key(tmp_path):
+    home = tmp_path / "home"
+    (home / ".claude").mkdir(parents=True)
+    (home / ".claude" / "settings.json").write_text(
+        '{"enabledPlugins": {"handbuilt-cad@handbuilt-cad-plugins": true}}',
+        encoding="utf-8",
+    )
+    other = tmp_path / "other"
+    other.mkdir()
+    log = tmp_path / "open.log"
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    opener = bin_dir / "xdg-open"
+    opener.write_text("#!/bin/sh\nprintf '%s\\n' \"$1\" > \"$OPEN_LOG\"\n", encoding="utf-8")
+    opener.chmod(0o755)
+    env = dict(os.environ, HOME=str(other), PATH=f"{bin_dir}{os.pathsep}{os.environ.get('PATH', '')}", OPEN_LOG=str(log))
+    r = subprocess.run(
+        ["bash", str(ROOT / "install-plugins.sh"), "--user-home", str(home)],
+        env=env, capture_output=True, text=True,
+    )
+    assert r.returncode == 0, r.stderr + r.stdout
+    assert "The handbuilt-cad plugin is present on claude.ai." in r.stdout
+    assert "browser was not opened (test home). Nothing was scheduled." in r.stdout
+    assert (home / ".cursor" / "plugins" / "local" / "handbuilt-cad" / ".cursor-plugin" / "plugin.json").is_file()
+    assert not (other / ".cursor").exists()
+    assert not log.exists()
+    (home / ".claude" / "settings.json").write_text(
+        '{"enabledPlugins": {"handbuilt-cad@handbuilt-cad-plugins": false}}',
+        encoding="utf-8",
+    )
+    off = subprocess.run(
+        ["bash", str(ROOT / "install-plugins.sh"), "--user-home", str(home)],
+        env=env, capture_output=True, text=True,
+    )
+    assert off.returncode == 0, off.stderr + off.stdout
+    assert "WARN: handbuilt-cad plugin not added on claude.ai yet:" in off.stdout
+    assert "The handbuilt-cad plugin is present on claude.ai." not in off.stdout
+
+
+def test_install_plugins_sh_refuses_to_copy_into_its_own_folder(tmp_path):
+    src = tmp_path / "src"
+    (src / ".cursor-plugin").mkdir(parents=True)
+    (src / "skills").mkdir()
+    script = src / "install-plugins.sh"
+    script.write_text((ROOT / "install-plugins.sh").read_text(encoding="utf-8"), encoding="utf-8")
+    script.chmod(0o755)
+    marker = src / "skills" / "keep.txt"
+    marker.write_text("keep", encoding="utf-8")
+    r = subprocess.run(
+        ["bash", str(script), "--user-home", str(src)],
+        capture_output=True, text=True,
+    )
+    assert "Refusing to copy the plugin into its own folder." in r.stdout
+    assert r.returncode == 1
+    assert marker.read_text(encoding="utf-8") == "keep"
+    assert not (src / ".cursor" / "plugins").exists()
+
+
+def test_ps1_copy_replaces_cursor_plugin_and_checks_the_same_key():
+    ps1 = (ROOT / "install-plugins.ps1").read_text(encoding="utf-8")
+    assert "handbuilt-cad@handbuilt-cad-plugins" in ps1
+    assert "Remove-Item -LiteralPath $fullDest -Recurse -Force" in ps1
+    assert ps1.index("Remove-Item -LiteralPath $fullDest") < ps1.index("Copy-Item -LiteralPath $from")
+    assert "@('.cursor-plugin', 'skills')" in ps1
+    assert "Join-Path $copyHome '.cursor\\plugins\\local\\handbuilt-cad'" in ps1
+    assert "[string]$UserHome" in ps1
+    assert "WhatIfPreference" in ps1
+    assert "Refusing to copy the plugin into its own folder." in ps1
+    assert "browser was not opened (test home). Nothing was scheduled." in ps1
+    assert "plugins/local" not in (ROOT / "setup.sh").read_text(encoding="utf-8")
+    assert "plugins\\local" not in (ROOT / "setup.ps1").read_text(encoding="utf-8")
 
 
 def test_repo_does_not_name_another_project_repo():

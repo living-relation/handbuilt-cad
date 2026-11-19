@@ -2,7 +2,7 @@
 
 [← Home](../../README.md) · next: [Setup](Setup.md) · [How to use](How-To-Use.md)
 
-Skills are not installed by the steps below. They come from the handbuilt-cad plugin on claude.ai. The shortcut, the commands, the agent prompt, and the click steps are in [INSTALL.md](../../INSTALL.md). Do not upload skill zips. Do not copy skills onto this machine.
+Skills are not installed by the steps below. They come from the handbuilt-cad plugin on claude.ai. The shortcut, the commands, the agent prompt, and the click steps are in [INSTALL.md](../../INSTALL.md). Do not upload skill zips. Setup does not copy skills into `~/.claude/skills` or `~/.cursor/skills`. The install-plugins script copies `.cursor-plugin` and `skills` to `~/.cursor/plugins/local/handbuilt-cad` and replaces the old copy.
 
 ## The whole thing in 3 steps
 
