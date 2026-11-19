@@ -46,6 +46,9 @@ def test_prompt_matches_setup_prompt_file():
     assert "Updates arrive automatically after merges to main." in prompt
     assert "Check for updates in the catalog forces it sooner." in prompt
     assert "still updates by re-running the install-plugins script" in prompt
+    assert "fully quit and reopen Cursor after the copy." in prompt
+    assert "Developer: Reload Window" not in prompt
+    assert "reload the Cursor window" not in prompt.lower()
     assert "copies .cursor-plugin and skills to ~/.cursor/plugins/local/handbuilt-cad and replaces the old copy" in prompt
     assert "https://claude.ai/customize/plugins" in prompt
     assert "Do not create a CLAUDE.md." in prompt
@@ -93,6 +96,10 @@ def test_four_routes_and_readme_points_at_the_plugin():
     copy_line = "copies .cursor-plugin and skills to ~/.cursor/plugins/local/handbuilt-cad and replaces the old copy"
     assert copy_line in install.replace("`", "")
     assert copy_line in readme.replace("`", "")
+    assert "Fully quit and reopen Cursor after the copy." in install
+    assert "Fully quit and reopen Cursor after the copy." in readme
+    assert "Developer: Reload Window" not in install
+    assert "Developer: Reload Window" not in readme
     assert "cd <projects>\\active\\handbuilt-cad" in install
     assert "cd ~/projects/handbuilt-cad" in install
     assert "cd <projects>\\active\\handbuilt-cad" in readme
@@ -147,6 +154,9 @@ def test_own_catalog_and_nothing_claude_removed_is_back():
         assert "handbuilt-cad@handbuilt-cad-plugins" in text
         assert "WARN: handbuilt-cad plugin not added on claude.ai yet: add catalog living-relation/handbuilt-cad and turn on handbuilt-cad." in text
         assert "copies .cursor-plugin and skills to ~/.cursor/plugins/local/handbuilt-cad and replaces the old copy" in text
+        assert "Fully quit and reopen Cursor." in text
+        assert "Developer: Reload Window" not in text
+        assert "Reload the Cursor window." not in text
         assert ".cursor/plugins/local/handbuilt-cad" in text
         assert "claude plugin marketplace add" not in text
         assert "claude plugin install" not in text
@@ -183,6 +193,9 @@ def test_install_plugins_sh_prints_clicks_and_asks_to_open_the_page(tmp_path):
     assert not (dest / ".git").exists()
     assert not (home / ".cursor" / "skills").exists()
     assert "Copied handbuilt-cad to" in r.stdout
+    assert "Fully quit and reopen Cursor." in r.stdout
+    assert "Developer: Reload Window" not in r.stdout
+    assert "Reload the Cursor window." not in r.stdout
     assert "Nothing was scheduled." in r.stdout
     assert "link" not in r.stdout.lower()
     assert log.read_text(encoding="utf-8").strip() == "https://claude.ai/customize/plugins"
