@@ -11,7 +11,9 @@ This is the single CAD repo (tools, drawings, sim; part scripts live in the part
 handbuilt-cad/
 ├── README.md, AGENTS.md, CONTRIBUTING.md   front page, agent rules, PR rules
 ├── INSTALL.md, SETUP-PROMPT.txt   four install routes; the agent prompt
-├── setup.sh / setup.ps1   one-step toolkit setup (builds .venv from uv.lock; does not install the plugin)
+├── setup.sh / setup.ps1   toolkit setup (builds .venv from uv.lock; does not add the plugin)
+├── install.cmd            Windows shortcut for setup.ps1
+├── install-plugins.*      open the claude.ai Plugins page when you run them
 ├── pyproject.toml, uv.lock, requirements-sim.txt, apt-sim.txt   pinned packages
 ├── local.toml.example     per-PC paths (models_dir, freecad_dir, ...); copy to local.toml (git-ignored)
 ├── docs/                  TOOLS.md (tools index), wiki/ (this wiki), history/ (files kept from the old repos)
