@@ -41,7 +41,11 @@ def test_prompt_matches_setup_prompt_file():
     assert "Do not upload skill zips." in prompt
     assert "handbuilt-cad-plugins" in prompt
     assert "living-relation/handbuilt-cad" in prompt
-    assert "Sync automatically off" in prompt
+    assert "Turn Sync automatically on" in prompt
+    assert "Sync automatically off" not in prompt
+    assert "Updates arrive automatically after merges to main." in prompt
+    assert "Check for updates in the catalog forces it sooner." in prompt
+    assert "still updates by re-running the install-plugins script" in prompt
     assert "https://claude.ai/customize/plugins" in prompt
     assert "Do not create a CLAUDE.md." in prompt
     assert "claude plugin marketplace add" not in prompt
@@ -78,7 +82,12 @@ def test_four_routes_and_readme_points_at_the_plugin():
         assert cmd in install
         assert cmd in readme
     assert "https://claude.ai/customize/plugins" in install
-    assert "Sync automatically off" in install
+    assert "Turn Sync automatically on" in install
+    assert "Sync automatically off" not in install
+    assert "where the Sync automatically switch sits is unverified" in (ROOT / "STATE.md").read_text(encoding="utf-8")
+    assert "Turn Sync automatically on" in (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    assert "Turn Sync automatically on" in (ROOT / "skills" / "README.md").read_text(encoding="utf-8")
+    assert "still updates by re-running" in (ROOT / "skills" / "README.md").read_text(encoding="utf-8")
     assert "handbuilt-cad-plugins" in readme
     for banned_cmd in (
         "claude plugin marketplace add",
@@ -121,7 +130,11 @@ def test_own_catalog_and_nothing_claude_removed_is_back():
         text = (ROOT / name).read_text(encoding="utf-8")
         assert "living-relation/handbuilt-cad" in text
         assert "https://claude.ai/customize/plugins" in text
-        assert "Sync automatically off" in text
+        assert "Turn Sync automatically on" in text
+        assert "Sync automatically off" not in text
+        assert "Updates arrive automatically after merges to main." in text
+        assert "still updates by re-running this script" in text
+        assert "where that switch sits" in text.lower()
         assert "The handbuilt-cad plugin is present on claude.ai." in text
         assert "not added on claude.ai yet" in text
         assert "claude plugin marketplace add" not in text
@@ -149,7 +162,8 @@ def test_install_plugins_sh_prints_clicks_and_asks_to_open_the_page(tmp_path):
     r = subprocess.run(["bash", str(script)], env=env, capture_output=True, text=True)
     assert r.returncode == 0, r.stderr + r.stdout
     assert "Catalog to paste: living-relation/handbuilt-cad" in r.stdout
-    assert "Leave Sync automatically off." in r.stdout
+    assert "Turn Sync automatically on." in r.stdout
+    assert "Sync automatically off" not in r.stdout
     assert "WARN: The handbuilt-cad plugin is not added on claude.ai yet." in r.stdout
     assert "link" not in r.stdout.lower()
     assert log.read_text(encoding="utf-8").strip() == "https://claude.ai/customize/plugins"

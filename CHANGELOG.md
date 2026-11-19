@@ -2,7 +2,7 @@
 
 ## 2026-11-19: claude.ai is the only Claude install route
 
-- Chat, Cowork, and Claude Code use one route: on claude.ai, Customize, Plugins, add catalog `living-relation/handbuilt-cad` (name `handbuilt-cad-plugins`) and turn on handbuilt-cad. Leave Sync automatically off.
+- Chat, Cowork, and Claude Code use one route: on claude.ai, Customize, Plugins, add catalog `living-relation/handbuilt-cad` (name `handbuilt-cad-plugins`) and turn on handbuilt-cad. Turn Sync automatically on. Updates arrive automatically after merges to main. Check for updates in the catalog forces it sooner. The Cursor local copy still updates by re-running the install-plugins script. Where that switch sits is unverified until someone clicks through Customize.
 - `install-plugins.ps1`, `install-plugins.cmd`, and `install-plugins.sh` open that page and print the clicks only when you run them. They do not add the plugin, schedule anything, or copy skills.
 - Claude Code command-line plugin install is not an install choice. The sections "Plugin (Claude Code shell)" and "Claude Code session" are gone.
 - Setup no longer takes a skill switch. It does not copy skills onto the machine.

@@ -8,7 +8,7 @@ The one state file for this repo: current goal and open items. Decisions go in `
 
 **Plugin (2026-11-17):** Phase 1 adds `.claude-plugin/plugin.json` and `.cursor-plugin/` (`plugin.json` plus a one-entry marketplace, `"source": "."`). No `version` field. Skills stay in `skills/`. `plugin-validate` CI runs `claude plugin validate .` (no `--strict`, because a missing `version` is only a warning) and checks the Cursor JSON. Cursor's live import of `"source": "."` is not verified.
 
-**Stand-alone catalog (2026-11-19):** This repo does not name or depend on any other project repo. The Claude catalog is `.claude-plugin/marketplace.json` here, named `handbuilt-cad-plugins`, listing only handbuilt-cad at source `./`. On each claude.ai account, paste `living-relation/handbuilt-cad` under Customize, Plugins, leave Sync automatically off, and turn on handbuilt-cad. That covers chat, Cowork, and Claude Code signed in to that account.
+**Stand-alone catalog (2026-11-19):** This repo does not name or depend on any other project repo. The Claude catalog is `.claude-plugin/marketplace.json` here, named `handbuilt-cad-plugins`, listing only handbuilt-cad at source `./`. On each claude.ai account, paste `living-relation/handbuilt-cad` under Customize, Plugins, Turn Sync automatically on, and turn on handbuilt-cad. Updates arrive automatically after merges to main. Check for updates in the catalog forces it sooner. That covers chat, Cowork, and Claude Code signed in to that account.
 
 **Agent guide (2026-11-17):** Root `CLAUDE.md` contained only `@AGENTS.md`. That line duplicated this guide, so no extra rules were copied and the file was deleted. `no-claude-md` CI fails if a tracked file is named `CLAUDE.md` or `CLAUDE.local.md`, or is `.claude/CLAUDE.md`.
 
@@ -17,7 +17,7 @@ The one state file for this repo: current goal and open items. Decisions go in `
 **Install routes (2026-11-19):** [INSTALL.md](INSTALL.md) has the four ways: `install.cmd` plus `install-plugins.cmd`, single-line commands in the README, [SETUP-PROMPT.txt](SETUP-PROMPT.txt), and the claude.ai clicks. claude.ai is the only Claude route. Cursor individual accounts copy the plugin to `~/.cursor/plugins/local/handbuilt-cad`. `install-plugins.ps1` opens the Plugins page only when you run it.
 
 ## Open
-- Confirm a live add of handbuilt-cad on a claude.ai account (catalog `living-relation/handbuilt-cad`, Sync automatically off) and a Cursor copy to `~/.cursor/plugins/local/handbuilt-cad`. This change checked the catalog file and the printed clicks. It did not sign in or click through Customize.
+- Confirm a live add of handbuilt-cad on a claude.ai account (catalog `living-relation/handbuilt-cad`, Turn Sync automatically on) and a Cursor copy to `~/.cursor/plugins/local/handbuilt-cad`. The Cursor local copy still updates by re-running the install-plugins script. This change checked the catalog file and the printed clicks. It did not sign in or click through Customize, so where the Sync automatically switch sits is unverified.
 
 **Kept branches:** none
 **Last cleanup:** 2026-10-29 @ 94a7706

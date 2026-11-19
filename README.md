@@ -7,7 +7,7 @@ and docs only** - no part models. Finished models live in a `models` folder outs
 
 ## Setup (about 5 minutes)
 
-Claude Chat, Cowork, and Claude Code get skills when you add this repo's catalog on claude.ai and turn on the **handbuilt-cad** plugin. That is the only Claude route. Cursor is separate. Setup does not copy skills onto this machine, and there is no zip upload. The four ways (shortcut, these commands, an agent prompt, and the clicks in INSTALL.md) are in [INSTALL.md](INSTALL.md). The catalog in this repo is named `handbuilt-cad-plugins`. It lists only this plugin. On claude.ai you paste `living-relation/handbuilt-cad` and leave Sync automatically off.
+Claude Chat, Cowork, and Claude Code get skills when you add this repo's catalog on claude.ai and turn on the **handbuilt-cad** plugin. That is the only Claude route. Cursor is separate. Setup does not copy skills onto this machine, and there is no zip upload. The four ways (shortcut, these commands, an agent prompt, and the clicks in INSTALL.md) are in [INSTALL.md](INSTALL.md). The catalog in this repo is named `handbuilt-cad-plugins`. It lists only this plugin. On claude.ai you paste `living-relation/handbuilt-cad` and Turn Sync automatically on. Updates arrive automatically after merges to main. Check for updates in the catalog forces it sooner.
 
 `<projects>` is your Projects folder. Each block below is one command.
 
@@ -47,7 +47,7 @@ bash setup.sh
 
 `.gitattributes` keeps LF in the repo (CRLF only for .bat/.cmd/.ps1).
 
-**Plugin on claude.ai. Windows PowerShell, normal window (not Administrator).** This opens the Plugins page and prints the clicks. It does not add the plugin. You still click. Leave Sync automatically off. One account covers chat, Cowork, and Claude Code. Details and Cursor are in [INSTALL.md](INSTALL.md).
+**Plugin on claude.ai. Windows PowerShell, normal window (not Administrator).** This opens the Plugins page and prints the clicks. It does not add the plugin. You still click. Turn Sync automatically on. One account covers chat, Cowork, and Claude Code. Updates arrive automatically after merges to main. Check for updates in the catalog forces it sooner. Details and Cursor are in [INSTALL.md](INSTALL.md).
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\install-plugins.ps1
