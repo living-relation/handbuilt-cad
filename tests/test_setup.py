@@ -46,14 +46,24 @@ def _run_step6(tmp_path, link):
     return home, r.stdout
 
 
-def test_skills_linked_by_default(tmp_path):
-    home, out = _run_step6(tmp_path, "0")  # LINK_SKILLS=0 must still link
-    assert (home / ".claude" / "skills" / "demo").is_symlink()
+def test_skills_not_linked_by_default(tmp_path):
+    home, out = _run_step6(tmp_path, "0")
+    assert not (home / ".claude" / "skills").exists()
     assert not (home / ".cursor" / "skills").exists()
-    assert "not linked" not in out
+    assert "skills: not linked" in out
 
 
-def test_skills_linked_with_noop_flag(tmp_path):
+def test_default_leaves_existing_links_alone(tmp_path):
+    home = tmp_path / "home"
+    root = tmp_path / "clone"
+    d = home / ".claude" / "skills"; d.mkdir(parents=True)
+    (d / "gone").symlink_to(root / "skills" / "gone")
+    _, out = _run_step6(tmp_path, "0")
+    assert (d / "gone").is_symlink()
+    assert "skill link" not in out
+
+
+def test_skills_linked_with_flag(tmp_path):
     home, _ = _run_step6(tmp_path, "1")
     assert (home / ".claude" / "skills" / "demo").is_symlink()
     assert not (home / ".cursor" / "skills" / "demo").exists()
@@ -68,7 +78,7 @@ def test_skills_link_ignores_zips_readme_and_folders_without_skill_md(tmp_path):
     (root / "skills" / "README.md").write_text("not a skill")
     (root / "skills" / "not-a-skill").mkdir()
     (root / "skills" / "not-a-skill" / "notes.md").write_text("x")
-    env = dict(os.environ, HOME=str(home), ROOT=str(root), LINK_SKILLS="0")
+    env = dict(os.environ, HOME=str(home), ROOT=str(root), LINK_SKILLS="1")
     script = "set -euo pipefail\n" + _block("# 6. skills", "# end 6")
     r = subprocess.run(["bash", "-c", script], env=env, capture_output=True, text=True)
     assert r.returncode == 0, r.stderr + r.stdout
@@ -90,7 +100,7 @@ def test_dead_skill_links_pruned_only_when_ours(tmp_path):
         (d / "elsewhere").symlink_to(other / "missing")        # not ours, dead
         (d / "keep").symlink_to(other / "keep")                # not ours
         (d / "real").mkdir()                                   # real folder
-    _, out = _run_step6(tmp_path, "0")
+    _, out = _run_step6(tmp_path, "1")
     d = home / ".claude" / "skills"
     assert not (d / "gone").is_symlink() and not (d / "gone").exists()
     assert (d / "elsewhere").is_symlink() and (d / "keep").is_symlink() and (d / "real").is_dir()
@@ -122,7 +132,7 @@ def test_harness_app_skills_never_linked_or_touched(tmp_path):
     cursor.mkdir(parents=True)
     (cursor / "harness-design").mkdir()
     (cursor / "harness-design" / "keep.md").write_text("app\n")
-    env = dict(os.environ, HOME=str(home), ROOT=str(root), LINK_SKILLS="0")
+    env = dict(os.environ, HOME=str(home), ROOT=str(root), LINK_SKILLS="1")
     script = "set -euo pipefail\n" + _block("# 6. skills", "# end 6")
     r = subprocess.run(["bash", "-c", script], env=env, capture_output=True, text=True)
     assert r.returncode == 0, r.stderr + r.stdout
@@ -144,7 +154,7 @@ def test_cursor_our_links_unlinked_others_untouched(tmp_path):
     (d / "demo").symlink_to(root / "skills" / "demo")  # ours: unlink, do not duplicate
     (d / "keep").symlink_to(other / "keep")            # not ours
     (d / "real").mkdir()                               # real folder
-    _, out = _run_step6(tmp_path, "0")
+    _, out = _run_step6(tmp_path, "1")
     assert not (d / "demo").exists()
     assert (d / "keep").is_symlink() and (d / "real").is_dir()
     assert (home / ".claude" / "skills" / "demo").is_symlink()
@@ -166,13 +176,13 @@ def test_ps1_link_skills_claude_only_unlinks_cursor():
     assert "'would-unlink'" in ps1 and "'unlinked'" in ps1 and ps1.count("[IO.Directory]::Delete($item.FullName, $false)") == 2
 
 
-def test_setup_sh_flag_and_ps1_link_skills_noop():
+def test_setup_sh_and_ps1_link_skills_opt_in():
     assert "--link-skills) LINK_SKILLS=1" in SETUP and "NO_SKILLS" not in SETUP
-    assert 'LINK_SKILLS=1' in SETUP.split("for a in")[0]
-    assert 'echo "skills: not linked' not in SETUP
+    assert 'LINK_SKILLS=0' in SETUP.split("for a in")[0]
     ps1 = (ROOT / "setup.ps1").read_text()
-    assert "[switch]$LinkSkills" in ps1 and "if (-not $LinkSkills)" not in ps1 and "NoSkills" not in ps1
-    assert r"scripts\link-skills.ps1" in ps1
+    assert "[switch]$LinkSkills" in ps1 and "NoSkills" not in ps1
+    assert ps1.index("if ($LinkSkills)") < ps1.index(r"scripts\link-skills.ps1")
+    assert "skills: not linked" in ps1
 
 
 def test_ps1_runs_wsl_half():
@@ -180,7 +190,7 @@ def test_ps1_runs_wsl_half():
     for s in ("[switch]$NoWsl", "wsl.exe -d $WslDistro", "bash setup.sh", "'--no-models'",
               "wsl.exe not found", "not found (have:", "$LASTEXITCODE -ne 0"):
         assert s in ps1, s
-    assert "'--link-skills'" not in ps1
+    assert "if ($LinkSkills) { $shArgs += '--link-skills' }" in ps1
     assert ps1.index("if ($NoWsl)") < ps1.index("wsl.exe -d $WslDistro")
 
 
@@ -316,20 +326,8 @@ def test_install_cmd_is_setup_ps1_wrapper_passthrough():
     assert "`pull.cmd`" in readme and "`install.cmd`" in readme
 
 
-def test_ps1_skill_upload_popup_at_end():
+def test_no_skill_upload_popup():
     ps1 = (ROOT / "setup.ps1").read_text()
-    pop = (ROOT / "scripts" / "skill-upload-popup.ps1").read_text()
     assert "[switch]$NoPopup" in ps1 and "[switch]$Quiet" in ps1
-    assert r"scripts\skill-upload-popup.ps1" in ps1
-    assert ps1.index("link-skills.ps1") < ps1.index("skill-upload-popup.ps1")
-    assert ps1.index("skill-upload-popup.ps1") > ps1.index("Optional: setx MODELS_DIR")
-    reminder = "Upload new or changed CAD skill zips to the Claude desktop app for each Claude account (Skills settings)."
-    assert reminder in pop
-    assert "System.Windows.Forms" in pop and "WScript.Shell" in pop
-    assert "explorer.exe" in pop
-    assert "Open this folder in Explorer?" in pop
-    assert "-Filter '*.zip'" in pop and "'SKILL.md'" in pop
-    assert "$NoPopup -or $Quiet" in pop
-    assert "'CI', 'GITHUB_ACTIONS', 'TF_BUILD'" in pop
-    assert "skills popup: skipped (-NoPopup/-Quiet/CI)" in pop
-    assert "-NoPopup:$NoPopup -Quiet:$Quiet" in ps1
+    assert "skill-upload-popup" not in ps1 and "upload new or changed" not in ps1.lower()
+    assert not (ROOT / "scripts" / "skill-upload-popup.ps1").exists()

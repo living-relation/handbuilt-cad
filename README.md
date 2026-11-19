@@ -12,7 +12,7 @@ through a link (`~/projects/handbuilt-cad -> /mnt/c/<projects>/active/handbuilt-
 ```powershell
 git clone <repo-url> <projects>\active\handbuilt-cad
 cd <projects>\active\handbuilt-cad
-powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1   # Windows part, then links the clone into WSL and runs setup.sh there; -NoWsl skips WSL, -NoModels / -NoSim pass through; -LinkSkills is a no-op; -NoPopup / -Quiet skip the skill-zip popup
+powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1   # Windows part, then links the clone into WSL and runs setup.sh there; -NoWsl skips WSL, -NoModels / -NoSim pass through; -LinkSkills also links the CAD skills into ~\.claude\skills (off by default: the plugin delivers them)
 ```
 `setup.ps1` makes the WSL link only if nothing is there. A link that already points to this clone is left
 as is. If `~/projects/handbuilt-cad` is a real folder (an old WSL clone) or a link to somewhere else,
@@ -27,7 +27,7 @@ bash setup.sh            # pinned uv + Python, .venv from uv.lock, sim tools (no
 ```
 `.gitattributes` keeps LF in the repo (CRLF only for .bat/.cmd/.ps1).
 
-Double-click `pull.cmd` in the clone (or run it from a prompt) to `git pull --ff-only` this repo only. Double-click `install.cmd` (or run it from a prompt; extra args pass through, e.g. `install.cmd -NoPopup`) to run `setup.ps1`. At the end of a Windows install a popup lists the CAD skill zips and reminds you to upload them in the Claude desktop app (Skills settings) for each Claude account; it offers to open that folder in Explorer. `-NoPopup` / `-Quiet` skip it (also skipped in CI).
+Double-click `pull.cmd` in the clone (or run it from a prompt) to `git pull --ff-only` this repo only. Double-click `install.cmd` (or run it from a prompt; extra args pass through, e.g. `install.cmd -NoSim`) to run `setup.ps1`. Skills reach Claude Chat, Cowork and Claude Code through the handbuilt-cad plugin; no zip upload.
 
 Then use the venv: `$CAD_PY tools/cnc_check.py --help` (`setup.sh` prints the `CAD_PY` to export: `.venv/bin/python`, or `~/.venvs/handbuilt-cad/bin/python` in WSL).
 

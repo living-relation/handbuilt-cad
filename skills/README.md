@@ -1,7 +1,7 @@
 # skills/
 
 Agent skills for CAD work. Claude, Cursor and bots install them from here
-(setup links them into `~/.claude/skills` by default; see Installing).
+(they reach Claude Chat, Cowork and Claude Code through the handbuilt-cad plugin, with no zip upload; see Installing).
 
 - cnc-part-check
 - publish-to-models
@@ -40,6 +40,5 @@ Do not edit the zip bytes. The packer reports Claude name/description limit viol
 
 ## Installing
 
-handbuilt-cad's setup owns the skill links, and linking is the default. `setup.ps1` and `bash setup.sh` junction/symlink each `skills/<name>` into `~/.claude/skills` (`scripts/link-skills.ps1` on Windows). Cursor reads that folder too, so skills are not also linked into `~/.cursor/skills`; old links this repo made there are removed (the link only). `-LinkSkills` / `--link-skills` are kept as no-ops. A same-name folder is backed up to `~/.skills-backup` first. Re-running also removes links it made whose skill was renamed or removed (the link only); nothing else is deleted. Skills listed in `EXCLUDE.txt` and any `SKILL.md` with `source: harness-design-app` are never linked or touched. No other repo installs these skills.
+Skills reach Claude Chat, Cowork and Claude Code through the handbuilt-cad plugin; no zip upload. Linking is opt-in: `setup.ps1 -LinkSkills` and `bash setup.sh --link-skills` junction/symlink each `skills/<name>` into `~/.claude/skills` (`scripts/link-skills.ps1` on Windows). Cursor reads that folder too, so skills are not also linked into `~/.cursor/skills`; old links this repo made there are removed (the link only). A same-name folder is backed up to `~/.skills-backup` first. Re-running also removes links it made whose skill was renamed or removed (the link only); nothing else is deleted. Skills listed in `EXCLUDE.txt` and any `SKILL.md` with `source: harness-design-app` are never linked or touched. No other repo installs these skills.
 
-On Windows, setup also shows a popup reminding you to upload new or changed CAD skill zips (`skills/<name>.zip`) to the Claude desktop app for each Claude account (Skills settings), lists the zip names (or skill folders if there are no zips), and offers to open that folder in Explorer. Skip the popup with `setup.ps1 -NoPopup` or `-Quiet` (also skipped in CI).

@@ -10,6 +10,8 @@ The one state file for this repo: current goal and open items. Decisions go in `
 
 **Agent guide (2026-11-17):** Root `CLAUDE.md` contained only `@AGENTS.md`. That line duplicated this guide, so no extra rules were copied and the file was deleted. `no-claude-md` CI fails if a tracked file is named `CLAUDE.md` or `CLAUDE.local.md`, or is `.claude/CLAUDE.md`.
 
+**Skill delivery (2026-11-19):** Skills reach Claude Chat, Cowork and Claude Code through the handbuilt-cad plugin; no zip upload. Setup links skills only with `-LinkSkills` / `--link-skills`; the upload popup is gone.
+
 ## Open
 - Dan merges the phase 1 plugin PR. Later phases stay unstarted.
 
