@@ -23,7 +23,7 @@ dev = ["pytest==9.1.1"]
 [tool.uv]
 package = false
 required-version = "==0.13.0"
-# Transitive pins = the working toolkit venv on the reference workstation (2026-10-17).
+# Transitive pins = the working toolkit venv on the reference machine (2026-10-17).
 constraint-dependencies = [
   "annotated-types==0.8.0",
   "anytree==2.13.0",

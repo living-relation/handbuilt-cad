@@ -50,7 +50,7 @@ for b in uv uvx; do
 done
 
 # 2c. sim tools (default; --no-sim skips). apt packages from apt-sim.txt (by name; the versions there are the
-#     reference workstation's; setup.ps1 installs them first as root via wsl.exe, so no password), then the sim venv
+#     reference machine's; setup.ps1 installs them first as root via wsl.exe, so no password), then the sim venv
 #     ($SIM_VENV, default ~/simvenv, used by tools/quick_fea.py and examples/bracket) from requirements-sim.txt with
 #     the pinned uv on the repo Python (.python-version; never the 3.14 system Python). A venv on another Python
 #     (e.g. 3.12) is moved aside, not deleted.

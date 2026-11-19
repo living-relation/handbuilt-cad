@@ -1,0 +1,13 @@
+{
+  "name": "handbuilt-cad-plugins",
+  "description": "Catalog for the handbuilt-cad plugin only.",
+  "owner": {
+    "name": "living-relation"
+  },
+  "plugins": [
+    {
+      "name": "handbuilt-cad",
+      "source": "./"
+    }
+  ]
+}

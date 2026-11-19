@@ -1,7 +1,7 @@
 # models folder: owned by handbuilt-cad
 
 This folder belongs to the **handbuilt-cad** repo: https://github.com/living-relation/handbuilt-cad
-No other repo owns or manages it (the workstation repo has nothing to do with it).
+No other repo owns or manages it.
 
 Used by: handbuilt-cad's `publish-to-models` skill (files finished parts here) and its tools (`tools/paths.py` finds this folder).
 Deleting, moving or renaming this folder breaks those tools and loses finished parts that may exist nowhere else.

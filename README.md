@@ -7,7 +7,7 @@ and docs only** - no part models. Finished models live in a `models` folder outs
 
 ## Setup (about 5 minutes)
 
-Skills reach Claude Chat, Cowork, Claude Code, and Cursor only by installing the **handbuilt-cad** plugin. Setup does not link skills, and there is no zip upload. The four ways (shortcut, these commands, an agent prompt, and Plugins-menu clicks) are in [INSTALL.md](INSTALL.md). Plugin updates are the Plugins menu. This repo has no plugin catalog.
+Skills reach Claude Chat, Cowork, Claude Code, and Cursor only by installing the **handbuilt-cad** plugin. Setup does not link skills, and there is no zip upload. The four ways (shortcut, these commands, an agent prompt, and Plugins-menu clicks) are in [INSTALL.md](INSTALL.md). Plugin updates are the Plugins menu. The Claude catalog in this repo is named `handbuilt-cad-plugins`. It lists only this plugin.
 
 `<projects>` is your Projects folder. Each block below is one command.
 
@@ -50,11 +50,11 @@ bash setup.sh
 **Plugin, normal terminal (not Administrator and not root).** Skip this if your claude.ai account already has the plugin, or Claude Code will load it twice. Leave marketplace auto-update off. Details and the other routes are in [INSTALL.md](INSTALL.md).
 
 ```bash
-claude plugin marketplace add living-relation/workstation
+claude plugin marketplace add living-relation/handbuilt-cad
 ```
 
 ```bash
-claude plugin install handbuilt-cad@living-relation-plugins
+claude plugin install handbuilt-cad@handbuilt-cad-plugins
 ```
 
 Double-click `pull.cmd` in the clone (or run it from a prompt) to `git pull --ff-only` this repo only. Double-click `install.cmd` (or run it from a normal prompt, not Administrator; extra args pass through, e.g. `install.cmd -NoSim`) to run `setup.ps1`. That shortcut installs the toolkit only. It does not install the plugin.

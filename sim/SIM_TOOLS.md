@@ -6,7 +6,7 @@ Strength (FEA), heat and CFD tools. The solvers run in WSL (Ubuntu 26.04), and F
 
 ## What's installed
 
-`setup.sh` installs CalculiX, Gmsh, ParaView and OCCT tools (`apt-sim.txt`) and the sim venv by default. **Elmer and OpenFOAM are optional and not installed by setup**; the rows below record the reference workstation's manual install.
+`setup.sh` installs CalculiX, Gmsh, ParaView and OCCT tools (`apt-sim.txt`) and the sim venv by default. **Elmer and OpenFOAM are optional and not installed by setup**; the rows below record the reference machine's manual install.
 
 | Tool | Use | Version | Where | Smoke test |
 |---|---|---|---|---|
