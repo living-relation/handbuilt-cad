@@ -91,7 +91,7 @@ Update: Turn Sync automatically on. Updates arrive automatically after merges to
 Remove: open handbuilt-cad, open its menu, choose Remove.
 
 Cursor is separate. Leave Auto Refresh off.
-This script copies .cursor-plugin and skills to ~/.cursor/plugins/local/handbuilt-cad and replaces the old copy. Restart Cursor or run Developer: Reload Window. Open Customize and confirm the skills.
+This script copies .cursor-plugin and skills to ~/.cursor/plugins/local/handbuilt-cad and replaces the old copy. Fully quit and reopen Cursor. Open Customize and confirm the skills.
 Update that copy: the Cursor local copy still updates by re-running this script (replace the copy, then reload).
 Remove that copy: delete ~/.cursor/plugins/local/handbuilt-cad and reload.
 It does not copy skills into ~/.claude/skills or ~/.cursor/skills.
@@ -124,7 +124,7 @@ fi
 rm -rf "$dest"
 mkdir -p "$dest"
 cp -a -- "$src/.cursor-plugin" "$src/skills" "$dest/"
-echo "Copied handbuilt-cad to $dest. Reload the Cursor window."
+echo "Copied handbuilt-cad to $dest. Fully quit and reopen Cursor."
 
 if [ -n "$USER_HOME" ]; then
   echo "browser was not opened (test home). Nothing was scheduled."

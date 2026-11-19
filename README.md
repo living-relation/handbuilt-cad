@@ -67,7 +67,7 @@ cd ~/projects/handbuilt-cad
 bash install-plugins.sh
 ```
 
-Double-click `pull.cmd` in the clone (or run it from a prompt) to `git pull --ff-only` this repo only. Double-click `install.cmd` (or run it from a normal prompt, not Administrator; extra args pass through, e.g. `install.cmd -NoSim`) to run `setup.ps1`. That shortcut installs the toolkit only. It does not add the plugin and it does not open a browser. Double-click `install-plugins.cmd` when you want the claude.ai page and the Cursor copy. That runs only because you started it. It copies `.cursor-plugin` and `skills` to `~/.cursor/plugins/local/handbuilt-cad` and replaces the old copy. Reload Cursor after the copy.
+Double-click `pull.cmd` in the clone (or run it from a prompt) to `git pull --ff-only` this repo only. Double-click `install.cmd` (or run it from a normal prompt, not Administrator; extra args pass through, e.g. `install.cmd -NoSim`) to run `setup.ps1`. That shortcut installs the toolkit only. It does not add the plugin and it does not open a browser. Double-click `install-plugins.cmd` when you want the claude.ai page and the Cursor copy. That runs only because you started it. It copies `.cursor-plugin` and `skills` to `~/.cursor/plugins/local/handbuilt-cad` and replaces the old copy. Fully quit and reopen Cursor after the copy.
 
 Then use the venv: `$CAD_PY tools/cnc_check.py --help` (`setup.sh` prints the `CAD_PY` to export: `.venv/bin/python`, or `~/.venvs/handbuilt-cad/bin/python` in WSL).
 

@@ -76,7 +76,7 @@ Write-Host 'Update: Turn Sync automatically on. Updates arrive automatically aft
 Write-Host 'Remove: open handbuilt-cad, open its menu, choose Remove.'
 Write-Host ''
 Write-Host 'Cursor is separate. Leave Auto Refresh off.'
-Write-Host 'This script copies .cursor-plugin and skills to ~/.cursor/plugins/local/handbuilt-cad and replaces the old copy. Restart Cursor or run Developer: Reload Window. Open Customize and confirm the skills.'
+Write-Host 'This script copies .cursor-plugin and skills to ~/.cursor/plugins/local/handbuilt-cad and replaces the old copy. Fully quit and reopen Cursor. Open Customize and confirm the skills.'
 Write-Host 'Update that copy: the Cursor local copy still updates by re-running this script (replace the copy, then reload).'
 Write-Host 'Remove that copy: delete ~/.cursor/plugins/local/handbuilt-cad and reload.'
 Write-Host 'It does not copy skills into ~/.claude/skills or ~/.cursor/skills.'
@@ -119,7 +119,7 @@ foreach ($name in @('.cursor-plugin', 'skills')) {
   }
   Copy-Item -LiteralPath $from -Destination (Join-Path $fullDest $name) -Recurse -Force
 }
-Write-Host "Copied handbuilt-cad to $fullDest. Reload the Cursor window."
+Write-Host "Copied handbuilt-cad to $fullDest. Fully quit and reopen Cursor."
 
 if ($UserHome) {
   Write-Host 'browser was not opened (test home). Nothing was scheduled.'
