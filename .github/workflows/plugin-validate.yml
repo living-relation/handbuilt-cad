@@ -41,3 +41,4 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/claude-cli" @anthropic-ai/claude-code@2.1.326 --no-fund --no-audit
           export PATH="$RUNNER_TEMP/claude-cli/node_modules/.bin:$PATH"
           claude plugin validate .
+          claude plugin validate .claude-plugin/marketplace.json

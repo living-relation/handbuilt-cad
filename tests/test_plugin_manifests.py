@@ -19,6 +19,9 @@ def _write_good(root: Path):
     (root / ".claude-plugin" / "plugin.json").write_text(
         json.dumps(chk.CLAUDE_PLUGIN) + "\n", encoding="utf-8"
     )
+    (root / ".claude-plugin" / "marketplace.json").write_text(
+        json.dumps(chk.CLAUDE_MARKETPLACE) + "\n", encoding="utf-8"
+    )
     (root / ".cursor-plugin" / "plugin.json").write_text(
         json.dumps(chk.CURSOR_PLUGIN) + "\n", encoding="utf-8"
     )
@@ -72,4 +75,6 @@ def test_workflow_runs_validate_without_strict():
     assert ".github/workflows/plugin-validate.yml" in auto
     agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     assert ".claude-plugin/plugin.json" in agents
+    assert ".claude-plugin/marketplace.json" in agents
+    assert "handbuilt-cad-plugins" in agents
     assert ".cursor-plugin/marketplace.json" in agents

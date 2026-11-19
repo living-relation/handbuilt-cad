@@ -24,6 +24,12 @@ CLAUDE_PLUGIN = {
     "name": "handbuilt-cad",
     "repository": "https://github.com/living-relation/handbuilt-cad",
 }
+CLAUDE_MARKETPLACE = {
+    "name": "handbuilt-cad-plugins",
+    "description": "Catalog for the handbuilt-cad plugin only.",
+    "owner": {"name": "living-relation"},
+    "plugins": [{"name": "handbuilt-cad", "source": "./"}],
+}
 CURSOR_PLUGIN = {
     "name": "handbuilt-cad",
     "skills": "./skills/",
@@ -71,6 +77,7 @@ def check(root: Path):
     errors = []
     files = {
         ".claude-plugin/plugin.json": CLAUDE_PLUGIN,
+        ".claude-plugin/marketplace.json": CLAUDE_MARKETPLACE,
         ".cursor-plugin/plugin.json": CURSOR_PLUGIN,
         ".cursor-plugin/marketplace.json": CURSOR_MARKETPLACE,
     }
@@ -103,6 +110,28 @@ def check(root: Path):
                 )
             elif source == "." and plugin_dir != root.resolve():
                 errors.append(f'source "." resolved to {plugin_dir}, not the repo root')
+    claude_market = loaded.get(".claude-plugin/marketplace.json")
+    if isinstance(claude_market, dict):
+        entries = claude_market.get("plugins") or []
+        if len(entries) != 1:
+            errors.append("claude marketplace must list only handbuilt-cad")
+        for entry in entries:
+            source = entry.get("source") if isinstance(entry, dict) else None
+            if source != "./":
+                errors.append(f'claude marketplace source must be "./", got {source!r}')
+                continue
+            try:
+                plugin_dir = resolve_source(root, source)
+            except ValueError as e:
+                errors.append(str(e))
+                continue
+            manifest = plugin_dir / ".claude-plugin" / "plugin.json"
+            if not manifest.is_file():
+                errors.append(
+                    f'source {source!r} resolves to {plugin_dir} but {manifest} is missing'
+                )
+            elif plugin_dir != root.resolve():
+                errors.append(f'source "./" resolved to {plugin_dir}, not the repo root')
     skills = root / "skills"
     if not skills.is_dir() or not any(skills.glob("*/SKILL.md")):
         errors.append("skills/*/SKILL.md is missing; plugin skills stay in skills/<name>/SKILL.md")

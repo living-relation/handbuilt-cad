@@ -8,14 +8,16 @@ The one state file for this repo: current goal and open items. Decisions go in `
 
 **Plugin (2026-11-17):** Phase 1 adds `.claude-plugin/plugin.json` and `.cursor-plugin/` (`plugin.json` plus a one-entry marketplace, `"source": "."`). No `version` field. Skills stay in `skills/`. `plugin-validate` CI runs `claude plugin validate .` (no `--strict`, because a missing `version` is only a warning) and checks the Cursor JSON. Cursor's live import of `"source": "."` is not verified.
 
+**Stand-alone catalog (2026-11-19):** This repo does not name or depend on any other project repo. The Claude catalog is `.claude-plugin/marketplace.json` here, named `handbuilt-cad-plugins`, listing only handbuilt-cad at source `./`. Install with `claude plugin marketplace add living-relation/handbuilt-cad`, then `claude plugin install handbuilt-cad@handbuilt-cad-plugins`.
+
 **Agent guide (2026-11-17):** Root `CLAUDE.md` contained only `@AGENTS.md`. That line duplicated this guide, so no extra rules were copied and the file was deleted. `no-claude-md` CI fails if a tracked file is named `CLAUDE.md` or `CLAUDE.local.md`, or is `.claude/CLAUDE.md`.
 
 **Skill delivery (2026-11-19):** Skills reach Claude Chat, Cowork and Claude Code through the handbuilt-cad plugin; no zip upload. Setup links skills only with `-LinkSkills` / `--link-skills`; the upload popup is gone.
 
-**Install routes (2026-11-19):** [INSTALL.md](INSTALL.md) has the four ways: `install.cmd`, single-line commands in the README, [SETUP-PROMPT.txt](SETUP-PROMPT.txt), and Plugins-menu clicks. The catalog is not in this repo. It is `living-relation-plugins` in living-relation/workstation (`workstation-core` at `./`, handbuilt-cad by GitHub source). Setup still does not link skills. Plugin updates stay a Plugins-menu action.
+**Install routes (2026-11-19):** [INSTALL.md](INSTALL.md) has the four ways: `install.cmd`, single-line commands in the README, [SETUP-PROMPT.txt](SETUP-PROMPT.txt), and Plugins-menu clicks. Setup still does not link skills. Plugin updates stay a Plugins-menu action. The catalog those routes install is `handbuilt-cad-plugins` in this repo.
 
 ## Open
-- Confirm a live install of handbuilt-cad from the workstation catalog on a PC (Claude Code, claude.ai, and Cursor). The install-docs change did not run those clicks.
+- Confirm a live install of handbuilt-cad from this repo's catalog `handbuilt-cad-plugins` on a PC (Claude Code, claude.ai, and Cursor). This change validated the catalog file only. It did not run those clicks or the install commands.
 
 **Kept branches:** none
 **Last cleanup:** 2026-10-29 @ 94a7706

@@ -71,7 +71,7 @@ automations:
     committed: no
     auto_commit: false
     enabled: true
-    run_cmd: claude plugin validate .
+    run_cmd: claude plugin validate . && claude plugin validate .claude-plugin/marketplace.json
     check_cmd: python3 scripts/check_cursor_plugin.py
     owner: maintainer
   - id: no-claude-md

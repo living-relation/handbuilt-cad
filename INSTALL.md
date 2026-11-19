@@ -2,7 +2,7 @@
 
 Skills reach Claude Chat, Cowork, Claude Code, and Cursor only by installing the **handbuilt-cad** plugin. Setup does not link skills. There is no zip upload. Nothing here installs or updates the plugin in the background.
 
-The catalog is not in this repo. Do not add `.claude-plugin/marketplace.json` here, and do not add a Cursor marketplace that lists other repos. The catalog is the marketplace named `living-relation-plugins` in [living-relation/workstation](https://github.com/living-relation/workstation). It lists `workstation-core` at `./` and handbuilt-cad as `{"source":"github","repo":"living-relation/handbuilt-cad"}`. This repo's `.cursor-plugin/marketplace.json` lists only this plugin (`"source": "."`).
+The Claude catalog is in this repo: `.claude-plugin/marketplace.json`, named `handbuilt-cad-plugins`. It lists only handbuilt-cad, with source `./` (this repo). Do not add another plugin to that file. The Cursor marketplace at `.cursor-plugin/marketplace.json` also lists only this plugin (`"source": "."`). Do not add a marketplace here that lists other repos.
 
 Pick **one** Claude route. A plugin turned on for a claude.ai account also shows up in Claude Code signed in to that account. Installing it again on that machine loads the skills twice.
 
@@ -63,33 +63,31 @@ On Windows, do not also clone inside WSL. `setup.ps1` links the Windows clone to
 **Normal terminal (not Administrator, not root).** Run these only if this machine does not already get the plugin from your claude.ai account. User scope is the default.
 
 ```bash
-claude plugin marketplace add living-relation/workstation
+claude plugin marketplace add living-relation/handbuilt-cad
 ```
 
 ```bash
-claude plugin install handbuilt-cad@living-relation-plugins
+claude plugin install handbuilt-cad@handbuilt-cad-plugins
 ```
 
 **Update the plugin.** Plugins menu, or this command. Do not turn marketplace auto-update on.
 
 ```bash
-claude plugin update handbuilt-cad@living-relation-plugins
+claude plugin update handbuilt-cad@handbuilt-cad-plugins
 ```
 
-**Remove the plugin.** This removes only handbuilt-cad. It does not remove the workstation catalog or workstation-core.
+**Remove the plugin.** This removes handbuilt-cad. It does not delete the clone.
 
 ```bash
-claude plugin uninstall handbuilt-cad@living-relation-plugins
+claude plugin uninstall handbuilt-cad@handbuilt-cad-plugins
 ```
-
-If `marketplace add` fails because `living-relation-plugins` is not in the workstation repo yet, stop. Do not create a catalog in this repo.
 
 ## 3. Agent prompt
 
 Copy all of [SETUP-PROMPT.txt](SETUP-PROMPT.txt) into a new agent chat. The agent may run the toolkit setup. It must wait for your yes before any plugin command, and it must not link skills or upload zips.
 
 ```prompt
-Set up handbuilt-cad on this PC, then stop for the plugin steps. Skills come only from the handbuilt-cad plugin. Do not link skills. Do not upload skill zips. Do not turn on Sync automatically, Claude Code marketplace auto-update, or Cursor Auto Refresh. Do not add a catalog or marketplace file to this repo. Do not create a CLAUDE.md. Do not edit Claude memory files. Do not touch st185-link-ecu-config. Do not add a scheduled task, a startup task, or any background sync.
+Set up handbuilt-cad on this PC, then stop for the plugin steps. Skills come only from the handbuilt-cad plugin. Do not link skills. Do not upload skill zips. Do not turn on Sync automatically, Claude Code marketplace auto-update, or Cursor Auto Refresh. Do not create a CLAUDE.md. Do not edit Claude memory files. Do not touch st185-link-ecu-config. Do not add a scheduled task, a startup task, or any background sync. The catalog is already in this repo. Do not add a second catalog file, and do not add another plugin to it.
 
 1. Find the clone. On Windows it is <projects>\active\handbuilt-cad (one clone, in Windows). On plain Linux it is ~/projects/handbuilt-cad. If it is missing, clone it in a normal terminal (not Administrator, not root). On Windows the last argument is <projects>\active\handbuilt-cad. On plain Linux the last argument is ~/projects/handbuilt-cad. The URL is https://github.com/living-relation/handbuilt-cad.git. Do not make a second WSL clone. WSL uses the Windows clone through ~/projects/handbuilt-cad.
 
@@ -99,11 +97,11 @@ Set up handbuilt-cad on this PC, then stop for the plugin steps. Skills come onl
 
 4. Do not install the plugin until I say yes. When I say yes, pick ONE Claude route so the skills do not load twice. If the plugin is already on for a claude.ai account, Claude Code signed in to that account already receives it. Do not also install it locally for that account.
    Route A, normal terminal (not Administrator), one command at a time, only after I say yes:
-   claude plugin marketplace add living-relation/workstation
-   claude plugin install handbuilt-cad@living-relation-plugins
-   Then in Claude Code open /plugin, go to Marketplaces, select living-relation-plugins, and confirm auto-update is off.
-   Route B, I click it: Customize, Plugins, Add, Add marketplace, living-relation/workstation. Leave Sync automatically off. Add handbuilt-cad. Do not also run the Route A commands for that account.
-   The catalog name is living-relation-plugins. It lives in living-relation/workstation, not in this repo. workstation-core is source ./ . handbuilt-cad is {"source":"github","repo":"living-relation/handbuilt-cad"}. If the add fails because that catalog file is not there yet, stop. Do not create a marketplace file in this repo.
+   claude plugin marketplace add living-relation/handbuilt-cad
+   claude plugin install handbuilt-cad@handbuilt-cad-plugins
+   Then in Claude Code open /plugin, go to Marketplaces, select handbuilt-cad-plugins, and confirm auto-update is off.
+   Route B, I click it: Customize, Plugins, Add, Add marketplace, living-relation/handbuilt-cad. Leave Sync automatically off. Add handbuilt-cad. Do not also run the Route A commands for that account.
+   The catalog name is handbuilt-cad-plugins. It is .claude-plugin/marketplace.json in this repo. It lists only handbuilt-cad, source ./. Do not add a second catalog file and do not add another plugin to it.
 
 5. Cursor is separate. Give me the click steps in INSTALL.md and wait. Leave Auto Refresh off. Do not copy or link skills into ~/.cursor/skills or ~/.claude/skills.
 
@@ -121,17 +119,17 @@ Set up handbuilt-cad on this PC, then stop for the plugin steps. Skills come onl
 1. Add the catalog. In the session, run the next line, then confirm the add.
 
 ```text
-/plugin marketplace add living-relation/workstation
+/plugin marketplace add living-relation/handbuilt-cad
 ```
 
 2. Open the plugin. This does not install by itself. It opens the plugin so you can choose a scope.
 
 ```text
-/plugin install handbuilt-cad@living-relation-plugins
+/plugin install handbuilt-cad@handbuilt-cad-plugins
 ```
 
 3. Choose **Install for you** (user scope). Do not choose the project scope. That would commit an enable line into this repo.
-4. Open `/plugin`, Marketplaces, `living-relation-plugins`. Confirm auto-update is **off**.
+4. Open `/plugin`, Marketplaces, `handbuilt-cad-plugins`. Confirm auto-update is **off**.
 5. **Update:** Installed tab, open handbuilt-cad, choose **Update now**.
 6. **Remove:** Installed tab, open handbuilt-cad, choose **Uninstall**.
 
@@ -139,7 +137,7 @@ Set up handbuilt-cad on this PC, then stop for the plugin steps. Skills come onl
 
 1. Open **Customize**, then **Plugins**.
 2. Choose **Add**, then **Add marketplace**.
-3. Enter `living-relation/workstation`.
+3. Enter `living-relation/handbuilt-cad`.
 4. Leave **Sync automatically** off.
 5. Open **handbuilt-cad** and choose **Add**.
 6. **Update:** on Plugins, choose **Check for updates**. Leave Sync automatically off.
