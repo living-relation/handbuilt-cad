@@ -1,18 +1,56 @@
 #!/usr/bin/env bash
-# Open the claude.ai Plugins page and print the clicks. Run this yourself.
-# It cannot add the plugin. It does not copy skills, and it does not schedule anything.
+# Open the claude.ai Plugins page, print the clicks, and copy the Cursor plugin.
+# It cannot add the plugin on claude.ai. It copies .cursor-plugin and skills to
+# ~/.cursor/plugins/local/handbuilt-cad and replaces the old copy.
+# It does not copy skills into ~/.claude/skills or ~/.cursor/skills.
+# It does not schedule anything.
+# --what-if prints the clicks and changes nothing.
+# --user-home DIR is for tests: the Cursor copy goes under that folder, and the
+# browser is not opened.
 set -euo pipefail
-if [ "$#" -ne 0 ]; then echo "install-plugins.sh takes no arguments."; exit 2; fi
+
+USER_HOME=""
+WHAT_IF=0
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --user-home)
+      if [ "$#" -lt 2 ] || [ -z "${2:-}" ]; then
+        echo "install-plugins.sh needs a folder after --user-home."
+        exit 2
+      fi
+      USER_HOME=$2
+      shift 2
+      ;;
+    --what-if)
+      WHAT_IF=1
+      shift
+      ;;
+    *)
+      echo "install-plugins.sh takes no arguments."
+      exit 2
+      ;;
+  esac
+done
+
 URL="https://claude.ai/customize/plugins"
 CATALOG="living-relation/handbuilt-cad"
+if [ -n "$USER_HOME" ]; then
+  HOME_ROOT=$USER_HOME
+else
+  HOME_ROOT=${HOME:-}
+fi
+if [ -z "$HOME_ROOT" ]; then
+  echo "No home folder found."
+  exit 1
+fi
 
 plugin_on_claude_ai() {
-  if ! python3 - "$HOME" <<'PY'
+  if ! python3 - "$1" <<'PY'
 import json, os, sys
 home = sys.argv[1]
 plugin_id = "handbuilt-cad@handbuilt-cad-plugins"
 ok = "The handbuilt-cad plugin is present on claude.ai."
-missing = "WARN: The handbuilt-cad plugin is not added on claude.ai yet. Add catalog living-relation/handbuilt-cad and turn on handbuilt-cad."
+missing = "WARN: handbuilt-cad plugin not added on claude.ai yet: add catalog living-relation/handbuilt-cad and turn on handbuilt-cad."
 path = os.path.join(home, ".claude", "settings.json")
 try:
     with open(path, encoding="utf-8") as f:
@@ -26,10 +64,10 @@ except (OSError, json.JSONDecodeError, AttributeError, TypeError):
 print(missing)
 PY
   then
-    echo "WARN: The handbuilt-cad plugin is not added on claude.ai yet. Add catalog living-relation/handbuilt-cad and turn on handbuilt-cad."
+    echo "WARN: handbuilt-cad plugin not added on claude.ai yet: add catalog living-relation/handbuilt-cad and turn on handbuilt-cad."
   fi
 }
-plugin_on_claude_ai
+plugin_on_claude_ai "$HOME_ROOT"
 
 cat <<EOF
 
@@ -53,14 +91,47 @@ Update: Turn Sync automatically on. Updates arrive automatically after merges to
 Remove: open handbuilt-cad, open its menu, choose Remove.
 
 Cursor is separate. Leave Auto Refresh off.
-Individual account: copy the plugin to ~/.cursor/plugins/local/handbuilt-cad (a real copy, not a shortcut to the clone). Include .cursor-plugin/plugin.json and skills/. Restart Cursor or run Developer: Reload Window. Open Customize and confirm the skills.
+This script copies .cursor-plugin and skills to ~/.cursor/plugins/local/handbuilt-cad and replaces the old copy. Restart Cursor or run Developer: Reload Window. Open Customize and confirm the skills.
 Update that copy: the Cursor local copy still updates by re-running this script (replace the copy, then reload).
 Remove that copy: delete ~/.cursor/plugins/local/handbuilt-cad and reload.
+It does not copy skills into ~/.claude/skills or ~/.cursor/skills.
 Team or Enterprise account: Dashboard, Plugins & MCPs, Add Marketplace, Import from Repo. Paste https://github.com/living-relation/handbuilt-cad. Under Marketplace Settings, leave Enable Auto Refresh off. Then in Customize, install handbuilt-cad. Update: open the marketplace and choose Refresh.
 
-Opening ${URL}
 EOF
 
+src=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
+case "$HOME_ROOT" in
+  /*) ;;
+  *) echo "Home must be an absolute path."; exit 1 ;;
+esac
+dest="$HOME_ROOT/.cursor/plugins/local/handbuilt-cad"
+case "$dest" in
+  */.cursor/plugins/local/handbuilt-cad) ;;
+  *) echo "Refusing to remove an unexpected folder."; exit 1 ;;
+esac
+case "$dest/" in
+  "$src/"*) echo "Refusing to copy the plugin into its own folder."; exit 1 ;;
+esac
+echo "Cursor copy: $dest"
+if [ "$WHAT_IF" -eq 1 ]; then
+  echo "WhatIf: browser was not opened. Nothing was copied. Nothing was scheduled."
+  exit 0
+fi
+if [ ! -d "$src/.cursor-plugin" ] || [ ! -d "$src/skills" ]; then
+  echo "Missing .cursor-plugin or skills in $src"
+  exit 1
+fi
+rm -rf "$dest"
+mkdir -p "$dest"
+cp -a -- "$src/.cursor-plugin" "$src/skills" "$dest/"
+echo "Copied handbuilt-cad to $dest. Reload the Cursor window."
+
+if [ -n "$USER_HOME" ]; then
+  echo "browser was not opened (test home). Nothing was scheduled."
+  exit 0
+fi
+
+echo "Opening ${URL}"
 if command -v xdg-open >/dev/null 2>&1; then
   xdg-open "$URL" || echo "Could not open a browser. Open this page yourself: $URL"
 elif command -v open >/dev/null 2>&1; then
@@ -68,3 +139,4 @@ elif command -v open >/dev/null 2>&1; then
 else
   echo "Could not open a browser. Open this page yourself: $URL"
 fi
+echo "Nothing was scheduled."

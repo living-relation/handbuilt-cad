@@ -14,10 +14,10 @@ The one state file for this repo: current goal and open items. Decisions go in `
 
 **Skill delivery (2026-11-19):** Skills reach Claude Chat, Cowork and Claude Code when the handbuilt-cad plugin is on for the claude.ai account; no zip upload. Setup does not copy skills onto the machine. The upload popup is gone.
 
-**Install routes (2026-11-19):** [INSTALL.md](INSTALL.md) has the four ways: `install.cmd` plus `install-plugins.cmd`, single-line commands in the README, [SETUP-PROMPT.txt](SETUP-PROMPT.txt), and the claude.ai clicks. claude.ai is the only Claude route. Cursor individual accounts copy the plugin to `~/.cursor/plugins/local/handbuilt-cad`. `install-plugins.ps1` opens the Plugins page only when you run it.
+**Install routes (2026-11-19):** [INSTALL.md](INSTALL.md) has the four ways: `install.cmd` plus `install-plugins.cmd`, single-line commands in the README, [SETUP-PROMPT.txt](SETUP-PROMPT.txt), and the claude.ai clicks. claude.ai is the only Claude route. `install-plugins.ps1`, `install-plugins.cmd`, and `install-plugins.sh` copy `.cursor-plugin` and `skills` to `~/.cursor/plugins/local/handbuilt-cad` and replace that copy each time you run them. They also open the Plugins page and print the clicks, only when you run them. Setup does not copy skills into `~/.claude/skills` or `~/.cursor/skills`.
 
 ## Open
-- Confirm a live add of handbuilt-cad on a claude.ai account (catalog `living-relation/handbuilt-cad`, Turn Sync automatically on) and a Cursor copy to `~/.cursor/plugins/local/handbuilt-cad`. The Cursor local copy still updates by re-running the install-plugins script. This change checked the catalog file and the printed clicks. It did not sign in or click through Customize, so where the Sync automatically switch sits is unverified.
+- Confirm a live add of handbuilt-cad on a claude.ai account (catalog `living-relation/handbuilt-cad`, Turn Sync automatically on) and a Cursor reload after the local copy. Linux `install-plugins.sh` was run against a temporary home: it copies `.cursor-plugin` and `skills`, replaces the old copy, and prints the missing-plugin line. `install-plugins.ps1` was not executed (no Windows PowerShell on this machine). Windows double-click, a live claude.ai sign-in, and a Cursor reload were not run, so where the Sync automatically switch sits is unverified.
 
 **Kept branches:** none
 **Last cleanup:** 2026-10-29 @ 94a7706

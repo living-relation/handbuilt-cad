@@ -1,16 +1,46 @@
-# Open the claude.ai Plugins page and print the clicks. Run this yourself.
-# It cannot add the plugin. It does not copy skills, and it does not schedule anything.
-param()
+#Requires -Version 5.1
+<#
+.SYNOPSIS
+  Open the claude.ai Plugins page and copy handbuilt-cad for Cursor.
+.DESCRIPTION
+  Run this yourself. Double-click install-plugins.cmd, or run this file.
+  A script cannot turn the plugin on at claude.ai. A real run opens the page
+  and prints the clicks. It also copies .cursor-plugin and skills to
+  ~\.cursor\plugins\local\handbuilt-cad and replaces the old copy.
+  It does not copy skills into ~\.claude\skills or ~\.cursor\skills.
+  It does not create a scheduled task, a sign-in item, or a Run key.
+  Turn Sync automatically on. Nothing runs in the background.
+  -WhatIf prints the clicks and changes nothing.
+  -UserHome is for tests: the Cursor copy goes under that folder, and the
+  browser is not opened.
+.PARAMETER UserHome
+  Testing only. Cursor copy destination root. Also skips the browser.
+#>
+[CmdletBinding(SupportsShouldProcess = $true)]
+param(
+  [string]$UserHome
+)
+
 $ErrorActionPreference = 'Stop'
-if ($args.Count -gt 0) { throw 'install-plugins.ps1 takes no arguments.' }
-$url = 'https://claude.ai/customize/plugins'
 $catalog = 'living-relation/handbuilt-cad'
+$url = 'https://claude.ai/customize/plugins'
+$dry = [bool]$WhatIfPreference
+$copyHome = $UserHome
+if (-not $copyHome) {
+  $copyHome = $env:USERPROFILE
+  if (-not $copyHome) { $copyHome = $HOME }
+}
+if (-not $copyHome) {
+  Write-Host 'No home folder found.'
+  exit 1
+}
 
 function Get-HandbuiltClaudeAiLine {
+  param([string]$HomeRoot)
   $id = 'handbuilt-cad@handbuilt-cad-plugins'
   $ok = 'The handbuilt-cad plugin is present on claude.ai.'
-  $missing = 'WARN: The handbuilt-cad plugin is not added on claude.ai yet. Add catalog living-relation/handbuilt-cad and turn on handbuilt-cad.'
-  $settings = Join-Path $env:USERPROFILE '.claude\settings.json'
+  $missing = 'WARN: handbuilt-cad plugin not added on claude.ai yet: add catalog living-relation/handbuilt-cad and turn on handbuilt-cad.'
+  $settings = Join-Path $HomeRoot '.claude\settings.json'
   if (Test-Path -LiteralPath $settings) {
     try {
       $j = Get-Content -LiteralPath $settings -Raw -ErrorAction Stop | ConvertFrom-Json
@@ -24,7 +54,7 @@ function Get-HandbuiltClaudeAiLine {
   return $missing
 }
 
-Write-Host (Get-HandbuiltClaudeAiLine)
+Write-Host (Get-HandbuiltClaudeAiLine -HomeRoot $copyHome)
 Write-Host ''
 Write-Host 'handbuilt-cad on claude.ai'
 Write-Host 'This script cannot add the plugin. Do these clicks yourself.'
@@ -46,11 +76,58 @@ Write-Host 'Update: Turn Sync automatically on. Updates arrive automatically aft
 Write-Host 'Remove: open handbuilt-cad, open its menu, choose Remove.'
 Write-Host ''
 Write-Host 'Cursor is separate. Leave Auto Refresh off.'
-Write-Host 'Individual account: copy the plugin to ~/.cursor/plugins/local/handbuilt-cad (a real copy, not a shortcut to the clone). Include .cursor-plugin/plugin.json and skills/. Restart Cursor or run Developer: Reload Window. Open Customize and confirm the skills.'
+Write-Host 'This script copies .cursor-plugin and skills to ~/.cursor/plugins/local/handbuilt-cad and replaces the old copy. Restart Cursor or run Developer: Reload Window. Open Customize and confirm the skills.'
 Write-Host 'Update that copy: the Cursor local copy still updates by re-running this script (replace the copy, then reload).'
 Write-Host 'Remove that copy: delete ~/.cursor/plugins/local/handbuilt-cad and reload.'
+Write-Host 'It does not copy skills into ~/.claude/skills or ~/.cursor/skills.'
 Write-Host 'Team or Enterprise account: Dashboard, Plugins & MCPs, Add Marketplace, Import from Repo. Paste https://github.com/living-relation/handbuilt-cad. Under Marketplace Settings, leave Enable Auto Refresh off. Then in Customize, install handbuilt-cad. Update: open the marketplace and choose Refresh.'
 Write-Host ''
+
+$src = $PSScriptRoot
+if (-not $src) { $src = Split-Path -Parent $MyInvocation.MyCommand.Path }
+$dest = Join-Path $copyHome '.cursor\plugins\local\handbuilt-cad'
+$fullDest = [IO.Path]::GetFullPath($dest)
+$fullSrc = [IO.Path]::GetFullPath($src)
+$destTrim = $fullDest.TrimEnd('\', '/')
+$srcTrim = $fullSrc.TrimEnd('\', '/')
+$tail = [IO.Path]::Combine('.cursor', 'plugins', 'local', 'handbuilt-cad')
+if (-not $destTrim.EndsWith($tail, [StringComparison]::OrdinalIgnoreCase)) {
+  Write-Host 'Refusing to remove an unexpected folder.'
+  exit 1
+}
+if ($destTrim.Equals($srcTrim, [StringComparison]::OrdinalIgnoreCase) -or
+    $destTrim.StartsWith($srcTrim + '\', [StringComparison]::OrdinalIgnoreCase) -or
+    $destTrim.StartsWith($srcTrim + '/', [StringComparison]::OrdinalIgnoreCase)) {
+  Write-Host 'Refusing to copy the plugin into its own folder.'
+  exit 1
+}
+Write-Host "Cursor copy: $fullDest"
+if ($dry) {
+  Write-Host 'WhatIf: browser was not opened. Nothing was copied. Nothing was scheduled.'
+  exit 0
+}
+
+if (Test-Path -LiteralPath $fullDest) {
+  Remove-Item -LiteralPath $fullDest -Recurse -Force
+}
+New-Item -ItemType Directory -Force -Path $fullDest | Out-Null
+foreach ($name in @('.cursor-plugin', 'skills')) {
+  $from = Join-Path $fullSrc $name
+  if (-not (Test-Path -LiteralPath $from -PathType Container)) {
+    Write-Host "Missing $name in $fullSrc"
+    exit 1
+  }
+  Copy-Item -LiteralPath $from -Destination (Join-Path $fullDest $name) -Recurse -Force
+}
+Write-Host "Copied handbuilt-cad to $fullDest. Reload the Cursor window."
+
+if ($UserHome) {
+  Write-Host 'browser was not opened (test home). Nothing was scheduled.'
+  exit 0
+}
+
 Write-Host "Opening $url"
 try { Start-Process $url }
 catch { Write-Host "Could not open a browser. Open this page yourself: $url" }
+Write-Host 'Nothing was scheduled.'
+exit 0

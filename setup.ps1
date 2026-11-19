@@ -83,7 +83,7 @@ if (-not $NoModels) { Write-Host "models notes: added by setup.sh in WSL (tools/
 function Get-HandbuiltClaudeAiLine {
   $id = 'handbuilt-cad@handbuilt-cad-plugins'
   $ok = 'The handbuilt-cad plugin is present on claude.ai.'
-  $missing = 'WARN: The handbuilt-cad plugin is not added on claude.ai yet. Add catalog living-relation/handbuilt-cad and turn on handbuilt-cad.'
+  $missing = 'WARN: handbuilt-cad plugin not added on claude.ai yet: add catalog living-relation/handbuilt-cad and turn on handbuilt-cad.'
   $settings = Join-Path $env:USERPROFILE '.claude\settings.json'
   if (Test-Path -LiteralPath $settings) {
     try {
