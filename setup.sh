@@ -4,7 +4,7 @@
 # the sim tools (apt-sim.txt via sudo apt-get, the sim venv), uv in ~/.local/bin, and an env file loaded by login
 # shells; then scripts/verify-install.sh checks everything and fails loudly if anything is missing.
 #   bash setup.sh [--no-models] [--with-fairsolid] [--no-sim] [--no-profile] [--link-skills]
-#   --link-skills is a no-op: skills are always linked into ~/.claude/skills.
+#   --link-skills links skills/<name> into ~/.claude/skills. Off by default: Skills reach Claude Chat, Cowork and Claude Code through the handbuilt-cad plugin; no zip upload.
 set -euo pipefail
 cd "$(dirname "$0")"
 ROOT=$PWD
@@ -20,9 +20,9 @@ esac
 export UV_PROJECT_ENVIRONMENT="$VENV" CAD_PY="$VENV/bin/python"   # every uv call below (and child scripts) uses this venv
 UV_VERSION=0.13.0
 UV_SHA=1468ebd5a5541121837c5a2817b9972ba6090fa6caa3d142620850a47fb75154  # uv-x86_64-unknown-linux-gnu.tar.gz
-NO_MODELS=0; WITH_FS=0; SIM=1; PROFILE=1; LINK_SKILLS=1
+NO_MODELS=0; WITH_FS=0; SIM=1; PROFILE=1; LINK_SKILLS=0
 # --sim is the default now; still accepted so old commands keep working.
-# --link-skills is a no-op (linking into ~/.claude/skills is the default).
+# --link-skills opts in to linking skills (step 6).
 for a in "$@"; do case $a in --no-models) NO_MODELS=1;; --with-fairsolid) WITH_FS=1;; --sim) SIM=1;; --no-sim) SIM=0;; --no-profile) PROFILE=0;; --link-skills) LINK_SKILLS=1;; *) echo "unknown option $a"; exit 2;; esac; done
 
 # 1. pinned uv (use the one on PATH if it is the pinned version, else fetch into .tools/)
@@ -143,8 +143,9 @@ if [ "$NO_MODELS" != 1 ] && [ -d "$MODELS" ]; then fn_args+=(--models "$MODELS")
 HBCAD_PARTS_HOME="$PARTS" "$VENV/bin/python" tools/folder_notes.py "${fn_args[@]}"
 # end 5d
 
-# 6. skills: always symlink skills/<name> into ~/.claude/skills (Cursor reads that folder too;
-#    do not also link into ~/.cursor/skills). --link-skills is a no-op kept for old commands.
+# 6. skills: opt-in (--link-skills). The handbuilt-cad plugin delivers the skills to every app, so a linked copy
+#    would load twice. With --link-skills: symlink skills/<name> into ~/.claude/skills (Cursor reads that folder too;
+#    do not also link into ~/.cursor/skills).
 #    A same-name entry is moved to ~/.skills-backup/<stamp>/ first. The only delete: a symlink
 #    into this clone's skills/ whose skill is gone is removed (the link only). Old links this
 #    repo made in ~/.cursor/skills are removed (the link only). On Windows, setup.ps1 does the
@@ -152,6 +153,9 @@ HBCAD_PARTS_HOME="$PARTS" "$VENV/bin/python" tools/folder_notes.py "${fn_args[@]
 #    Claude-app-owned skills (skills/EXCLUDE.txt, or SKILL.md frontmatter `source: harness-design-app`):
 #    never linked, and a same-name entry in ~/.claude/skills or ~/.cursor/skills is never moved,
 #    backed up, replaced or removed.
+if [ "${LINK_SKILLS:-0}" != 1 ]; then
+  echo "skills: not linked (the handbuilt-cad plugin delivers them; pass --link-skills to link)"
+else
 stamp=$(date +%Y%m%d-%H%M%S)
 hb_app_skill() { # $1 name, $2 dir (may be missing)
   if [ -f "$ROOT/skills/EXCLUDE.txt" ] && sed 's/#.*//; s/[[:space:]]//g' "$ROOT/skills/EXCLUDE.txt" | grep -qxF "$1"; then return 0; fi
@@ -185,6 +189,7 @@ for d in "$t"/*; do
   case "$l" in "$ROOT"/skills/*) rm "$d"; echo "skill link unlinked: $d" ;;
   esac
 done
+fi
 # end 6
 
 # 7. env file for every shell, including agents' non-interactive 'wsl bash -lc'. Setup rewrites
