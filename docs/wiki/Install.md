@@ -2,6 +2,8 @@
 
 [← Home](../../README.md) · next: [Setup](Setup.md) · [How to use](How-To-Use.md)
 
+Skills are not installed by the steps below. They come from the handbuilt-cad plugin. The shortcut, the commands, the agent prompt, and the click steps are in [INSTALL.md](../../INSTALL.md). Do not upload skill zips. Do not link skills.
+
 ## The whole thing in 3 steps
 
 1. **Install it** (below). This is the only part you might do by hand, and your agent can do it for you too.
@@ -32,18 +34,27 @@ You need: internet, about **5 GB** free disk, and your login password (for insta
    wsl --install -d Ubuntu
    ```
 3. Restart the PC when it asks. Ubuntu opens by itself and asks for a **user name and password**. Pick any (remember the password).
-4. From now on, open **Ubuntu** from the Start menu. That black window is where you paste the commands below.
+4. Install the toolkit from the one Windows clone. The commands are in [INSTALL.md](../../INSTALL.md). Do not clone the repo again inside Ubuntu.
 
 **You should see** a prompt like `you@PC:~$`.
 
 ## B. Get the toolkit (Windows-in-Ubuntu or plain Linux)
 
-Paste these lines one at a time:
+**Plain Linux, normal terminal (not root).** `sudo` asks for your password. Paste one block at a time. On Windows, skip this and use the one Windows clone in [INSTALL.md](../../INSTALL.md).
 
 ```bash
 sudo apt update && sudo apt install -y git curl python3
-git clone https://github.com/living-relation/handbuilt-cad.git
-cd handbuilt-cad
+```
+
+```bash
+git clone https://github.com/living-relation/handbuilt-cad.git ~/projects/handbuilt-cad
+```
+
+```bash
+cd ~/projects/handbuilt-cad
+```
+
+```bash
 bash setup.sh
 ```
 
@@ -61,8 +72,13 @@ Yellow `[skip]` lines are optional extras. Red `[fail]` lines need fixing (see b
 
 ## C. Try it
 
+**Ubuntu or Linux terminal, normal user (not root).**
+
 ```bash
 source sim/env.sh
+```
+
+```bash
 bash examples/bracket/run_all.sh
 ```
 

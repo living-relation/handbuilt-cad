@@ -10,7 +10,8 @@ This is the single CAD repo (tools, drawings, sim; part scripts live in the part
 ```
 handbuilt-cad/
 ├── README.md, AGENTS.md, CONTRIBUTING.md   front page, agent rules, PR rules
-├── setup.sh / setup.ps1   one-step setup (builds .venv from uv.lock; --full adds the sim tools)
+├── INSTALL.md, SETUP-PROMPT.txt   four install routes; the agent prompt
+├── setup.sh / setup.ps1   one-step toolkit setup (builds .venv from uv.lock; does not install the plugin)
 ├── pyproject.toml, uv.lock, requirements-sim.txt, apt-sim.txt   pinned packages
 ├── local.toml.example     per-PC paths (models_dir, freecad_dir, ...); copy to local.toml (git-ignored)
 ├── docs/                  TOOLS.md (tools index), wiki/ (this wiki), history/ (files kept from the old repos)
@@ -21,7 +22,7 @@ handbuilt-cad/
 ├── drawing/               2D drawing engine (part / assembly sheets, rev letters, rev log, templates)
 ├── pipelines/fairsolid/   scan -> parametric STEP pipeline
 ├── sim/                   simulation: env.sh, SIM_TOOLS.md, install / smoke / rollback scripts, FreeCAD wrappers (freecad/)
-├── skills/                agent skills plus Claude-import zips at skills/<name>.zip
+├── skills/                agent skills; the plugin installs them (CI zips at skills/<name>.zip are not the install path)
 ├── examples/bracket/      worked example (run_all.sh)
 ├── templates/parts-home/ owner AGENTS.md that setup.sh puts in the parts home
 ├── scans/INDEX.md         list of raw scans (scans themselves are not in git)
