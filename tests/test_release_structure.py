@@ -1,9 +1,7 @@
-"""tools/checks/release_structure.py: one solid per made part, maker models, STEP tree, stale rev paths."""
+"""tools/checks/release_structure.py: version folders, AP242 STEP only, one solid per made part, external parts."""
 import os
 import sys
 from pathlib import Path
-
-import pytest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", "tools"))
@@ -34,10 +32,12 @@ def _two(path):
     write_shape(comp, Path(path))
 
 
-def _assembly(path):
-    """One assembly STEP: a part named leg and a fastener body named SHCS M4."""
+def _embedded(path, names=("leg", "SHCS M4")):
+    """One assembly STEP with every body embedded (no external files)."""
     from OCP.BRepPrimAPI import BRepPrimAPI_MakeBox
+    from OCP.Interface import Interface_Static
     from OCP.STEPCAFControl import STEPCAFControl_Writer
+    from OCP.STEPControl import STEPControl_Controller
     from OCP.TCollection import TCollection_ExtendedString
     from OCP.TDataStd import TDataStd_Name
     from OCP.TDocStd import TDocStd_Document
@@ -46,19 +46,19 @@ def _assembly(path):
     from OCP.XCAFDoc import XCAFDoc_DocumentTool
     from OCP.gp import gp_Trsf, gp_Vec
 
+    STEPControl_Controller.Init_s()
+    Interface_Static.SetCVal_s("write.step.schema", "AP242DIS")
     app = XCAFApp_Application.GetApplication_s()
     doc = TDocStd_Document(TCollection_ExtendedString("MDTV-XCAF"))
     doc, = app.NewDocument(TCollection_ExtendedString("MDTV-XCAF"), doc)
     st = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
-    leg = st.AddShape(BRepPrimAPI_MakeBox(10.0, 20.0, 5.0).Shape(), False)
-    screw = st.AddShape(BRepPrimAPI_MakeBox(4.0, 4.0, 4.0).Shape(), False)
-    TDataStd_Name.Set_s(leg, TCollection_ExtendedString("leg"))
-    TDataStd_Name.Set_s(screw, TCollection_ExtendedString("SHCS M4"))
     assy = st.NewShape()
-    st.AddComponent(assy, leg, TopLoc_Location(gp_Trsf()))
-    moved = gp_Trsf()
-    moved.SetTranslation(gp_Vec(30, 0, 0))
-    st.AddComponent(assy, screw, TopLoc_Location(moved))
+    for i, name in enumerate(names):
+        lab = st.AddShape(BRepPrimAPI_MakeBox(4.0 + i, 4.0, 4.0).Shape(), False)
+        TDataStd_Name.Set_s(lab, TCollection_ExtendedString(name))
+        moved = gp_Trsf()
+        moved.SetTranslation(gp_Vec(30 * i, 0, 0))
+        st.AddComponent(assy, lab, TopLoc_Location(moved))
     TDataStd_Name.Set_s(assy, TCollection_ExtendedString("bracket"))
     st.UpdateAssemblies()
     w = STEPCAFControl_Writer()
@@ -66,117 +66,114 @@ def _assembly(path):
     assert w.Write(str(path))
 
 
+def _release(ver, parts=(("leg", 10.0), ("plate", 30.0))):
+    from OCP.BRepPrimAPI import BRepPrimAPI_MakeBox
+    from step_release import write_assembly
+    ver.mkdir(parents=True, exist_ok=True)
+    write_assembly(ver / "bracket.step", [(n, BRepPrimAPI_MakeBox(x, 20.0, 5.0).Shape()) for n, x in parts])
+
+
 def test_one_solid_part_passes_and_fused_part_fails(tmp_path):
-    job = tmp_path / "job_1017"
-    job.mkdir()
-    _box(job / "leg-revA.step")
-    assert rs.check_release(job) == []
-    _two(job / "leg-revA.step")
-    fails = rs.check_release(job)
-    assert any("2 solids" in f for f in fails)
+    ver = tmp_path / "revA"
+    ver.mkdir()
+    _box(ver / "leg.step")
+    assert rs.check_release(tmp_path) == []
+    _two(ver / "leg.step")
+    assert any("has 2 solids" in f for f in rs.check_release(tmp_path))
 
 
-def test_embedded_assembly_does_not_count_as_external_refs(tmp_path):
-    job = tmp_path / "job_1017"
-    (job / "Parts").mkdir(parents=True)
-    _assembly(job / "bracket-revB.step")
-    _box(job / "Parts" / "leg-revC.stp")
-    fails = rs.check_release(job)
-    assert any("does not reference external STEP" in f for f in fails)
+def test_external_release_passes(tmp_path):
+    _release(tmp_path / "revA")
+    assert rs.check_release(tmp_path) == []
+    assert rs.check_release(tmp_path / "revA") == []
 
 
-def test_unnamed_compound_does_not_match_parts_folder(tmp_path):
-    job = tmp_path / "job_1017"
-    (job / "Parts").mkdir(parents=True)
-    _two(job / "bracket-revB.step")
-    _box(job / "Parts" / "leg-revA.step")
-    _box(job / "Parts" / "plate-revA.step", 8, 8, 8)
-    fails = rs.check_release(job)
-    assert any("does not reference external STEP" in f for f in fails)
+def test_embedded_parts_fail_fasteners_may_stay(tmp_path):
+    ver = tmp_path / "revA"
+    ver.mkdir()
+    _embedded(ver / "bracket.step", names=("leg", "plate", "SHCS M4"))
+    assert any("has 2 solids besides fasteners" in f for f in rs.check_release(tmp_path))
+    _embedded(ver / "bracket.step", names=("leg", "SHCS M4", "washer M4"))
+    assert rs.check_release(tmp_path) == []
 
 
-def test_bought_part_needs_a_maker_file(tmp_path):
-    job = tmp_path / "job_1017"
-    job.mkdir()
-    _box(job / "bracket-revA.step")
-    card = job / "bracket-revA.md"
-    card.write_text("# bracket / revA\n## Bought parts\n- hinge\n")
-    assert any("no maker model" in f for f in rs.check_release(job))
-    (job / "reference").mkdir()
-    (job / "reference" / "hinge-maker.step").write_bytes(b"step")
-    card.write_text("# bracket / revA\n## Bought parts\n- hinge: reference/hinge-maker.step\n")
-    assert rs.check_release(job) == []
-    (job / "reference" / "hinge-maker.step").write_bytes(b"")
-    assert any("no maker model" in f for f in rs.check_release(job))
+def test_missing_and_unused_parts_fail(tmp_path):
+    ver = tmp_path / "revA"
+    _release(ver)
+    (ver / "Parts" / "plate.stp").unlink()
+    _box(ver / "Parts" / "spare.stp")
+    fails = rs.check_release(tmp_path)
+    assert any("plate.stp, which is missing" in f for f in fails)
+    assert any("Parts/spare.stp: no assembly references it" in f for f in fails)
 
 
-def test_older_rev_of_that_part_fails(tmp_path):
-    job = tmp_path / "job_1017"
-    (job / "Parts").mkdir(parents=True)
-    _assembly(job / "bracket-revD.step")
-    _box(job / "Parts" / "leg-revC.step")
-    _box(job / "Parts" / "leg-revA.step")
-    text = (job / "bracket-revD.step").read_text(errors="replace")
-    text = text.replace("ENDSEC;", "/* 'Parts/leg-revA.step' */\nENDSEC;", 1)
-    (job / "bracket-revD.step").write_text(text)
-    fails = rs.check_release(job)
-    assert any("leg newest is revC" in f for f in fails)
+def test_bought_part_needs_a_maker_file_and_may_be_multi_body(tmp_path):
+    ver = tmp_path / "revA"
+    _release(ver, parts=(("leg", 10.0),))
+    (ver / "SUMMARY.md").write_text("# bracket / revA\n## Bought parts\n- hinge\n")
+    assert any("no maker model" in f for f in rs.check_release(tmp_path))
+    _two(ver / "Parts" / "hinge-maker.stp")
+    (ver / "SUMMARY.md").write_text("# bracket / revA\n## Bought parts\n- hinge: Parts/hinge-maker.stp\n")
+    fails = rs.check_release(tmp_path)
+    assert not any("hinge-maker.stp: made part" in f or "no maker model" in f for f in fails)
 
 
-def test_fastener_file_must_be_named_in_the_card(tmp_path):
-    job = tmp_path / "job_1017"
-    (job / "Parts").mkdir(parents=True)
-    _assembly(job / "bracket-revC.step")
-    _box(job / "Parts" / "leg-revA.step")
-    _box(job / "Parts" / "SHCS_M4.step", 4, 4, 4)
-    fails = rs.check_release(job)
-    assert any("does not reference external STEP" in f and "leg-revA.step" in f for f in fails)
-    assert not any("SHCS_M4" in f and "does not reference" in f for f in fails)
+def test_more_than_two_versions_fail(tmp_path):
+    for v in ("revA", "revB", "revB.01"):
+        (tmp_path / v).mkdir()
+    assert rs.check_release(tmp_path) == []
+    (tmp_path / "revC").mkdir()
+    assert any("3 model versions" in f for f in rs.check_release(tmp_path))
 
 
-def test_clerical_card_with_no_step_passes(tmp_path):
-    job = tmp_path / "job_1017"
-    job.mkdir()
-    (job / "bracket-revD.01.md").write_text("drawings only\n")
-    (job / "bracket-revD.01.pdf").write_bytes(b"%PDF")
-    assert rs.check_release(job) == []
+def test_clerical_version_with_drawings_only_passes(tmp_path):
+    ver = tmp_path / "revD.01"
+    (ver / "drawings").mkdir(parents=True)
+    (ver / "SUMMARY.md").write_text("drawings only\n")
+    (ver / "drawings" / "bracket-revD.01.pdf").write_bytes(b"%PDF")
+    assert rs.check_release(tmp_path) == []
 
 
 def test_f3d_and_other_model_formats_fail(tmp_path):
-    job = tmp_path / "job_1017"
-    job.mkdir()
-    (job / "leg-revA.f3d").write_bytes(b"fusion")
-    (job / "plate-revA.stl").write_bytes(b"mesh")
-    fails = rs.check_release(job)
-    assert any("leg-revA.f3d" in f and "STEP only" in f for f in fails)
-    assert any("plate-revA.stl" in f and "STEP only" in f for f in fails)
-    (job / "leg-revA.f3d").unlink()
-    (job / "plate-revA.stl").unlink()
-    _box(job / "leg-revA.step")
-    (job / "leg-revA.pdf").write_bytes(b"%PDF")
-    assert rs.check_release(job) == []
+    ver = tmp_path / "revA"
+    ver.mkdir()
+    (ver / "leg.f3d").write_bytes(b"fusion")
+    (ver / "plate.stl").write_bytes(b"mesh")
+    fails = rs.check_release(tmp_path)
+    assert any("leg.f3d" in f and "STEP only" in f for f in fails)
+    assert any("plate.stl" in f and "STEP only" in f for f in fails)
 
 
 def test_duplicate_step_copies_fail(tmp_path):
-    job = tmp_path / "job_1017"
-    (job / "Parts").mkdir(parents=True)
-    _box(job / "leg-revA.step")
-    _box(job / "Parts" / "leg-revA.step")
-    fails = rs.check_release(job)
-    assert any("duplicate STEP" in f for f in fails)
+    ver = tmp_path / "revA"
+    (ver / "Parts").mkdir(parents=True)
+    _box(ver / "leg.step")
+    _box(ver / "Parts" / "leg.stp")
+    assert any("duplicate" in f for f in rs.check_release(tmp_path))
 
 
-def test_scripts_and_scans_are_refused(tmp_path):
-    job = tmp_path / "job_1017"
-    (job / "src").mkdir(parents=True)
-    (job / "src" / "leg.py").write_text("print(1)\n")
-    _box(job / "leg-revA.step")
-    fails = rs.check_release(job)
-    assert any("source file" in f or "src/" in f for f in fails)
+def test_scripts_scans_and_notes_are_refused(tmp_path):
+    ver = tmp_path / "revA"
+    (ver / "src").mkdir(parents=True)
+    (ver / "src" / "leg.py").write_text("print(1)\n")
+    (ver / "scan.ply").write_text("cloud")
+    (ver / "notes.md").write_text("todo")
+    (ver / "REVLOG.md").write_text("| Rev |")
+    fails = rs.check_release(tmp_path)
+    assert any("src/" in f for f in fails)
+    assert any("scan.ply" in f and "scan" in f for f in fails)
+    assert any("notes.md" in f for f in fails)
+    assert not any(f.startswith("revA/REVLOG.md") for f in fails)
+
+
+def test_ap214_header_fails(tmp_path):
+    path = tmp_path / "leg.step"
+    path.write_text("ISO-10303-21;\nHEADER;\nFILE_SCHEMA(('AUTOMOTIVE_DESIGN { 1 0 10303 214 1 1 1 1 }'));\nENDSEC;\nDATA;\nENDSEC;\nEND-ISO-10303-21;\n")
+    assert any("not AP242" in f for f in rs.check_release(tmp_path))
 
 
 def test_cli_exit_code(tmp_path):
-    job = tmp_path / "job_1017"
-    job.mkdir()
-    _two(job / "arm-revA.step")
-    assert rs.main([str(job)]) == 1
+    ver = tmp_path / "revA"
+    ver.mkdir()
+    _two(ver / "arm.step")
+    assert rs.main([str(tmp_path)]) == 1
