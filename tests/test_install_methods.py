@@ -76,7 +76,8 @@ def test_four_routes_and_readme_points_at_the_plugin():
     assert "not Administrator" in readme
     assert "not root" in readme
     assert "[INSTALL.md](INSTALL.md)" in readme
-    assert "**handbuilt-cad** plugin" in readme
+    assert "Adding the repo alone does not install it." in readme
+    assert "Adding the repo alone does not install it." in install
     for cmd in (
         "powershell -NoProfile -ExecutionPolicy Bypass -File .\\setup.ps1",
         "powershell -NoProfile -ExecutionPolicy Bypass -File .\\install-plugins.ps1",
@@ -84,6 +85,11 @@ def test_four_routes_and_readme_points_at_the_plugin():
         "bash install-plugins.sh",
     ):
         assert cmd in install
+    for cmd in (
+        "powershell -NoProfile -ExecutionPolicy Bypass -File .\\setup.ps1",
+        "powershell -NoProfile -ExecutionPolicy Bypass -File .\\install-plugins.ps1",
+        "bash setup.sh",
+    ):
         assert cmd in readme
     assert "https://claude.ai/customize/plugins" in install
     assert "Turn Sync automatically on" in install
@@ -92,7 +98,7 @@ def test_four_routes_and_readme_points_at_the_plugin():
     assert "Turn Sync automatically on" in (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     assert "Turn Sync automatically on" in (ROOT / "skills" / "README.md").read_text(encoding="utf-8")
     assert "still updates by re-running" in (ROOT / "skills" / "README.md").read_text(encoding="utf-8")
-    assert "handbuilt-cad-plugins" in readme
+    assert "handbuilt-cad-plugins" in install
     copy_line = "copies .cursor-plugin and skills to ~/.cursor/plugins/local/handbuilt-cad and replaces the old copy"
     assert copy_line in install.replace("`", "")
     assert copy_line in readme.replace("`", "")
