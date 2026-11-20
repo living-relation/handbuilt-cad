@@ -14,8 +14,8 @@ Automated:
 - A made part STEP must be one valid solid. Extra solids are allowed only when they are named fasteners.
 - A bought part listed under "## Bought parts" must point at a non-empty maker STEP (no rev; usually reference/).
 - STEP only, schema AP242 (`write.step.schema` = AP242DIS). Any other model format, or a STEP header that is not AP242, fails. Two STEP files for the same item fail.
-- An assembly STEP must reference each non-fastener file in `Parts/` (`DOCUMENT_FILE` / external id). An assembly that embeds those parts fails. SR fastener bodies may stay inside the assembly STEP.
-- A STEP that names `<part>-rev<LETTER>` fails when a newer letter of that same part is in the job.
+- The newest assembly STEP must reference the newest rev of each non-fastener file in `Parts/` (`DOCUMENT_FILE` / external id). An assembly that embeds those parts fails. The kept previous assembly rev may point at the previous part revs. SR fastener bodies may stay inside the assembly STEP.
+- A newest-rev STEP that names `<part>-rev<LETTER>` fails when a newer letter of that same part is in the job.
 - A script, source file, run, scan, or working note in the tree fails.
 
 Not automated (Fusion is not opened here; checklist in skills/publish-to-models):
@@ -137,37 +137,6 @@ def part_solid_failures(path: Path) -> list[str]:
     return [f"{path.name}: made part has {n} solids; a part is one solid, not a fused multi-body"]
 
 
-def tree_failures(step: Path, part_files: list[Path], summary: str) -> list[str]:
-    text = step.read_text(errors="replace")
-    names = product_names(text)
-    name_norms = {norm(nm) for nm in names}
-    part_stems = {norm(bare_name(p.stem)) for p in part_files
-                  if not is_fastener(p.stem) and not is_fastener(bare_name(p.stem))}
-    comp = set()
-    for nm in names:
-        if is_fastener(nm) or norm(nm) == norm(bare_name(step.stem)):
-            continue
-        comp.add(norm(nm))
-    extra = comp - part_stems
-    missing = part_stems - comp
-    if not missing and len(extra) == 1 and norm(bare_name(step.stem)) not in name_norms and norm(step.stem) not in name_norms:
-        extra = set()
-    fails = []
-    if missing or extra:
-        fails.append(
-            f"{step.name}: STEP tree does not match Parts/ "
-            f"(STEP {sorted(comp) or ['(none)']}, Parts {sorted(part_stems) or ['(none)']}; "
-            "SR fastener names are ignored)"
-        )
-    fast_files = [p.name for p in part_files if is_fastener(p.stem)]
-    if fast_files and "separate file" not in summary.lower():
-        fails.append(
-            "Parts/ has fastener files (" + ", ".join(fast_files) + "); "
-            "the data card must say the SR fastener bodies are separate files"
-        )
-    return fails
-
-
 def newest_letters(job: Path) -> dict[str, str]:
     """Highest model letter of each designed part (clerical decimals do not count)."""
     best: dict[str, str] = {}
@@ -188,9 +157,21 @@ def newest_letters(job: Path) -> dict[str, str]:
     return best
 
 
+def is_previous_rev(path: Path, best: dict[str, str]) -> bool:
+    """True for the kept previous rev of an item (an older letter than that item's newest)."""
+    m = FILE_REV_RE.match(path.name)
+    if not m or not revs.is_valid_letter(m.group("letter")):
+        return False
+    newest = best.get(m.group("part"))
+    return bool(newest) and revs.letter_to_index(m.group("letter")) < revs.letter_to_index(newest)
+
+
 def stale_failures(step: Path, job: Path) -> list[str]:
-    """Fail when a STEP names a rev of a part that is older than that part's newest file."""
+    """Fail when a STEP names a rev of a part that is older than that part's newest file.
+    The kept previous rev of an assembly may still point at the previous part revs."""
     best = newest_letters(job)
+    if is_previous_rev(step, best):
+        return []
     fails = []
     for raw in external_paths(step.read_text(errors="replace")):
         m = FILE_REV_RE.match(Path(raw.replace("\\", "/")).name)
@@ -260,15 +241,19 @@ def schema_failures(path: Path) -> list[str]:
 
 
 def external_ref_failures(job: Path) -> list[str]:
-    """Assembly STEP must point at each non-fastener Parts/ STEP. Embedded parts fail."""
+    """The newest assembly STEP must point at the newest rev of each non-fastener Parts/ STEP.
+    Embedded parts fail. A kept previous assembly rev is not checked against newer parts."""
     parts_dir = job / "Parts"
     if not parts_dir.is_dir():
         return []
+    best = newest_letters(job)
     needed = []
     for p in sorted(parts_dir.iterdir()):
         if not p.is_file() or p.suffix.lower() not in STEP_SUFFIXES:
             continue
         if is_fastener(p.stem) or is_fastener(bare_name(p.stem)):
+            continue
+        if is_previous_rev(p, best):
             continue
         needed.append(p.name)
     if not needed:
@@ -278,6 +263,8 @@ def external_ref_failures(job: Path) -> list[str]:
         return ["Parts/ has part STEPs but there is no assembly STEP at the job root"]
     fails = []
     for root in roots:
+        if is_previous_rev(root, best):
+            continue
         text = root.read_text(errors="replace")
         missing = [name for name in needed if name not in text and f"Parts/{name}" not in text and f"Parts\\{name}" not in text]
         if missing:

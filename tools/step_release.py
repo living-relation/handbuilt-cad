@@ -27,7 +27,7 @@ from OCP.TDocStd import TDocStd_Document
 from OCP.TopLoc import TopLoc_Location
 from OCP.XCAFApp import XCAFApp_Application
 from OCP.XCAFDoc import XCAFDoc_DocumentTool
-from OCP.gp import gp_Trsf, gp_Vec
+from OCP.gp import gp_Trsf
 
 SCHEMA = "AP242DIS"
 
@@ -89,12 +89,9 @@ def write_assembly(root: Path, parts: list[tuple[str, object]]) -> list[Path]:
         labels.append(lab)
     assembly = tool.NewShape()
     TDataStd_Name.Set_s(assembly, TCollection_ExtendedString(root.stem))
-    for i, lab in enumerate(labels):
-        loc = gp_Trsf()
-        loc.SetTranslation(gp_Vec(0, 0, 0 if i == 0 else 1))
-        # Keep each part at its own location; a zero shift stacks them, which is
-        # fine for the file link. Callers who care about placement pass located shapes.
-        tool.AddComponent(assembly, lab, TopLoc_Location(gp_Trsf() if i == 0 else loc))
+    for lab in labels:
+        # Identity location: each part keeps the placement its shape already has.
+        tool.AddComponent(assembly, lab, TopLoc_Location(gp_Trsf()))
     tool.UpdateAssemblies()
 
     writer = STEPCAFControl_Writer()
