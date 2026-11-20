@@ -83,6 +83,23 @@ def test_wsl_only_no_models(tmp_path):
     assert fn.missing(ph, None) == []
 
 
+def test_models_rev_folder_is_a_job(tmp_path):
+    ph, md = layout(tmp_path)
+    (ph / "bracket_0101").mkdir()
+    job = md / "bracket-revB"
+    (job / "revB").mkdir(parents=True)
+    (job / "revB" / "SUMMARY.md").write_text("# bracket-revB / revB\n- What changed: new leg\n")
+    warns = []
+    fn.run(ph, md, warn=warns.append)
+    assert not any("bracket-revB" in w for w in warns)
+    note = (job / "README.md").read_text()
+    assert "new leg" in note and "bracket_0101" in note
+    (md / "bracket-revI").mkdir()
+    warns = []
+    fn.jobs(md, warn=warns.append, models=True)
+    assert any("bracket-revI" in w for w in warns)
+
+
 def test_non_job_folders_warn(tmp_path):
     ph, md = layout(tmp_path)
     (ph / "scratchpad").mkdir(); (md / "loose").mkdir(); (ph / "_private").mkdir()
@@ -177,3 +194,16 @@ def test_notes_say_who_uses_and_what_breaks(tmp_path):
 def test_no_clone_option():
     assert "--clone" not in (ROOT / "tools" / "folder_notes.py").read_text()
     assert "--clone" not in (ROOT / "setup.sh").read_text()
+
+
+def test_models_job_note_lists_per_part_rev_cards(tmp_path):
+    ph, md = tmp_path / "parts", tmp_path / "models"
+    ph.mkdir()
+    job = md / "bracket_1120"
+    job.mkdir(parents=True)
+    (job / "leg-revB.md").write_text("# leg / revB\n- What changed from the previous rev: wider foot\n")
+    (job / "plate-revA.md").write_text("# plate / revA\n- What changed from the previous rev:\n")
+    fn.run(ph, md, warn=lambda m: None)
+    note = (job / "README.md").read_text()
+    assert "`leg-revB.md`: What changed from the previous rev: wider foot" in note
+    assert "`plate-revA.md`: rev card" in note

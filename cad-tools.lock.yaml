@@ -30,7 +30,7 @@ outside_dependencies:   # listed here only; never installed, built or copied by 
     source: TBD
     version: TBD
     enable: "Install the upstream Blender MCP add-on in Blender (Edit > Preferences > Add-ons)."
-models_dir: "{desktop}/models"   # MODELS_DIR / [paths] models_dir; setup.sh creates it if missing; add-only afterwards
+models_dir: "{desktop}/models"   # MODELS_DIR / [paths] models_dir; setup.sh creates it if missing. Rev retention is publish-to-models step 7.
 open_items:
   - Fusion MCP Claude Desktop extension version
   - Blender MCP add-on source and version

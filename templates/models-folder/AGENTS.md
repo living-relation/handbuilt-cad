@@ -8,11 +8,12 @@ Deleting, moving or renaming this folder breaks those tools and loses finished p
 
 Rules for agents and people:
 - Don't move or rename this folder. Scripts find it through `MODELS_DIR`, then `[paths] models_dir` in handbuilt-cad's `local.toml`, then `<Desktop>\models`.
-- Add new `<job>_<MMDD>/<rev>/` folders; never overwrite or edit an existing rev.
-- Old versions may be deleted (Daniel, 2026-11-04): keep the latest version plus the 2 most recent previous versions of each assembly, and every part those kept assemblies use; parts keep the latest version. Keep at most 2 screenshots/2D renders per model (drawings PDF/DXF/SVG are not screenshots). Never delete 3D scans. Regenerate a rev's MANIFEST.sha256 after removing files from it.
+- This folder holds AP242 STEP files and drawings only, plus a short `<part>-rev<LETTER>.md` card and this README. No .f3d (Fusion keeps that in its cloud), scripts, runs, or scans. Those stay in the parts home (`~/cad-parts/<job>/`).
+- A job folder is `<subject>_<MMDD>/`. Parts in it can be at different revs: `<part>-rev<LETTER>.step`. An assembly STEP references each part as `Parts/<part>-rev<LETTER>.stp`.
+- Keep each part's newest letter and the one before it (and those letters' clerical decimals). Prune deletes only that part's older files. Bought maker STEPs in `reference/` have no rev.
 - ST185 jobs live here in the models folder (`st185_*`), not in the st185 repo.
 - Publish with the handbuilt-cad `publish-to-models` skill.
-- This note is written by handbuilt-cad `tools/folder_notes.py`, run by setup and by publish-to-models. It's add-only: written only when missing, never overwritten.
+- This note is written by handbuilt-cad `tools/folder_notes.py`, run by setup and by publish-to-models. It is written only when missing, never overwritten.
 - To change these rules, open a handbuilt-cad PR (`templates/models-folder/`).
 
 ## CNC machining rules

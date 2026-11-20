@@ -6,9 +6,9 @@ description: >-
   hash-verified folder.
 ---
 ## When to use
-File into the user's single models home as a new versioned folder with SUMMARY.md, REVLOG.md, MADE-WITH.md, drawings, sources and intermediates, then hash-verify. Runs on the user's machine.
+File STEP and drawings into the user's models home. One AP242 STEP per designed part rev, plus a short data card. Runs on the user's machine.
 
-Models home (the only one): `[paths] models_dir` in the toolkit repo's `local.toml` (or `MODELS_DIR`). Empty means `<Desktop>/models`, which the repo's setup step resolves from the system's Desktop folder (cloud-synced Desktops included) and creates if missing. Never hard-code a user or cloud-drive path; if the folder can't be resolved, stop and ask the user. Never move, rename or edit an existing rev. Deleting old versions follows the retention rule in step 7; never delete 3D scans.
+Models home (the only one): `[paths] models_dir` in the toolkit repo's `local.toml` (or `MODELS_DIR`). Empty means `<Desktop>/models`. Never hard-code a user path. The job folder is `<subject>_<MMDD>` and is not a rev. Never edit an existing part's rev file. Scripts, runs, scans and working notes stay in the parts home (`HBCAD_PARTS_HOME`, default `~/cad-parts/<job>/`, `tools/paths.py`).
 
 The project's own rules (AGENTS.md, decision log, revision register) win over this skill wherever they differ.
 
@@ -18,43 +18,48 @@ The project's own rules (AGENTS.md, decision log, revision register) win over th
 Publish straight from the user's machine into the models home, never through the agent's own computer. If that machine is offline, stop and tell the user. On Windows + WSL, write from WSL out to `/mnt/c/...`; never write through `\\wsl.localhost` paths from Windows. If a file must be staged, use a dedicated temp folder outside models (`<cad_staging>/<job>`, from `[paths] cad_staging` / `CAD_STAGING`); only that folder is ever removed.
 
 ## Sources and runs
-Part build scripts live in the parts home (`HBCAD_PARTS_HOME`, default `~/cad-parts/<job>/src/`); copy the ones that built this rev into the rev's `src/`. Working outputs live in `~/cad-parts/<job>/runs/<stamp>/` and are not published, except the finished deliverables (final STEP, drawings, review views, final strength summary, SUMMARY.md). After a successful publish the run's regenerable outputs may be deleted; costly ones go to `~/cad-parts/_archive/<job>/`. Runs of an older rev are deleted when the new rev is filed (step 7).
+Part build scripts live in the parts home (`~/cad-parts/<job>/src/`). Working outputs live in `~/cad-parts/<job>/runs/<stamp>/`. Do not copy either into the models folder. After a successful publish, regenerable run outputs may be deleted; costly ones go to `~/cad-parts/_archive/<job>/`. Agents clean up their own leftovers there.
 
 ## Files others add are expected
-Drawings, PDFs, photos or notes dropped into a job or rev folder are legitimate. Never delete, move, rename, overwrite or flag a file this run didn't write, and leave them out of checks. The only exception is deleting a superseded rev (step 7).
+Drawings dropped into a job folder are legitimate. Do not add scripts, runs, scans, or working notes. Never edit a rev file this run did not just create. The only deletion is an older rev of that part (step 7).
 
 ## Steps
-1. Job folder. Existing folders are `<job>_<MMDD>`; keep them as they are. Reuse the existing folder for the same job even on a later day; MMDD is the first publish date. New multi-assembly projects use `<project>_<assembly>_<MMDD>`. If the same name exists from a different year, use `_<YYMMDD>`. Example: `bracket_billet_al_0312`, `rover_gearbox_0415`.
-2. Unchanged? Compare the new output model(s) and every file listed in the last rev's manifest. If everything matches, don't make a new rev; report "unchanged". If only drawings changed and fit, form and function are untouched, make a clerical rev (step 3). Different build switches or a different scan input always mean a new letter.
-3. Next rev. In the models home the model's rev letter names the folder: `rev<LETTER>`, e.g. `revD`. If the project has its own rules or record (its AGENTS.md, revision register), those win: in a project repo that keeps revs in its title block and register, the letter lives only there (no rev folder) and git history is the record.
+1. Job folder `<subject>_<MMDD>` (first publish date). Reuse it. Parts in it may be at different revs. `tools/rev.py --part <name>` writes the next `<part>-rev<LETTER>.md` card and does not touch other parts. Never edit an existing rev file.
+2. Unchanged? Compare the new output model(s) and every file on the Files line of that part's last card. If everything matches, don't make a new rev; report "unchanged". If only drawings changed and fit, form and function are untouched, make a clerical rev (step 3). Different build switches or a different scan input always mean a new letter.
+3. Next rev is per part: `<part>-rev<LETTER>` (clerical `<part>-rev<LETTER>.<NN>`, drawing and card only). If the project has its own revision register, those rules win.
    - Letters: A, B, C ... Z, then AA, AB ... Skip I, L, O and Q in every position, first and second letter alike (so ... AG, AH, AJ, AK, AM ...). Lookup table:
      1=A, 2=B, 3=C, 4=D, 5=E, 6=F, 7=G, 8=H, 9=J, 10=K, 11=M, 12=N, 13=P, 14=R, 15=S, 16=T, 17=U, 18=V, 19=W, 20=X, 21=Y, 22=Z, 23=AA, 24=AB, 25=AC, 26=AD, 27=AE, 28=AF, 29=AG, 30=AH.
-   - A release is a merged PR that changed that model (moves and render- or trimetric-only PRs don't count) or, going forward where there is no PR (most models-home jobs), the user's explicit approval. Only releases use up a letter. A pending or unapproved candidate gets no letter until it is released; keep it in staging, not in a rev folder.
-   - Brand-new model with no earlier folders: starts at A. Rev A is only for brand-new models.
-   - Job already has `rev<LETTER>` folders: take the next letter after the highest one.
-   - Job has old `rev<number>` folders: don't convert the numbers (many were iterations, not releases). Count the model's real releases in the repo history, skipping I, L, O and Q, and the next letter follows that count. For past history with no repo record, count the saved versions in which the model changed. List those releases as evidence in the revision register and the new SUMMARY.md. If both numbered and lettered folders exist, the lettered ones win: take the next letter after the highest letter. Example: a model with 7 counted releases is at G, so its next release is H.
-   - Never rename or renumber old `rev<number>` folders. Count their releases first; once the new rev is filed they are deleted like any older rev (step 7).
-   - Clerical rev (only for a drawing already released; an unreleased drawing keeps its counted letter): a drawing-only change that doesn't affect fit, form or function goes in `rev<LETTER>.<NN>` (e.g. `revD.01`, `revD.02`) under the current model letter. It holds only the new drawings, a SUMMARY.md and a manifest, never a model file. A changed model always means a new letter. Its SUMMARY.md points to the `rev<LETTER>` model folder and is the only place the clerical change is logged (it is not added to REVLOG.md).
-   - Create the folder so the step fails if it already exists. If it fails, re-read the folders and recompute; never reuse a letter.
-4. Inside the rev folder:
-   - primary model file(s) at the top (not in clerical revs): STEP only, plus STL only when a print job needs one.
-   - `drawings\`: PDF, DXF, SVG
-   - `src\`: build scripts (leave it out if there are none)
-   - `reference\`: intermediates, native files (.f3d, .FCStd), bought-part STEPs, OEM/reference STEPs, and the scan mesh (or a path to it if it's huge; raw scans stay out of public repos)
-   - review views and preview PNGs (smooth-shaded, no mesh lines). Section views are capped (closed-surface clipping, solid cut faces), never open cut faces, which render as hollow shells.
-   - `SUMMARY.md`: job, rev letter (and clerical decimal, if any), date, source path, primary file(s), made with, mass (with material) and bounding box, check results, what changed, open issues, approval status (FEA not run until approved), and the evidence for the letter (step 3). Scan-to-CAD jobs also give the scan, the pipeline or script commit, the build script and its switches, and deviation from the scan if measured.
-   - `MADE-WITH.md`: the tool that made each model file (e.g. Fusion, build123d, FreeCAD, CadQuery), plus a version if known. Mark anything you can't confirm as "unconfirmed". Whenever the model is shown in chat, put the same tool name in parentheses after it so the two never disagree. If the project has a register with a Made-with column, update it together with MADE-WITH.md.
-   - Rev log: one cumulative changelog per model, one row per release (Rev, Description, By, Date). One model in the folder: `REVLOG.md`; several: one `<part no>.REVLOG.md` per model (what the drawing tool reads). A new rev folder copies the old rows forward and adds one. Dates are dd/mm/yy: day first, then month, then 2-digit year (e.g. 17/10/26 = 17 October 2026). Rev A's description is "Initial". Clerical revs aren't listed (see step 3). The drawing's Rev log table is generated from it (newest rows shown, oldest drop off first).
-   - bought parts: supplier's part number on the BOM plus a cited datasheet or the maker's own page and the key values the design uses, looked up from primary sources (`skills/primary-source-spec-check`); anything no source confirms is marked TBD. The bought-part STEP is the supplier's official CAD model when one exists, otherwise a clearly labelled best-guess from the datasheet. Every part model, purchased and fabricated, is saved in a `parts/` folder inside the project; the published copy of a bought-part STEP goes in `reference\`. Designs with electronics also file the plan document (wiring tables, schematic, electronics BOM).
-   - `MANIFEST.sha256`: every file this run wrote, including SUMMARY.md, but not the manifest itself; written on the user's machine after the copy
+   - A release is a merged PR that changed that model (moves and render- or trimetric-only PRs don't count) or, going forward where there is no PR (most models-home jobs), the user's explicit approval. Only releases use up a letter. A pending or unapproved candidate gets no letter until it is released; keep it in staging, not in the models folder.
+   - Brand-new part with no earlier rev files: starts at A. Rev A is only for brand-new models.
+   - The part already has `<part>-rev<LETTER>` files: take the next letter after the highest one for that part only.
+   - Old numeric `rev<N>` folders are not converted. Count real releases and pass `--releases N` or `--letter X`.
+   - Clerical rev: `<part>-rev<LETTER>.<NN>.md` and the new drawing only. Not listed in REVLOG.md. A model change takes the next letter.
+4. Publish only these files into the job folder:
+   - One AP242 STEP per designed part or assembly: `<part>-rev<LETTER>.step`. Schema `AP242DIS`. No .f3d, STL, or second copy. Fusion exports to STEP; the .f3d stays in Fusion's cloud. Fusion's own STEP export may bundle every part into one file (unverified); convert that with `tools/step_release.py` before filing.
+   - Assembly: the root STEP references each part or subassembly as `Parts/<part>-rev<LETTER>.stp` (AP242 external references, resolvable on reopen). Write it with `tools/step_release.py`. A made part is one solid. A piece that installs in its own step is its own part. SR fastener bodies may stay inside the assembly STEP; other fasteners are files in `Parts/`.
+   - Drawings: `<part>-rev<LETTER>.pdf` (DXF, SVG). Same letter as that part.
+   - Data card: `<part>-rev<LETTER>.md` (rev, what changed, made-with). Bought parts listed under `## Bought parts` as `- name: reference/<maker>.stp`.
+   - `reference/`: bought maker STEP only, no rev letter. Re-save it as AP242 if the maker file is another schema.
+   - Do not publish `src/`, `runs/`, scripts, scans, or review PNGs.
+   - Rev log: `<part>.REVLOG.md` beside that part (Rev, Description, By, Date dd/mm/yy). Rev A is "Initial". Clerical revs are not listed. The drawing reads this file.
+   - Bought parts: maker's AP242 STEP in `reference/`, supplier part number on the BOM (`skills/primary-source-spec-check`). A missing maker file fails the check.
 5. Copy, confirm each file landed (cloud-synced online-only or locked files can fail; let them download, retry if locked), then SHA-256 check every copied file; on Windows + WSL re-check the hashes from Windows, since sync clients can lag. Stop on any mismatch.
-6. Copy vs move. From a live project folder always copy. Move only when the user asks; then remove only manifest sources whose hash matched. A source in a git repo is removed with a normal commit via safe-repo-preflight.
-7. Retention. Old versions may be deleted (Daniel, 2026-11-04): keep the latest version plus the 2 most recent previous versions of each assembly, and every part those kept assemblies use; parts keep the latest version. Keep at most 2 screenshots/2D renders per model (drawings PDF/DXF/SVG are not screenshots). Never delete 3D scans. Regenerate a rev's MANIFEST.sha256 after removing files from it. Only after step 5 passes for the new rev: delete older rev folders beyond that (`rev<LETTER>`, `rev<LETTER>.<NN>`, old `rev<number>`) and their runs in `~/cad-parts/<job>/runs/`. When unsure whether a file is a scan or is used by a kept assembly, keep it. The kept revs' REVLOG.md and SUMMARY.md carry the history. Real changes always go in a new rev, never into an existing one.
-8. Folder notes: run `.venv/bin/python tools/folder_notes.py` (add-only) so a new job folder, and its parts-home `<job>/`, `src/` and `runs/`, each get a README.md from `templates/notes/`. Never edit an existing README.
-9. Report the rev path, the files and the check result.
+6. Copy vs move. From a live project folder always copy. Move only when the user asks; then remove only sources whose hash matched. A source in a git repo is removed with a normal commit via safe-repo-preflight.
+7. Retention is per part (Daniel, 2026-11-20). After the release check passes, `tools/rev.py <subject> --prune` deletes only files older than that part's newest letter and the one before it (clerical decimals of those letters stay). It does not delete the job folder or `reference/`. Real changes always go in a new rev file, never into an existing one.
+8. Folder notes: run `.venv/bin/python tools/folder_notes.py` so a new job folder, and its parts-home `<job>/`, `src/` and `runs/`, each get a README.md from `templates/notes/` when one is missing. Never edit an existing README.
+9. Release check: `.venv/bin/python tools/checks/release_structure.py <job-folder>`. It fails a non-AP242 STEP, a non-STEP model, a duplicate STEP, a multi-solid made part, a bought part with no maker file, an assembly that embeds parts instead of referencing `Parts/`, a reference to an older rev of that part, or a script, run, or scan. Fix and re-file; do not edit the previous rev.
+10. Report the rev path, the files and the check result.
+
+## Fusion checklist
+This repo cannot open a Fusion document, so these are not in `release_structure.py`. Confirm them before filing:
+- Each part and subassembly is a linked component (right-click > Open), not a body fused into the assembly.
+- A piece that installs in its own step is its own part.
+- SR Fasteners screws, nuts and washers are bodies inside the assembly. Any other fastener is a file in Parts.
+- One Fusion assembly and one parts folder, updated in place from the newest parts. No per-rev copy of that assembly.
+- Each link is the newest version of that part.
 
 ## Notes
-- Other tools find "the part" through SUMMARY/MANIFEST, never "whatever's in the folder".
-- The model drives the letter, and the drawings in a rev folder always carry the same letter as the model in it (clerical revs: the parent letter plus the decimal, e.g. D.01). Workflow: redline the drawing, then change the model, then regenerate the drawing.
-- File names: follow the project's rules. If they say no rev letters in file names, the letter lives only in the title block, the register and (in the models home) the folder name. Otherwise file names may carry the letter if useful.
+- Find a part by its `<part>-rev<LETTER>` file, not by "whatever is in the folder".
+- The drawing letter matches that part (clerical: D.01). Redline the drawing, then change the model, then regenerate the drawing.
+- In the models home the rev letter is in the file name.
 - Filing into a project repo also needs whatever its AGENTS.md asks for (e.g. a README row, a trimetric view).

@@ -31,7 +31,7 @@ A finished, checked STEP, using the handbuilt-cad drawing engine (`drawing/part.
    - skipped-fillet and edge-break notes present where needed.
 3. Fix problems in the spec (or the model, via the redline order), regenerate, re-check. Don't hand-edit the PDF/DXF.
 4. Report: the files and an image of each sheet, the tool in parentheses after the part (e.g. "FH-103 Rev F (build123d)"). Raise only real problems. Report and ask as cnc-part-check "Asking the user" says.
-5. After approval, file it: publish-to-models (`drawings/` in the rev folder), or the project's own filing rule and a PR.
+5. After approval, file it: publish-to-models (`<part>-rev<LETTER>.pdf` beside that part in the job folder), or the project's own filing rule and a PR.
 
 ## Notes
 - Tests: `tests/test_revs.py`, `tests/test_drawing_settings.py`, `tests/test_sections.py`, `tests/test_hole_callouts.py`.

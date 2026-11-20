@@ -178,8 +178,8 @@ export_stl(part, "<part>.stl", tolerance=0.02, angular_tolerance=0.2)   # mesh, 
 
 1. **Each part is one valid solid:**
    `.venv-cad\Scripts\python.exe tools\check_step.py <part_a>.step <part_b>.step ...`
-   (`OK` = 1 solid, valid; `BAD` = floating pieces or invalid. An assembly file shows several solids, that is fine;
-   check the part files.)
+   (`OK` = 1 solid, valid; `BAD` = more than one solid, or invalid. A made part is one solid, never a fused multi-body.
+   An assembly is linked part files plus fastener bodies; check the part files, not the assembly file.)
 2. **Clearances and fit:** overlaps and minimum gaps between parts (the example script writes them to
    `<part>_report.json`: `overlap_mm3` must be 0.0 unless the summary explains it; `min_gap_mm` as designed).
 3. **Rule gates from `RULES.md`:** the electrical, hole, printed-part and sealing rules that apply to the job,

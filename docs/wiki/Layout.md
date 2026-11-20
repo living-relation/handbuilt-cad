@@ -1,6 +1,6 @@
 # Layout — where everything goes
 
-> **Part files moved (2026-10-15):** finished part outputs (STEP, STL, PNG renders, notes) are no longer in this repo. They live in the owner's models folder, `$MODELS_DIR/<job>_<MMDD>/rev<LETTER>/` (only the latest rev is kept: filing a new rev deletes the old rev's models and runs), each rev with a `SUMMARY.md` and a `src/` copy of its scripts. The folders below keep the generation scripts; rebuild a part from its script, or point `MODELS_DIR` at your own models folder.
+> **Part files moved (2026-10-15):** finished part outputs are no longer in this repo. They live in the owner's models folder, `$MODELS_DIR/<subject>_<MMDD>/`: one AP242 STEP per part rev, drawings, and a short data card. An assembly STEP references `Parts/`. No scripts, runs, scans, or .f3d. Build scripts stay in `~/cad-parts/<job>/src`. Keep each part's newest rev and the one before it.
 
 
 [← Home](../../README.md)
@@ -19,7 +19,7 @@ handbuilt-cad/
 ├── docs/                  TOOLS.md (tools index), wiki/ (this wiki), history/ (files kept from the old repos)
 ├── tools/                 the toolkit: features, cnc_check, quick_fea, views, viewer, an_fitting, blend,
 │   │                      sketch_blend, chamfer_batch, rev, scan_helper
-│   ├── checks/            model checks: mesh, printed walls, round-trip, interference, edge breaks, hole fixes
+│   ├── checks/            model checks: mesh, printed walls, round-trip, interference, edge breaks, hole fixes, release structure
 │   └── render/            smooth-shaded renders, section plots
 ├── drawing/               2D drawing engine (part / assembly sheets, rev letters, rev log, templates)
 ├── pipelines/fairsolid/   scan -> parametric STEP pipeline
@@ -34,7 +34,7 @@ handbuilt-cad/
 
 ## Where new work goes
 
-- **New part:** `~/cad-parts/<job>/src/` (parts home, `HBCAD_PARTS_HOME`, outside git; job name matches the models folder) with `<part>.py` and a short `NOTES.md`. Finished STEP / drawings / review views go to `$MODELS_DIR/<job>/rev<LETTER>/` (skill `publish-to-models`), never into git. Old versions go to `~/cad-parts/_archive/<job>/`.
+- **New part:** `~/cad-parts/<job>/src/` (parts home, `HBCAD_PARTS_HOME`, outside git) with `<part>.py` and notes. Finished AP242 STEP and drawings go to `$MODELS_DIR/<subject>_<MMDD>/` (skill `publish-to-models`), never into git. Working runs stay in `~/cad-parts/<job>/runs/`.
 - **Working outputs and simulation runs:** `~/cad-parts/<job>/runs/<YYYYMMDD-HHMM>/` (`tools/paths.py run_dir`, `quick_fea.py --job`). Delete regenerable outputs once a run is published or superseded.
 - **Docs:** update the [Parts index](Parts.md) and add a dated line to `NOTES.md`.
 
