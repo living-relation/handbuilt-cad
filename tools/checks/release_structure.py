@@ -1,25 +1,28 @@
 #!/usr/bin/env python3
-"""Check a models job folder (Daniel, 2026-11-20).
+"""Check models job folders (Daniel, 2026-11-20).
 
-    .venv/bin/python tools/checks/release_structure.py <job-folder> [<job-folder> ...]
+    .venv/bin/python tools/checks/release_structure.py <job-or-rev-folder> [...]
 
-The models folder holds STEP files and their drawings, plus the per-part data card
-`<part>-rev<LETTER>.md` and the folder README. Fusion exports to STEP; the .f3d stays
-in Fusion's cloud. Scripts, runs, scans and working notes stay in the parts home
-(`tools/paths.py`).
-
-Exit 1 on any failure. A clerical card with no STEP passes.
+A job folder holds version folders `rev<LETTER>/` (clerical `rev<LETTER>.<NN>/`, old numeric
+`rev<N>/`). Each version folder is checked; a folder with no version folders is checked as one.
+A version holds its assembly AP242 STEP at the root, `Parts/` beside it (made parts, subassemblies
+and bought maker STEPs), `drawings/`, `SUMMARY.md` and `REVLOG.md`. Scripts, runs, scans and working
+notes stay in the parts home (`tools/paths.py`). Exit 1 on any failure.
 
 Automated:
-- A made part STEP must be one valid solid. Extra solids are allowed only when they are named fasteners.
-- A bought part listed under "## Bought parts" must point at a non-empty maker STEP (no rev; usually reference/).
-- STEP only, schema AP242 (`write.step.schema` = AP242DIS). Any other model format, or a STEP header that is not AP242, fails. Two STEP files for the same item fail.
-- The newest assembly STEP must reference the newest rev of each non-fastener file in `Parts/` (`DOCUMENT_FILE` / external id). An assembly that embeds those parts fails. The kept previous assembly rev may point at the previous part revs. SR fastener bodies may stay inside the assembly STEP.
-- A newest-rev STEP that names `<part>-rev<LETTER>` fails when a newer letter of that same part is in the job.
-- A script, source file, run, scan, or working note in the tree fails.
+- More than two model versions in a job fails (keep the two newest; `tools/rev.py <job> --prune`).
+- Model files are AP242 STEP only. Any other model format, a STEP header that is not AP242, or two
+  STEP files with the same name in one version fails.
+- A made part STEP is one valid solid. Bought parts listed under "## Bought parts" in SUMMARY.md
+  (`- name: Parts/<file>.stp`) must exist, are exempt from the one-solid check.
+- An assembly STEP (one with external references) must reference parts that exist. Embedded bodies other
+  than named fasteners (SR Fasteners) fail. A STEP without external references is a made part: one solid
+  besides named fastener bodies. A part in
+  `Parts/` that no assembly references fails.
+- A script, source file, run, scan, or working note fails.
 
-Not automated (Fusion is not opened here; checklist in skills/publish-to-models):
-the live Fusion browser and linked-component opens.
+Not automated (checklist in skills/publish-to-models): the live Fusion browser, linked-component
+opens, and that the one assembly is built from the newest parts.
 """
 from __future__ import annotations
 
@@ -28,15 +31,12 @@ import re
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "drawing"))
-import revs  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import rev  # noqa: E402
 
 PRODUCT_RE = re.compile(r"PRODUCT\s*\(\s*'([^']*)'", re.I)
 PATH_RE = re.compile(r"'([^']+\.(?:step|stp))'", re.I)
-FILE_REV_RE = re.compile(
-    r"^(?P<part>.+)-rev(?P<letter>[A-Z]+)(?:\.(?P<cl>\d{2}))?(?:\.[A-Za-z0-9]+)?$")
-CARD_RE = re.compile(r"^.+-rev[A-Z]+(?:\.\d{2})?\.md$", re.I)
-NAUO = "NEXT_ASSEMBLY_USAGE_OCCURRENCE"
+BREP = "MANIFOLD_SOLID_BREP"
 FASTENER_RE = re.compile(
     r"(?:^|[^A-Za-z0-9])(?:shcs|bhcs|fhcs|screws?|nuts?|washers?|rivets?|helicoil|sr[\s_-]*fastener)(?:[^A-Za-z0-9]|$)",
     re.I)
@@ -44,69 +44,44 @@ STEP_SUFFIXES = {".step", ".stp"}
 NON_STEP_MODELS = {".f3d", ".fcstd", ".stl", ".iges", ".igs", ".3mf", ".brep", ".sat",
                    ".obj", ".glb", ".jt", ".sldprt", ".sldasm", ".x_t", ".x_b"}
 SCRIPT_SUFFIXES = {".py", ".pyw", ".sh", ".ps1", ".bat", ".cmd", ".js", ".ts", ".ipynb"}
-SCAN_SUFFIXES = {".ply", ".e57", ".pts", ".xyz", ".las", ".laz"}
+SCAN_SUFFIXES = rev.SCAN_SUFFIXES
 BLOCK_DIRS = {"src", "runs", "scripts", "script", "scan", "scans"}
-ALLOWED_MD = {"readme.md", "agents.md"}
+ALLOWED_MD = {"readme.md", "agents.md", "summary.md", "revlog.md"}
 
 
 def is_fastener(name: str) -> bool:
     return bool(FASTENER_RE.search(name or ""))
 
 
-def norm(name: str) -> str:
-    return re.sub(r"[^a-z0-9]+", "", (name or "").lower())
-
-
-def bare_name(stem: str) -> str:
-    """`leg-revC` -> `leg`. A name with no rev is unchanged."""
-    m = FILE_REV_RE.match(stem)
-    return m.group("part") if m else stem
-
-
-def _skipped_dir(rel: Path) -> bool:
-    return any(p.lower() in BLOCK_DIRS or p.lower() in {"reference", "references"} for p in rel.parts[:-1])
-
-
 def blocked_reason(rel: Path) -> str | None:
-    """Why this path must not be published into the models folder. None means it may stay."""
+    """Why this path must not be in the models folder. None means it may stay."""
     for seg in rel.parts[:-1]:
         if seg.lower() in BLOCK_DIRS:
             return f"{rel.as_posix()}: {seg}/ is agent working files; keep it in the parts home (~/cad-parts)"
-    name = rel.name
-    suf = rel.suffix.lower()
+    name, suf = rel.name, rel.suffix.lower()
     if suf in SCRIPT_SUFFIXES:
-        return f"{name}: source file; keep it in the parts home (~/cad-parts)"
+        return f"{rel.as_posix()}: source file; keep it in the parts home (~/cad-parts)"
     if suf in SCAN_SUFFIXES:
-        return f"{name}: scan; keep it in the parts home (~/cad-parts), not the models folder"
-    if suf == ".md" and name.lower() not in ALLOWED_MD and not CARD_RE.match(name) and not name.upper().endswith("REVLOG.MD"):
-        return f"{name}: working note; the models folder keeps only the per-part data card, rev log, and README"
+        return f"{rel.as_posix()}: scan; keep it in the parts home (~/cad-parts), not the models folder"
+    if suf in NON_STEP_MODELS:
+        return f"{rel.as_posix()}: models folder is AP242 STEP only; export to STEP (Fusion keeps .f3d in its cloud)"
+    if suf == ".md" and name.lower() not in ALLOWED_MD and not name.lower().endswith(".revlog.md"):
+        return f"{rel.as_posix()}: working note; a version keeps only SUMMARY.md, REVLOG.md and README"
     return None
 
 
-def product_names(text: str) -> list[str]:
-    return PRODUCT_RE.findall(text)
-
-
-def external_paths(text: str) -> list[str]:
-    return PATH_RE.findall(text)
-
-
-def _step_files(folder: Path) -> list[Path]:
-    if not folder.is_dir():
-        return []
-    return sorted(p for p in folder.iterdir() if p.is_file() and p.suffix.lower() in STEP_SUFFIXES)
+def data_text(text: str) -> str:
+    """The DATA section (the HEADER names the file itself)."""
+    return text.split("DATA;", 1)[-1]
 
 
 def solid_info(path: Path):
     """(solid count, all valid, error). error is set when the file is not a readable STEP."""
     try:
         from build123d import import_step
-        shape = import_step(str(path))
-        solids = list(shape.solids())
+        solids = list(import_step(str(path)).solids())
     except Exception as e:
         return 0, False, f"not a readable STEP ({e.__class__.__name__})"
-    if not solids:
-        return 0, True, None
     ok = True
     for s in solids:
         v = s.is_valid
@@ -114,235 +89,120 @@ def solid_info(path: Path):
     return len(solids), ok, None
 
 
-def part_solid_failures(path: Path) -> list[str]:
-    """A made-part file is one solid. Fastener-named extras inside an assembly structure are allowed."""
-    n, valid, err = solid_info(path)
-    if err:
-        return [f"{path.name}: {err}"]
-    if not valid:
-        return [f"{path.name}: invalid solid"]
-    if n == 1:
-        return []
-    text = path.read_text(errors="replace")
-    names = product_names(text)
-    nauo = NAUO in text.upper()
-    if n == 0 and nauo:
-        return []
-    if n > 1 and nauo:
-        extras = [nm for nm in names if norm(nm) != norm(path.stem)]
-        if extras and all(is_fastener(nm) for nm in extras):
-            return []
-    if n == 0:
-        return [f"{path.name}: made part has no solid"]
-    return [f"{path.name}: made part has {n} solids; a part is one solid, not a fused multi-body"]
-
-
-def newest_letters(job: Path) -> dict[str, str]:
-    """Highest model letter of each designed part (clerical decimals do not count)."""
-    best: dict[str, str] = {}
-    if not job.is_dir():
-        return best
-    for p in job.rglob("*"):
-        if not p.is_file():
-            continue
-        rel = p.relative_to(job)
-        if _skipped_dir(rel):
-            continue
-        m = FILE_REV_RE.match(p.name)
-        if not m or m.group("cl") or not revs.is_valid_letter(m.group("letter")):
-            continue
-        part, letter = m.group("part"), m.group("letter")
-        if part not in best or revs.letter_to_index(letter) > revs.letter_to_index(best[part]):
-            best[part] = letter
-    return best
-
-
-def is_previous_rev(path: Path, best: dict[str, str]) -> bool:
-    """True for the kept previous rev of an item (an older letter than that item's newest)."""
-    m = FILE_REV_RE.match(path.name)
-    if not m or not revs.is_valid_letter(m.group("letter")):
-        return False
-    newest = best.get(m.group("part"))
-    return bool(newest) and revs.letter_to_index(m.group("letter")) < revs.letter_to_index(newest)
-
-
-def stale_failures(step: Path, job: Path) -> list[str]:
-    """Fail when a STEP names a rev of a part that is older than that part's newest file.
-    The kept previous rev of an assembly may still point at the previous part revs."""
-    best = newest_letters(job)
-    if is_previous_rev(step, best):
-        return []
-    fails = []
-    for raw in external_paths(step.read_text(errors="replace")):
-        m = FILE_REV_RE.match(Path(raw.replace("\\", "/")).name)
-        if not m or not revs.is_valid_letter(m.group("letter")):
-            continue
-        part, letter = m.group("part"), m.group("letter")
-        newest = best.get(part)
-        if newest and revs.letter_to_index(letter) < revs.letter_to_index(newest):
-            fails.append(f"{step.name} references {raw}, but {part} newest is rev{newest}")
-    return fails
-
-
-def bought_failures(summary: str, rev_dir: Path) -> list[str]:
-    fails = []
-    in_sec = False
-    for line in summary.splitlines():
-        if line.startswith("#"):
-            in_sec = line.strip().lower() in ("## bought parts", "# bought parts")
-            continue
-        if not in_sec:
-            continue
-        body = line.strip()
-        if not body.startswith("-"):
-            continue
-        body = body.lstrip("-").strip()
-        if not body or body.lower() in ("none", "(none)"):
-            continue
-        if ":" not in body:
-            fails.append(f"bought part {body!r} has no maker model")
-            continue
-        name, rel = body.split(":", 1)
-        rel = rel.strip().replace("\\", "/")
-        f = (rev_dir / rel)
-        if not rel or not f.is_file() or f.stat().st_size == 0:
-            fails.append(f"bought part {name.strip()} has no maker model ({rel or 'no path'})")
-    return fails
-
-
-def _md_text(job: Path) -> str:
-    chunks = []
-    for p in sorted(job.rglob("*.md")):
-        rel = p.relative_to(job)
-        if _skipped_dir(rel):
-            continue
-        if p.name.lower() in ALLOWED_MD or CARD_RE.match(p.name):
-            chunks.append(p.read_text(errors="replace"))
-    return "\n".join(chunks)
-
-
-def _model_key(path: Path):
-    """One identity per part rev. Two `leg-revC.step` files are the same item."""
-    m = FILE_REV_RE.match(path.name)
-    if m and revs.is_valid_letter(m.group("letter")):
-        return (m.group("part").lower(), m.group("letter").upper(), m.group("cl") or "")
-    return (path.stem.lower(), "", "")
-
-
-def schema_failures(path: Path) -> list[str]:
-    """The HEADER schema must be AP242. AP214 and AP203 fail. Non-STEP bytes are ignored."""
-    text = path.read_text(errors="replace")
-    if "FILE_SCHEMA" not in text:
-        return []
-    head = text.split("DATA;", 1)[0]
-    if "AP242" not in head:
+def schema_failures(path: Path, text: str) -> list[str]:
+    if "FILE_SCHEMA" in text and "AP242" not in text.split("DATA;", 1)[0]:
         return [f"{path.name}: STEP schema is not AP242"]
     return []
 
 
-def external_ref_failures(job: Path) -> list[str]:
-    """The newest assembly STEP must point at the newest rev of each non-fastener Parts/ STEP.
-    Embedded parts fail. A kept previous assembly rev is not checked against newer parts."""
-    parts_dir = job / "Parts"
-    if not parts_dir.is_dir():
-        return []
-    best = newest_letters(job)
-    needed = []
-    for p in sorted(parts_dir.iterdir()):
-        if not p.is_file() or p.suffix.lower() not in STEP_SUFFIXES:
+def bought_files(summary: str, ver: Path) -> tuple[set[Path], list[str]]:
+    files, fails, in_sec = set(), [], False
+    for line in summary.splitlines():
+        if line.startswith("#"):
+            in_sec = line.strip().lower() in ("## bought parts", "# bought parts")
             continue
-        if is_fastener(p.stem) or is_fastener(bare_name(p.stem)):
+        body = line.strip()
+        if not in_sec or not body.startswith("-"):
             continue
-        if is_previous_rev(p, best):
+        body = body.lstrip("-").strip()
+        if not body or body.lower() in ("none", "(none)"):
             continue
-        needed.append(p.name)
-    if not needed:
-        return []
-    roots = [p for p in job.iterdir() if p.is_file() and p.suffix.lower() in STEP_SUFFIXES]
-    if not roots:
-        return ["Parts/ has part STEPs but there is no assembly STEP at the job root"]
+        name, _, rel = body.partition(":")
+        rel = rel.strip().replace("\\", "/")
+        f = ver / rel
+        if not rel or not f.is_file() or f.stat().st_size == 0:
+            fails.append(f"bought part {name.strip()} has no maker model ({rel or 'no path'})")
+        else:
+            files.add(f.resolve())
+    return files, fails
+
+
+def assembly_failures(step: Path, text: str, ver: Path) -> tuple[list[str], set[Path]]:
+    """Failures for one assembly STEP, and the external files it references."""
+    data = data_text(text)
+    refs = set()
     fails = []
-    for root in roots:
-        if is_previous_rev(root, best):
-            continue
-        text = root.read_text(errors="replace")
-        missing = [name for name in needed if name not in text and f"Parts/{name}" not in text and f"Parts\\{name}" not in text]
-        if missing:
-            fails.append(
-                f"{root.name}: does not reference external STEP {', '.join(missing)} in Parts/; "
-                "embedded parts are not the release format (SR fastener bodies may stay in the assembly)"
-            )
-    return fails
+    for raw in PATH_RE.findall(data):
+        target = (step.parent / raw.replace("\\", "/")).resolve()
+        if not target.is_file():
+            target = (ver / raw.replace("\\", "/")).resolve()
+        if target.is_file():
+            refs.add(target)
+        else:
+            fails.append(f"{step.name}: references {raw}, which is missing")
+    breps = data.upper().count(BREP + "(")
+    fasteners = {n for n in PRODUCT_RE.findall(data) if is_fastener(n)}
+    if breps > len(fasteners):
+        fails.append(f"{step.name}: embeds {breps - len(fasteners)} non-fastener bodies; each part must be an external "
+                     "STEP in Parts/ (SR fastener bodies may stay inside)")
+    return fails, refs
 
 
-def model_file_failures(job: Path) -> list[str]:
-    """STEP only, one file per item. .f3d and other model formats fail. Drawings are not models."""
-    groups: dict[tuple, list[Path]] = {}
+def check_version(ver: Path) -> list[str]:
     fails = []
-    for p in job.rglob("*"):
-        if not p.is_file():
-            continue
-        suf = p.suffix.lower()
-        rel = p.relative_to(job).as_posix()
-        if suf in NON_STEP_MODELS:
-            fails.append(f"{rel}: models folder is STEP only; export to STEP (Fusion keeps .f3d in its cloud)")
-        elif suf in STEP_SUFFIXES:
-            groups.setdefault(_model_key(p), []).append(p)
-    for key, files in groups.items():
-        if len(files) < 2:
-            continue
-        rels = ", ".join(sorted(str(f.relative_to(job)) for f in files))
-        label = f"{key[0]} rev{key[1]}" if key[1] else key[0]
-        fails.append(f"{label}: duplicate STEP files ({rels}); keep one")
-    return fails
-
-
-def check_release(job: Path) -> list[str]:
-    """Failure messages for one models job folder. Empty means pass."""
-    job = Path(job)
-    if not job.is_dir():
-        return [f"{job} is not a folder"]
-    fails = []
-    for p in job.rglob("*"):
+    for p in sorted(ver.rglob("*")):
         if p.is_file():
-            reason = blocked_reason(p.relative_to(job))
+            reason = blocked_reason(p.relative_to(ver))
             if reason:
                 fails.append(reason)
-    summary = _md_text(job)
-    fails += bought_failures(summary, job)
-    fails += model_file_failures(job)
-    fails += external_ref_failures(job)
-    all_steps = [p for p in job.rglob("*") if p.is_file() and p.suffix.lower() in STEP_SUFFIXES]
-    for p in all_steps:
-        fails += schema_failures(p)
-    steps = [p for p in all_steps if not _skipped_dir(p.relative_to(job))]
-    parts_dir = job / "Parts"
-    part_files = [p for p in steps if parts_dir in p.parents] if parts_dir.is_dir() else []
-    root_steps = [p for p in steps if p.parent == job]
-    root_models = [p for p in job.iterdir() if p.is_file() and p.suffix.lower() in STEP_SUFFIXES]
-    for p in part_files:
-        fails += part_solid_failures(p)
-        fails += stale_failures(p, job)
-    for p in root_steps:
+    summary = (ver / "SUMMARY.md").read_text(errors="replace") if (ver / "SUMMARY.md").is_file() else ""
+    bought, bfails = bought_files(summary, ver)
+    fails += bfails
+    steps = sorted(p for p in ver.rglob("*") if p.is_file() and p.suffix.lower() in STEP_SUFFIXES)
+    seen: dict[str, Path] = {}
+    for p in steps:
+        key = p.stem.lower()
+        if key in seen:
+            fails.append(f"{p.relative_to(ver)}: duplicate of {seen[key].relative_to(ver)}; keep one STEP per item")
+        seen.setdefault(key, p)
+    referenced: set[Path] = set()
+    parts = [p for p in steps if (ver / "Parts") in p.parents]
+    for p in steps:
+        text = p.read_text(errors="replace")
+        fails += schema_failures(p, text)
+        data = data_text(text)
+        if p.resolve() in bought:
+            continue
+        if PATH_RE.search(data):
+            f, refs = assembly_failures(p, text, ver)
+            fails += f
+            referenced |= refs
+            continue
         n, valid, err = solid_info(p)
+        made = n - len({nm for nm in PRODUCT_RE.findall(data) if is_fastener(nm)})
         if err:
             fails.append(f"{p.name}: {err}")
-            continue
-        if not valid:
+        elif not valid:
             fails.append(f"{p.name}: invalid solid")
-        text = p.read_text(errors="replace")
-        is_assy = parts_dir.is_dir() and (NAUO in text.upper() or "DOCUMENT_FILE" in text or n != 1)
-        if not is_assy:
-            fails += part_solid_failures(p)
-        fails += stale_failures(p, job)
-    if not root_models and part_files:
-        fails.append("Parts/ is present but there is no assembly model at the job root")
+        elif made != 1:
+            fails.append(f"{p.name}: made part has {made} solids besides fasteners; a part is one solid. "
+                         "Several pieces are an assembly with each part an external STEP in Parts/")
+    for p in parts:
+        if p.resolve() not in referenced:
+            fails.append(f"Parts/{p.name}: no assembly references it; link it from the assembly or remove it")
+    return fails
+
+
+def check_release(folder: Path) -> list[str]:
+    """Failure messages for a job folder (each version) or one version folder. Empty means pass."""
+    folder = Path(folder)
+    if not folder.is_dir():
+        return [f"{folder} is not a folder"]
+    model, clerical = rev.versions(folder)
+    vers = model + [p for ps in clerical.values() for p in ps]
+    if not vers:
+        return check_version(folder)
+    fails = []
+    if len(model) > 2:
+        fails.append(f"{len(model)} model versions; keep the two newest (tools/rev.py {folder.name} --prune)")
+    for v in sorted(vers):
+        fails += [f"{v.name}/{f}" for f in check_version(v)]
     return fails
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("job", nargs="+", help="models job folder")
+    ap.add_argument("job", nargs="+", help="models job folder or version folder")
     args = ap.parse_args(argv)
     bad = 0
     for raw in args.job:

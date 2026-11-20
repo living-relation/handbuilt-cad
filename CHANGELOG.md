@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-20: keep two assembly versions
+
+- Per-part revs are dropped. A models job holds version folders `rev<LETTER>/`; existing job folder names are kept. `tools/rev.py <job> --prune` lists versions beyond the 2 latest, `--apply` deletes them; a folder with a 3D scan is never deleted.
+- `tools/checks/release_structure.py` checks each version folder: AP242 STEP only, one solid per made part, assemblies reference existing `Parts/` STEPs (bought maker STEPs too), no unused parts, no scripts or scans, at most two versions.
+- Drawings are assembly-only with a one-page printed parts list (DRAWING-RULES 40-41). Working files default to the parts home.
+
 ## 2026-11-20: per-part AP242 STEP
 
 - Revs are per designed part in `<subject>_<MMDD>/<part>-rev<LETTER>`. Keep that part's newest letter and the one before it.

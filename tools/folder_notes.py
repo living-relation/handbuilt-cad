@@ -5,7 +5,7 @@
 --check writes nothing: it lists every layout folder with neither README.md nor AGENTS.md and exits 1 if any.
 run() writes a note for every folder --check looks at, so a run followed by --check always passes. With no models folder
 (--no-models, MODELS_DIR unset, or the folder missing) only the parts home is written and checked.
-Parts-home folders whose names lack the <name>_<MMDD> suffix, and models folders that are neither that nor <subject>-rev<current>, are not treated as jobs; they are reported as warnings, never silently skipped.
+Parts-home folders whose names lack the <name>_<MMDD> suffix, and models folders that are none of that, <subject>-rev<current>, or a folder holding rev* version folders, are not treated as jobs; they are reported as warnings, never silently skipped.
 
 Writes (this is the only writer of these notes):
   <parts_home>/AGENTS.md                     owner note (templates/parts-home/AGENTS.md)
@@ -15,7 +15,7 @@ and, from templates/notes/*.md:
   <parts_home>/_archive/README.md            what is archived and why
   <parts_home>/<job>/src/README.md           the build scripts, how to run, paired models folder
   <parts_home>/<job>/runs/README.md          working outputs only, cleanup rule
-  <models>/<job>/README.md                   the job, each part's rev cards (<part>-rev<LETTER>.md), paired parts-home folder
+  <models>/<job>/README.md                   the job, its version folders (one line each from SUMMARY.md), paired parts-home folder
 setup.sh runs it; publish-to-models runs it after filing a new job.
 """
 import argparse, os, re, sys
@@ -27,7 +27,7 @@ import paths
 ROOT = Path(__file__).resolve().parents[1]
 TPL = ROOT / "templates" / "notes"
 LEGACY_JOB_RE = re.compile(r"^[a-z0-9][a-z0-9_]*_\d{4,6}$")
-MODELS_JOB_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]*-rev[A-HJ-NP-Z]+(?:\.[0-9]{2})?$")
+MODELS_JOB_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]*-rev(?:[A-HJ-NP-Z]+(?:\.[0-9]{2})?|[0-9]+[A-Za-z]*)$")
 
 
 def tpl(name, **kw):
@@ -61,7 +61,7 @@ def show(p) -> str:
 
 
 def part_name(job):
-    m = re.match(r"^(?P<s>.+)-rev[A-Z]+(?:\.\d{2})?$", job)
+    m = re.match(r"^(?P<s>.+)-rev(?:[A-Z]+(?:\.\d{2})?|\d+[A-Za-z]*)$", job)
     if m:
         return m.group("s")
     return re.sub(r"_\d{4,6}$", "", job)
@@ -108,14 +108,14 @@ def rev_line(rev: Path):
 
 
 def jobs(base: Path, warn=None, models=False):
-    """Job folders under base. Parts home: `<name>_<MMDD>`. Models: that or `<subject>-rev<current>`.
-    Other visible folders go to warn() instead of being skipped silently."""
+    """Job folders under base. Parts home: `<name>_<MMDD>`. Models: that, `<subject>-rev<current>`, or any
+    folder that holds `rev*` version folders (existing names are kept). Other visible folders go to warn()."""
     out = []
     for d in sorted(p for p in base.iterdir() if p.is_dir()):
-        if LEGACY_JOB_RE.match(d.name) or (models and MODELS_JOB_RE.match(d.name)):
+        if LEGACY_JOB_RE.match(d.name) or (models and (MODELS_JOB_RE.match(d.name) or revs(d))):
             out.append(d)
         elif warn and not d.name.startswith(("_", ".")):
-            need = "a _MMDD suffix or <subject>-rev<LETTER>" if models else "a _MMDD suffix, e.g. part_1021"
+            need = "rev* version folders, a _MMDD suffix or <subject>-rev<current>" if models else "a _MMDD suffix, e.g. part_1021"
             warn(f"warning: {d} is not a job folder (name needs {need}); no note written or checked")
     return out
 
@@ -124,23 +124,9 @@ def _stderr(msg):
     print(msg, file=sys.stderr)
 
 
-CARD_RE = re.compile(r"^.+-rev[A-HJ-NP-Z]+(?:\.\d{2})?\.md$")
-
-
 def revs(job_dir: Path):
-    """Per-part rev cards (`<part>-rev<LETTER>.md`), then any older `rev*` folders."""
-    cards = [p for p in job_dir.iterdir() if p.is_file() and CARD_RE.match(p.name)]
     rs = [d for d in job_dir.iterdir() if d.is_dir() and d.name.startswith("rev")]
-    return sorted(cards, key=lambda p: p.name) + sorted(rs, key=lambda d: d.name)
-
-
-def card_line(card: Path):
-    """One line for a per-part rev card: its 'What changed' line, else its file name."""
-    for l in card.read_text(errors="replace").splitlines():
-        l2 = l.strip("- ").strip()
-        if re.match(r"What changed", l2, re.I) and l2.split(":", 1)[-1].strip():
-            return l2[:160]
-    return "rev card"
+    return sorted(rs, key=lambda d: d.name)
 
 
 def run(parts_home: Path, models: Path | None, dry=False, warn=_stderr):
@@ -158,7 +144,7 @@ def run(parts_home: Path, models: Path | None, dry=False, warn=_stderr):
             text = (ROOT / "templates" / "models-folder" / n).read_text()
             write_new(models / n, text, dry, log)
         for job in jobs(models, warn, models=True):
-            rl = "\n".join(f"- `{r.name}`: {card_line(r) if r.is_file() else rev_line(r)}" for r in revs(job)) or "- (no revs yet)"
+            rl = "\n".join(f"- `{r.name}`: {rev_line(r)}" for r in revs(job)) or "- (no rev folders yet)"
             ph = paired_parts(parts_home, job.name)
             pair = f"`{show(ph)}`" if ph is not None else f"none: this job has no parts-home folder (no build scripts were kept in `{show(parts_home)}`); scripts are never kept in the models folder"
             write_new(job / "README.md", tpl("models-job.md", job=job.name, part=part_name(job.name), revs=rl, pair=pair), dry, log)
