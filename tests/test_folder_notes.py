@@ -194,3 +194,16 @@ def test_notes_say_who_uses_and_what_breaks(tmp_path):
 def test_no_clone_option():
     assert "--clone" not in (ROOT / "tools" / "folder_notes.py").read_text()
     assert "--clone" not in (ROOT / "setup.sh").read_text()
+
+
+def test_models_job_note_lists_per_part_rev_cards(tmp_path):
+    ph, md = tmp_path / "parts", tmp_path / "models"
+    ph.mkdir()
+    job = md / "bracket_1120"
+    job.mkdir(parents=True)
+    (job / "leg-revB.md").write_text("# leg / revB\n- What changed from the previous rev: wider foot\n")
+    (job / "plate-revA.md").write_text("# plate / revA\n- What changed from the previous rev:\n")
+    fn.run(ph, md, warn=lambda m: None)
+    note = (job / "README.md").read_text()
+    assert "`leg-revB.md`: What changed from the previous rev: wider foot" in note
+    assert "`plate-revA.md`: rev card" in note

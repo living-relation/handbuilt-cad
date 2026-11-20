@@ -11,4 +11,4 @@ Deleting or moving this folder breaks publish-to-models. It holds AP242 STEP and
 ## Revs
 @REVS@
 
-New revs: publish-to-models (next letter, SUMMARY.md, MADE-WITH.md, MANIFEST.sha256). STEP only.
+New revs: publish-to-models (next letter for that part and its `<part>-rev<LETTER>.md` card). AP242 STEP only.
