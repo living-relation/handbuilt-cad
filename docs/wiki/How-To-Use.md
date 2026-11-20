@@ -175,11 +175,11 @@ More detail: [For AI agents](AI-agents.md).
   ```
 
   Keep run folders outside the repo.
-- `tools/rev.py` writes the next per-part data card in `$MODELS_DIR/<subject>_<MMDD>/<part>-rev<LETTER>.md` (A-Z skipping I, L, O, Q). `--part` names the part; other parts stay put. `--clerical` writes `<part>-rev<LETTER>.<NN>.md`. `--prune` deletes only that part's older files (newest and the one before). The STEP itself is AP242, written by `tools/step_release.py`:
+- `tools/rev.py` makes the next version folder `$MODELS_DIR/<job>/rev<LETTER>/` with its SUMMARY.md (A-Z skipping I, L, O, Q; existing job folder names are kept). `--clerical` makes `rev<LETTER>.<NN>/`. `--prune` lists version folders beyond the 2 latest; `--prune --apply` deletes them (never a folder holding a 3D scan). The STEP itself is AP242, written by `tools/step_release.py`:
 
   ```bash
   export MODELS_DIR=~/models
   .venv/bin/python tools/rev.py bracket --source ~/work/bracket
   ```
 
-  Part files (STEP, drawings, renders; STL only for print jobs) go there, not into this repo. The full filing steps are the `publish-to-models` skill.
+  AP242 STEP and drawings go there, not into this repo; print STLs and renders stay in the parts home. The full filing steps are the `publish-to-models` skill.

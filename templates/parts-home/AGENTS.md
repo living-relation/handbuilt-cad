@@ -7,7 +7,7 @@ Deleting, moving or renaming this folder breaks those tools and loses the part b
 
 - `<job>/src/` : part build scripts, inputs, params, interface JSON, notes (the editable source of each part). Job names match the models folder.
 - `<job>/runs/<YYYYMMDD-HHMM>/` : working outputs (meshes, solver files, iteration STEPs, topo .npz, renders, interim JSON). Disposable.
-- Finished AP242 STEP and drawings (plus the per-part data card) are published to the models folder with publish-to-models. Review views, strength summaries and working notes stay here.
+- Finished AP242 STEP and drawings (plus the version's SUMMARY.md) are published to the models folder with publish-to-models. Review views, strength summaries and working notes stay here.
 - Once a run is published or superseded, delete its regenerable outputs. Keep only costly-to-regenerate results, in `_archive/<job>/`.
 - Logs and caches are deleted, not kept.
 - `_archive/` : iteration history and superseded versions. Read-only by convention.

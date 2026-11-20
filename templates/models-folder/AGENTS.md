@@ -8,10 +8,10 @@ Deleting, moving or renaming this folder breaks those tools and loses finished p
 
 Rules for agents and people:
 - Don't move or rename this folder. Scripts find it through `MODELS_DIR`, then `[paths] models_dir` in handbuilt-cad's `local.toml`, then `<Desktop>\models`.
-- This folder holds AP242 STEP files and drawings only, plus a short `<part>-rev<LETTER>.md` card and this README. No .f3d (Fusion keeps that in its cloud), scripts, runs, or scans. Those stay in the parts home (`~/cad-parts/<job>/`).
-- A job folder is `<subject>_<MMDD>/`. Parts in it can be at different revs: `<part>-rev<LETTER>.step`. An assembly STEP references each part as `Parts/<part>-rev<LETTER>.stp`.
-- Keep each part's newest letter and the one before it (and those letters' clerical decimals). Prune deletes only that part's older files. Bought maker STEPs in `reference/` have no rev.
-- ST185 jobs live here in the models folder (`st185_*`), not in the st185 repo.
+- This folder holds usable AP242 STEP models and drawings only, plus each version's `SUMMARY.md`, `REVLOG.md` and these notes. No .f3d (Fusion keeps that in its cloud), STL, scripts, runs, scans, backup ZIPs or purge copies. Working files stay in the parts home (`~/cad-parts/<job>/`).
+- A job folder holds version folders `rev<LETTER>/` (clerical `rev<LETTER>.<NN>/`). Existing job folder names are kept as they are. A version holds the assembly STEP at its root, `Parts/` beside it (every part, subassembly and bought maker STEP, referenced by the assembly), `drawings/`, `SUMMARY.md` and `REVLOG.md`. Never edit an existing version.
+- Keep the 2 latest versions of each assembly (with their parts); older versions are deleted after the new one is filed and checked. Never delete or alter a 3D scan.
+- ST185 jobs live here in the models folder (`st185_*`), not in the st185 repo. Leave them untouched during general cleanups until the owner lifts that.
 - Publish with the handbuilt-cad `publish-to-models` skill.
 - This note is written by handbuilt-cad `tools/folder_notes.py`, run by setup and by publish-to-models. It is written only when missing, never overwritten.
 - To change these rules, open a handbuilt-cad PR (`templates/models-folder/`).
