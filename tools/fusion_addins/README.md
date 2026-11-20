@@ -33,6 +33,5 @@ also `{"bom": [...]}`, a plain list, or `{"Hinge leaf": {"pn": "FC5-712", ...}}`
 
 ## Tests
 - Pure logic (no Fusion): `$CAD_PY -m pytest -q tests/test_fusion_addins.py`.
-- Inside Fusion: run `dev/fusion_smoke.py` through the AutodeskFusionMCP `execute_python` tool (set `os.environ['HBCAD_ADDINS']` to this folder, `exec` the file, call `main()`). It opens a new scratch design, exports every format, fills/writes/exports a BOM, registers and removes both buttons, then closes the scratch design **without saving**. Output: `%TEMP%\hbcad_fusion_smoke`.
 
 Fusion work uses Autodesk's official, Autodesk-hosted MCP servers (nothing to install): Fusion Compute MCP `https://developer.api.autodesk.com/da/v3/mcp/fusion` (preferred, headless cloud Fusion, so local Fusion isn't interrupted); Fusion Data MCP `https://developer.api.autodesk.com/fusion/mcp`; Fusion Desktop MCP is built into Fusion (Preferences > General > API, local `http://127.0.0.1:27182/mcp`). Docs: https://help.autodesk.com/view/ADSKMCP/ENU/

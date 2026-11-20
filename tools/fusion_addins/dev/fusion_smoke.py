@@ -1,5 +1,5 @@
 """In-Fusion smoke test for HB Export and HB BOM. Run from Fusion (Scripts and Add-Ins > run this file as a
-script, or the AutodeskFusionMCP execute_python tool). Works only in a NEW scratch document that it closes
+script). Works only in a NEW scratch document that it closes
 WITHOUT saving; your open documents are not touched. Output goes to %TEMP%/hbcad_fusion_smoke."""
 import importlib
 import json
