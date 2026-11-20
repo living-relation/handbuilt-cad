@@ -4,7 +4,7 @@ The one state file for this repo: current goal and open items. Decisions go in `
 
 **Goal now:** keep the toolkit current, and ship it as the `handbuilt-cad` plugin (phase 1). (`handbuilt-models` is retired.)
 
-**Model rules (2026-11-20):** Keep two revisions (newest and the one before). Layout is `<subject>-rev<current>/rev<LETTER>/`. One part is one solid; assemblies are linked files in `Parts`. `tools/checks/release_structure.py` checks the STEP release. Fusion browser checks stay a checklist in `skills/publish-to-models`. See `DECISIONS.md`.
+**Model rules (2026-11-20):** Per-part revs in `<subject>_<MMDD>/`. Models folder is AP242 STEP only, one file per part rev, plus drawings. Assemblies reference `Parts/`. Scripts stay in ~/cad-parts. See `DECISIONS.md`.
 
 **CNC rules (2026-11-14):** machined parts follow `docs/CNC-MACHINING-RULES.md` (Xometry guide, PDF 16 Apr 2025, plus project rules). CNC walls under 0.030"/0.060" fail; printed parts keep the structural-only, never-assumed wall rule. `tools/cnc_check.py` flags inside corners under 1.3× the nearest standard tool radius and exact standard sizes, and applies the CNC wall floors. Edge breaks are never auto-applied. The in-repo source is `docs/references/xometry-design-guide-cnc-machining-2025-04-16.md`; the PDF is in the models folder `references/`. Under-1.5×D engagement is a model-check flag only; over 2×D is never flagged. Drawings call out actual thread and hole depths, with `THRU` (no depth) for through holes.
 

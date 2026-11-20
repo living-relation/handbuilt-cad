@@ -1,10 +1,9 @@
 # Changelog
 
-## 2026-11-20: two revisions, one solid, linked parts
+## 2026-11-20: per-part AP242 STEP
 
-- Retention is the newest rev and the one before it (two model letters, plus their clerical decimals). This supersedes 2026-11-04 (latest + 2 previous) and 2026-10-29 (latest only).
-- Models layout is `<subject>-rev<current>/rev<LETTER>/`. The top folder is renamed to the current rev. An existing rev folder is not edited.
-- A made part is one solid. Assemblies are linked files in `Parts`. SR Fasteners stay as bodies in the assembly. `tools/checks/release_structure.py` checks the STEP release. Fusion-only items are a checklist in `skills/publish-to-models`.
+- Revs are per designed part in `<subject>_<MMDD>/<part>-rev<LETTER>`. Keep that part's newest letter and the one before it.
+- The models folder is AP242 STEP only, one file per part rev, plus drawings and a short card. An assembly STEP references `Parts/*.stp`. No .f3d, scripts, runs, or scans (those stay in ~/cad-parts). `tools/step_release.py` writes the assembly. `tools/checks/release_structure.py` checks it.
 
 ## 2026-11-19: install-plugins copies the Cursor plugin
 

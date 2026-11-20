@@ -175,7 +175,7 @@ More detail: [For AI agents](AI-agents.md).
   ```
 
   Keep run folders outside the repo.
-- `tools/rev.py` makes the next revision folder in your models folder, `$MODELS_DIR/<subject>-rev<current>/rev<LETTER>/` (A-Z skipping I, L, O, Q, then AA ...; `--clerical` makes `rev<LETTER>.<NN>` and renames the top folder). It never edits an existing rev and never converts old numeric `revN` folders (for those, give `--releases N` or `--letter X`). `--prune` keeps the newest model letter and the one before it:
+- `tools/rev.py` writes the next per-part data card in `$MODELS_DIR/<subject>_<MMDD>/<part>-rev<LETTER>.md` (A-Z skipping I, L, O, Q). `--part` names the part; other parts stay put. `--clerical` writes `<part>-rev<LETTER>.<NN>.md`. `--prune` deletes only that part's older files (newest and the one before). The STEP itself is AP242, written by `tools/step_release.py`:
 
   ```bash
   export MODELS_DIR=~/models
