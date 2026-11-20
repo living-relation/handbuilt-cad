@@ -12,7 +12,7 @@ Windows only. Two shortcuts. Neither one adds the plugin by itself.
 
 **Toolkit.** In File Explorer, double-click `install.cmd` in the clone. That opens a normal window (not Administrator), runs `setup.ps1` with no extra flags, and waits. It does not open a browser and it does not copy skills onto this machine.
 
-**Plugin page.** Double-click `install-plugins.cmd` when you want the claude.ai steps and the Cursor copy. That runs only because you started it. It copies `.cursor-plugin` and `skills` to `~/.cursor/plugins/local/handbuilt-cad` and replaces the old copy. It opens the Plugins page and prints the clicks, including Turn Sync automatically on. It cannot turn the plugin on. You still click. It does not schedule anything. Fully quit and reopen Cursor after the copy.
+**Plugin page.** Double-click `install-plugins.cmd` for the Cursor copy. That runs only because you started it. It copies `.cursor-plugin` and `skills` to `~/.cursor/plugins/local/handbuilt-cad` and replaces the old copy. It does not open a browser. It prints the clicks, including Turn Sync automatically on. It cannot turn the plugin on. It does not schedule anything. Fully quit and reopen Cursor after the copy.
 
 **Update the toolkit.** Double-click `install.cmd` again. That is a full re-run of setup. It still does not add or update the plugin.
 
@@ -60,19 +60,41 @@ On Windows, do not also clone inside WSL. `setup.ps1` points WSL at the Windows 
 
 ### Cursor copy
 
-1. Open a normal (not admin) Windows PowerShell 5.1 window.
-2. cd to the repo clone (`cd <Projects>\active\handbuilt-cad`). If no clone exists, clone first with the full URL https://github.com/living-relation/handbuilt-cad.
-3. Run `powershell -NoProfile -ExecutionPolicy Bypass -File .\install-plugins.ps1`.
-4. Fully quit and reopen Cursor.
-5. Check that the plugin's skills show up.
+Skip this if you don't use Cursor.
+
+Open a Cursor agent chat in any folder and paste this:
+
+```text
+Install the handbuilt-cad Cursor plugin from https://github.com/living-relation/handbuilt-cad: if it is not cloned yet, clone it into my projects folder; then copy the repo (without .git and .venv) to ~/.cursor/plugins/local/handbuilt-cad, replacing any old copy. Tell me when done so I can fully quit and reopen Cursor.
+```
+
+Manual fallback. Windows PowerShell 5.1, normal window, not admin. `<projects-folder>` is the folder where you keep clones, for example `C:\Users\<you>\projects`.
+
+1. `cd <projects-folder>`
 
 ```powershell
-cd <Projects>\active\handbuilt-cad
+cd <projects-folder>
 ```
+
+2. Clone if needed: `git clone https://github.com/living-relation/handbuilt-cad`
+
+```powershell
+git clone https://github.com/living-relation/handbuilt-cad
+```
+
+3. `cd <projects-folder>\handbuilt-cad`
+
+```powershell
+cd <projects-folder>\handbuilt-cad
+```
+
+4. Copy the Cursor plugin. This does not open a browser.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\install-plugins.ps1
 ```
+
+5. Fully quit and reopen Cursor.
 
 **Update the plugin.** On claude.ai, Turn Sync automatically on. Updates arrive automatically after merges to main. Check for updates in the catalog forces it sooner. Run the same install-plugins command again to replace the Cursor copy, then reload Cursor.
 
@@ -91,7 +113,7 @@ Set up handbuilt-cad on this PC, then stop for the plugin steps. Skills come onl
 
 3. Install the toolkit. cd to the clone. On Windows, a normal PowerShell window (not Administrator), run powershell -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1. On plain Linux, a normal terminal (not root), run bash setup.sh. Double-click install.cmd is the same Windows setup and adds no flags. Show the exit code. If it fails, stop. This step does not add the plugin and does not open a browser.
 
-4. Do not open the plugin page until I say yes. When I say yes, claude.ai is the only Claude route. It covers chat, Cowork, and Claude Code signed in to that account. cd to the clone. On Windows, a normal PowerShell window (not Administrator), run powershell -NoProfile -ExecutionPolicy Bypass -File .\install-plugins.ps1. On plain Linux, a normal terminal (not root), run bash install-plugins.sh. That opens https://claude.ai/customize/plugins and prints the clicks. It cannot add the plugin. I still do the clicks: Customize, Plugins, Add, Add marketplace, paste living-relation/handbuilt-cad, Turn Sync automatically on, then turn on handbuilt-cad. The catalog name is handbuilt-cad-plugins. It is .claude-plugin/marketplace.json in this repo. It lists only handbuilt-cad, source ./. Do not add a second catalog file and do not add another plugin to it. That same command copies .cursor-plugin and skills to ~/.cursor/plugins/local/handbuilt-cad and replaces the old copy. It does not copy skills into ~/.claude/skills or ~/.cursor/skills.
+4. Do not open the plugin page until I say yes. When I say yes, claude.ai is the only Claude route. It covers chat, Cowork, and Claude Code signed in to that account. cd to the clone. On Windows, a normal PowerShell window (not Administrator), run powershell -NoProfile -ExecutionPolicy Bypass -File .\install-plugins.ps1. On plain Linux, a normal terminal (not root), run bash install-plugins.sh. It does not open a browser. It prints the clicks. The page is https://claude.ai/customize/plugins. It cannot add the plugin. I still do the clicks: Customize, Plugins, Add, Add marketplace, paste living-relation/handbuilt-cad, Turn Sync automatically on, then turn on handbuilt-cad. The catalog name is handbuilt-cad-plugins. It is .claude-plugin/marketplace.json in this repo. It lists only handbuilt-cad, source ./. Do not add a second catalog file and do not add another plugin to it. That same command copies .cursor-plugin and skills to ~/.cursor/plugins/local/handbuilt-cad and replaces the old copy. It does not copy skills into ~/.claude/skills or ~/.cursor/skills.
 
 5. Cursor is separate. Give me the click steps in INSTALL.md and wait. The install-plugins command in step 4 copies .cursor-plugin and skills to ~/.cursor/plugins/local/handbuilt-cad and replaces the old copy. Do not copy that plugin yourself. Leave Auto Refresh off. Do not copy skills into ~/.cursor/skills or ~/.claude/skills. Tell me to fully quit and reopen Cursor after the copy.
 
@@ -106,6 +128,8 @@ Do these clicks yourself. A script cannot do them.
 
 ### claude.ai
 
+Skip this if you don't use Claude.
+
 1. Open https://claude.ai/customize/plugins and sign in.
 2. Click Add, then Add marketplace, then Add from a repository.
 3. Paste https://github.com/living-relation/handbuilt-cad, turn Sync automatically on, and confirm.
@@ -117,19 +141,41 @@ Updates arrive automatically after merges to main.
 
 ### Cursor
 
-1. Open a normal (not admin) Windows PowerShell 5.1 window.
-2. cd to the repo clone (`cd <Projects>\active\handbuilt-cad`). If no clone exists, clone first with the full URL https://github.com/living-relation/handbuilt-cad.
-3. Run `powershell -NoProfile -ExecutionPolicy Bypass -File .\install-plugins.ps1`.
-4. Fully quit and reopen Cursor.
-5. Check that the plugin's skills show up.
+Skip this if you don't use Cursor.
+
+Open a Cursor agent chat in any folder and paste this:
+
+```text
+Install the handbuilt-cad Cursor plugin from https://github.com/living-relation/handbuilt-cad: if it is not cloned yet, clone it into my projects folder; then copy the repo (without .git and .venv) to ~/.cursor/plugins/local/handbuilt-cad, replacing any old copy. Tell me when done so I can fully quit and reopen Cursor.
+```
+
+Manual fallback. Windows PowerShell 5.1, normal window, not admin. `<projects-folder>` is the folder where you keep clones, for example `C:\Users\<you>\projects`.
+
+1. `cd <projects-folder>`
 
 ```powershell
-cd <Projects>\active\handbuilt-cad
+cd <projects-folder>
 ```
+
+2. Clone if needed: `git clone https://github.com/living-relation/handbuilt-cad`
+
+```powershell
+git clone https://github.com/living-relation/handbuilt-cad
+```
+
+3. `cd <projects-folder>\handbuilt-cad`
+
+```powershell
+cd <projects-folder>\handbuilt-cad
+```
+
+4. Copy the Cursor plugin. This does not open a browser.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\install-plugins.ps1
 ```
+
+5. Fully quit and reopen Cursor.
 
 ## Remove the toolkit
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Open the claude.ai Plugins page, print the clicks, and copy the Cursor plugin.
+# Copy the Cursor plugin. It does not open a browser.
 # It cannot add the plugin on claude.ai. It copies .cursor-plugin and skills to
 # ~/.cursor/plugins/local/handbuilt-cad and replaces the old copy.
 # It does not copy skills into ~/.claude/skills or ~/.cursor/skills.
@@ -131,12 +131,5 @@ if [ -n "$USER_HOME" ]; then
   exit 0
 fi
 
-echo "Opening ${URL}"
-if command -v xdg-open >/dev/null 2>&1; then
-  xdg-open "$URL" || echo "Could not open a browser. Open this page yourself: $URL"
-elif command -v open >/dev/null 2>&1; then
-  open "$URL" || echo "Could not open a browser. Open this page yourself: $URL"
-else
-  echo "Could not open a browser. Open this page yourself: $URL"
-fi
+echo "This script does not open a browser."
 echo "Nothing was scheduled."

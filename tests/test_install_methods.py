@@ -175,7 +175,7 @@ def test_own_catalog_and_nothing_claude_removed_is_back():
     assert "-LinkSkills" not in cmd and "schtasks" not in cmd
 
 
-def test_install_plugins_sh_prints_clicks_and_asks_to_open_the_page(tmp_path):
+def test_install_plugins_sh_copies_without_opening_a_browser(tmp_path):
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     log = tmp_path / "open.log"
@@ -204,7 +204,11 @@ def test_install_plugins_sh_prints_clicks_and_asks_to_open_the_page(tmp_path):
     assert "Reload the Cursor window." not in r.stdout
     assert "Nothing was scheduled." in r.stdout
     assert "link" not in r.stdout.lower()
-    assert log.read_text(encoding="utf-8").strip() == "https://claude.ai/customize/plugins"
+    assert "This script does not open a browser." in r.stdout
+    assert "Opening" not in r.stdout
+    assert not log.exists()
+    assert "xdg-open" not in (ROOT / "install-plugins.sh").read_text(encoding="utf-8")
+    assert "Start-Process" not in (ROOT / "install-plugins.ps1").read_text(encoding="utf-8")
     assert not (home / ".claude").exists()
     refused = subprocess.run(["bash", str(script), "extra"], env=env, capture_output=True, text=True)
     assert refused.returncode == 2
