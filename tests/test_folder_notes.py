@@ -83,6 +83,23 @@ def test_wsl_only_no_models(tmp_path):
     assert fn.missing(ph, None) == []
 
 
+def test_models_rev_folder_is_a_job(tmp_path):
+    ph, md = layout(tmp_path)
+    (ph / "bracket_0101").mkdir()
+    job = md / "bracket-revB"
+    (job / "revB").mkdir(parents=True)
+    (job / "revB" / "SUMMARY.md").write_text("# bracket-revB / revB\n- What changed: new leg\n")
+    warns = []
+    fn.run(ph, md, warn=warns.append)
+    assert not any("bracket-revB" in w for w in warns)
+    note = (job / "README.md").read_text()
+    assert "new leg" in note and "bracket_0101" in note
+    (md / "bracket-revI").mkdir()
+    warns = []
+    fn.jobs(md, warn=warns.append, models=True)
+    assert any("bracket-revI" in w for w in warns)
+
+
 def test_non_job_folders_warn(tmp_path):
     ph, md = layout(tmp_path)
     (ph / "scratchpad").mkdir(); (md / "loose").mkdir(); (ph / "_private").mkdir()

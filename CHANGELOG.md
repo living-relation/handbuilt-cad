@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-20: two revisions, one solid, linked parts
+
+- Retention is the newest rev and the one before it (two model letters, plus their clerical decimals). This supersedes 2026-11-04 (latest + 2 previous) and 2026-10-29 (latest only).
+- Models layout is `<subject>-rev<current>/rev<LETTER>/`. The top folder is renamed to the current rev. An existing rev folder is not edited.
+- A made part is one solid. Assemblies are linked files in `Parts`. SR Fasteners stay as bodies in the assembly. `tools/checks/release_structure.py` checks the STEP release. Fusion-only items are a checklist in `skills/publish-to-models`.
+
 ## 2026-11-19: install-plugins copies the Cursor plugin
 
 - `install-plugins.ps1`, `install-plugins.cmd`, and `install-plugins.sh` copy `.cursor-plugin` and `skills` to `~/.cursor/plugins/local/handbuilt-cad` and replace that copy each time you run them. They still open the claude.ai Plugins page and print the clicks only when you run them. They do not turn the plugin on, and they do not schedule anything.
@@ -47,7 +53,8 @@
 - At the end of a Windows install (`setup.ps1`, including double-click `install.cmd`) a separate popup reminds you to upload new or changed CAD skill zips in the Claude desktop app for each Claude account (Skills settings), lists the zip names (or skill folders if there are no zips), and offers to open that folder in Explorer. `-NoPopup` / `-Quiet` skip it, as do CI env vars.
 - Claude-app harness skills (`skills/EXCLUDE.txt` or `source: harness-design-app`) stay unlinked and are never moved, backed up, replaced or removed.
 
-## 2026-10-29: the latest rev replaces the previous one
+## 2026-10-29: the latest rev replaces the previous one (superseded 2026-11-20)
+- Superseded 2026-11-20: keep the newest rev and the one before it. The text below is the rule as it stood on this date.
 - Rule (AGENTS.md 19, `skills/publish-to-models` step 7, `skills/cnc-part-check`): The latest revision of a model always replaces the previous one. When a new rev is filed, delete the old rev's models and outputs (models folder and runs); keep only the latest rev. Never keep old revs side by side.
 - Docs and skills text only. `tools/rev.py` is unchanged: it still creates the new `rev<LETTER>` folder beside the old ones; the old ones are deleted after the new rev is filed and checked.
 
@@ -55,7 +62,7 @@
 - Zip commits use HTTP basic `x-access-token` (same as actions/checkout). Bearer was ignored, so the bot could not push rebuilt `skills/*.zip` files.
 
 ## 2026-10-29: electrical plan, off-the-shelf CAD, questions to Dan
-- Every design with electronics has a plan document (wiring tables, schematic, electronics BOM). Wiring tables list every required wire; unplanned GPIO/PCB pins are TBA. Electrical designs use real gauges, connectors, routing and device specs. Off-the-shelf parts (dev boards, extrusion brackets, plates and similar hardware) use the supplier's official CAD model, or a labelled best-guess from the datasheet; put the supplier's part number on the BOM and save every part model, purchased and fabricated, in a `parts/` folder inside the project.
+- Every design with electronics has a plan document (wiring tables, schematic, electronics BOM). Wiring tables list every required wire; unplanned GPIO/PCB pins are TBA. Electrical designs use real gauges, connectors, routing and device specs. Off-the-shelf parts use the supplier's official CAD model (the best-guess clause in this bullet was superseded 2026-11-20: a bought part needs the maker's model). Put the supplier's part number on the BOM and save every part model, purchased and fabricated, in a `parts/` folder inside the project.
 - Questions to the maintainer are always multiple choice, labelled a1, a2, with a recommended answer when there is one.
 - Docs and skills only (`AGENTS.md` "Electrical and design plans", not CAD rule 19 — that number is reserved for PR 49).
 

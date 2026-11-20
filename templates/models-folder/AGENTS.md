@@ -8,11 +8,12 @@ Deleting, moving or renaming this folder breaks those tools and loses finished p
 
 Rules for agents and people:
 - Don't move or rename this folder. Scripts find it through `MODELS_DIR`, then `[paths] models_dir` in handbuilt-cad's `local.toml`, then `<Desktop>\models`.
-- Add new `<job>_<MMDD>/<rev>/` folders; never overwrite or edit an existing rev.
-- Old versions may be deleted (Daniel, 2026-11-04): keep the latest version plus the 2 most recent previous versions of each assembly, and every part those kept assemblies use; parts keep the latest version. Keep at most 2 screenshots/2D renders per model (drawings PDF/DXF/SVG are not screenshots). Never delete 3D scans. Regenerate a rev's MANIFEST.sha256 after removing files from it.
+- Layout is `<subject>-rev<current>/rev<LETTER>/` (clerical `rev<LETTER>.<NN>`). The top folder is renamed to the current rev when a new one is filed. Never edit an existing rev folder.
+- Keep the newest model letter and the one before it, plus the clerical decimals of those letters (Daniel, 2026-11-20). Delete the oldest after the new rev is hash-checked. Never delete 3D scans. Regenerate a rev's MANIFEST.sha256 after removing files from it.
+- One part is one solid. A separate install step is its own part. Several pieces are an assembly of linked files in `Parts` (STEP: assembly STEP at the rev root, `Parts\` beside it), never one fused body. SR Fasteners stay as bodies inside the assembly; other fasteners are files. One assembly, built from the newest parts.
 - ST185 jobs live here in the models folder (`st185_*`), not in the st185 repo.
 - Publish with the handbuilt-cad `publish-to-models` skill.
-- This note is written by handbuilt-cad `tools/folder_notes.py`, run by setup and by publish-to-models. It's add-only: written only when missing, never overwritten.
+- This note is written by handbuilt-cad `tools/folder_notes.py`, run by setup and by publish-to-models. It is written only when missing, never overwritten.
 - To change these rules, open a handbuilt-cad PR (`templates/models-folder/`).
 
 ## CNC machining rules

@@ -18,12 +18,14 @@ def mk(root, *names):
 
 def test_new_job_is_rev_a_then_b(tmp_path):
     r1 = rev.create(tmp_path, "bracket", today=D)
-    assert r1 == tmp_path / "bracket_1017" / "revA"
+    assert r1 == tmp_path / "bracket-revA" / "revA"
     s = (r1 / "SUMMARY.md").read_text()
-    assert "bracket_1017 / revA" in s and "brand-new model" in s and "STL only if a print job" in s
+    assert "bracket-revA / revA" in s and "brand-new model" in s and "STL only if a print job" in s
     (r1 / "SUMMARY.md").write_text("mine")
     r2 = rev.create(tmp_path, "bracket", today=D)
-    assert r2.name == "revB" and (r1 / "SUMMARY.md").read_text() == "mine"
+    assert r2 == tmp_path / "bracket-revB" / "revB"
+    assert (r2.parent / "revA" / "SUMMARY.md").read_text() == "mine"
+    assert not (tmp_path / "bracket-revA").exists()
 
 
 @pytest.mark.parametrize("have,want", [("revH", "revJ"), ("revK", "revM"), ("revN", "revP"), ("revP", "revR"),
@@ -67,8 +69,9 @@ def test_numeric_only_is_never_converted(tmp_path):
     assert rev.next_rev(job, releases=0) == "revA"
     assert rev.next_rev(job, letter="h") == "revH"
     r = rev.create(tmp_path, "knuckle_1009", releases=7, today=D)
+    assert r.parent == tmp_path / "knuckle-revH"
     assert "7 counted past release" in (r / "SUMMARY.md").read_text()
-    assert sorted(p.name for p in job.iterdir()) == ["rev1", "rev4b", "rev7-best", "revH"]   # old folders untouched
+    assert sorted(p.name for p in r.parent.iterdir()) == ["rev1", "rev4b", "rev7-best", "revH"]   # old folders moved, not edited
 
 
 def test_lettered_folders_win_over_numeric(tmp_path):
@@ -101,14 +104,28 @@ def test_never_overwrites(tmp_path, monkeypatch):
 
 def test_job_resolution(tmp_path):
     mk(tmp_path / "knuckle_1009", "revB")
-    assert rev.create(tmp_path, "knuckle", today=D).parent.name == "knuckle_1009"
-    assert rev.create(tmp_path, "pipe", date="1014", today=D).parent.name == "pipe_1014"
+    r = rev.create(tmp_path, "knuckle", today=D)
+    assert r == tmp_path / "knuckle-revC" / "revC" and (r.parent / "revB").is_dir()
+    assert not (tmp_path / "knuckle_1009").exists()
+    assert rev.create(tmp_path, "pipe", date="1014", today=D).parent.name == "pipe-revA"
 
 
 def test_cli_exit_codes(tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("MODELS_DIR", str(tmp_path))
     assert rev.main(["bracket", "--date", "1017"]) == 0
-    assert capsys.readouterr().out.strip().endswith(os.path.join("bracket_1017", "revA"))
+    assert capsys.readouterr().out.strip().endswith(os.path.join("bracket-revA", "revA"))
     mk(tmp_path / "old_1009", "rev2")
     assert rev.main(["old_1009"]) == 2
     assert "numeric" in capsys.readouterr().err
+
+
+def test_prune_keeps_two_letters_and_scans(tmp_path):
+    job = tmp_path / "bracket-revD"
+    mk(job, "revB", "revC", "revC.01", "revD", "rev2")
+    drop, scans = rev.prune_revs(job, apply=False)
+    assert drop == ["rev2", "revB"] and scans == []
+    (job / "revB" / "scan.ply").write_text("cloud")
+    drop, scans = rev.prune_revs(job, apply=True)
+    assert drop == ["rev2"] and scans == ["revB"]
+    assert (job / "revB" / "scan.ply").is_file() and not (job / "rev2").exists()
+    assert (job / "revC").is_dir() and (job / "revC.01").is_dir() and (job / "revD").is_dir()
