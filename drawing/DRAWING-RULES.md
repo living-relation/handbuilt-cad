@@ -56,8 +56,8 @@ Rules for every drawing this engine makes. The engine enforces the ones marked *
 ## Model structure
 These rules are the model, not the sheet. The drawing engine does not enforce them. `tools/checks/release_structure.py` checks the STEP release; Fusion-only items are a checklist in `skills/publish-to-models`.
 34. **One part is one solid.** A part that installs in its own step is its own part. Several pieces are an assembly or subassembly of linked parts, never one fused body.
-35. **Every part and subassembly is its own file** and opens from the top assembly (Fusion: linked component, right-click > Open). External parts live in `Parts` at the assembly root. The STEP release puts the assembly STEP at the rev root and `Parts\` beside it.
+35. **Every part and subassembly is its own file** and opens from the top assembly (Fusion: linked component, right-click > Open). External parts live in `Parts` at the assembly root. The STEP release puts the assembly STEP at the job root and `Parts\` beside it.
 36. **SR Fasteners** (Dan's add-in) stay as separate bodies inside the assembly or subassembly. That is the only exception to rule 35. Any other fastener is its own file.
-37. **One AP242 STEP per part rev.** The models folder does not keep a second format. Fusion's .f3d stays in Fusion's cloud. An assembly STEP references `Parts\<part>.stp`. SR fastener bodies may stay inside the assembly STEP.
+37. **One AP242 STEP per part rev.** The models folder does not keep a second format. Fusion's .f3d stays in Fusion's cloud. An assembly STEP references `Parts\<part>-rev<LETTER>.stp`. SR fastener bodies may stay inside the assembly STEP.
 38. **One source-of-truth assembly**, built from the newest part models. No per-rev copy of the Fusion assembly.
 39. **Retention is per part.** Job folder `$MODELS_DIR/<subject>_<MMDD>/`. Files are `<part>-rev<LETTER>`. Keep that part's newest letter and the one before it, plus those letters' clerical decimals. Scripts, runs and scans stay in the parts home.

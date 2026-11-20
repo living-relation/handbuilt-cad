@@ -20,7 +20,7 @@ def test_new_job_is_rev_a_then_b(tmp_path):
     r1 = rev.create(tmp_path, "bracket", today=D)
     assert r1 == tmp_path / "bracket_1017" / "bracket-revA.md"
     s = r1.read_text()
-    assert "bracket / revA" in s and "brand-new model" in s and "STL only if a print job" in s
+    assert "bracket / revA" in s and "brand-new model" in s and "AP242 STEP only" in s
     r1.write_text("mine")
     r2 = rev.create(tmp_path, "bracket", today=D)
     assert r2.name == "bracket-revB.md" and r1.read_text() == "mine"

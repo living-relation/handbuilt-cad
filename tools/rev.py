@@ -201,7 +201,7 @@ def create(root: Path, job: str, date: str | None = None, source: str = "", toda
     else:
         note = ""
         files = (f"{part}-{name}.step (or Parts\\{part}-{name}.step) and drawing {part}-{name}.pdf. "
-                 "STL only if a print job needs it. No scripts: those stay in the parts home.")
+                 "AP242 STEP only. A print STL and scripts stay in the parts home.")
         if releases is not None:
             evidence = f"{releases} counted past release(s) (list them here)"
         elif letter is not None:

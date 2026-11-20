@@ -13,7 +13,7 @@
 - **Questions to the maintainer:** always multiple choice, labelled a1, a2, with a recommended answer when there is one.
 - **Git:** the rules are in [`AGENTS.md`](../../AGENTS.md) and [`CONTRIBUTING.md`](../../CONTRIBUTING.md): branch -> PR -> review -> merge, never commit or push to `main`, never force-push or rewrite pushed history, never skip a hook. There is one clone, in Windows; WSL reaches it through the `~/projects/handbuilt-cad` link. Run git from Windows and pull with `git pull --ff-only`.
 - **Backups:** git history is the backup for anything in the repo. The projects `_archive` folder is only for obsolete work, and only with the owner's OK; no zip snapshots there before changes.
-- **STEP only:** STEP is the deliverable; STL only when a print job needs one.
+- **STEP only:** AP242 STEP is the only model format in the models folder; a print STL, if a job needs one, stays in the parts home.
 - **One part, one solid.** A separate install step is a separate part. Several pieces are an assembly of linked STEP files in `Parts` (Fusion: right-click > Open), never one fused body. SR Fasteners stay as bodies inside the assembly STEP.
 - **Models folder:** `$MODELS_DIR/<subject>_<MMDD>/` holds AP242 STEP only, one file per part rev (`<part>-rev<LETTER>.step`), drawings, and a short data card. An assembly STEP references `Parts/`. No .f3d (Fusion keeps that in its cloud). Scripts, runs and scans stay in `~/cad-parts/<job>/`. Keep each part's newest rev and the one before it.
 - **FEA after approval:** run strength checks (FEA) only after the owner approves the geometry, unless they ask for early tests.
