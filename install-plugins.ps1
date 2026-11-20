@@ -1,11 +1,11 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Open the claude.ai Plugins page and copy handbuilt-cad for Cursor.
+  Copy handbuilt-cad for Cursor. It does not open a browser.
 .DESCRIPTION
   Run this yourself. Double-click install-plugins.cmd, or run this file.
-  A script cannot turn the plugin on at claude.ai. A real run opens the page
-  and prints the clicks. It also copies .cursor-plugin and skills to
+  A script cannot turn the plugin on at claude.ai. A real run prints the clicks
+  and does not open a browser. It copies .cursor-plugin and skills to
   ~\.cursor\plugins\local\handbuilt-cad and replaces the old copy.
   It does not copy skills into ~\.claude\skills or ~\.cursor\skills.
   It does not create a scheduled task, a sign-in item, or a Run key.
@@ -126,8 +126,6 @@ if ($UserHome) {
   exit 0
 }
 
-Write-Host "Opening $url"
-try { Start-Process $url }
-catch { Write-Host "Could not open a browser. Open this page yourself: $url" }
+Write-Host 'This script does not open a browser.'
 Write-Host 'Nothing was scheduled.'
 exit 0

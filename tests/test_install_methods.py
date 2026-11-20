@@ -76,7 +76,8 @@ def test_four_routes_and_readme_points_at_the_plugin():
     assert "not Administrator" in readme
     assert "not root" in readme
     assert "[INSTALL.md](INSTALL.md)" in readme
-    assert "**handbuilt-cad** plugin" in readme
+    assert "Adding the repo alone does not install it." in readme
+    assert "Adding the repo alone does not install it." in install
     for cmd in (
         "powershell -NoProfile -ExecutionPolicy Bypass -File .\\setup.ps1",
         "powershell -NoProfile -ExecutionPolicy Bypass -File .\\install-plugins.ps1",
@@ -84,6 +85,11 @@ def test_four_routes_and_readme_points_at_the_plugin():
         "bash install-plugins.sh",
     ):
         assert cmd in install
+    for cmd in (
+        "powershell -NoProfile -ExecutionPolicy Bypass -File .\\setup.ps1",
+        "powershell -NoProfile -ExecutionPolicy Bypass -File .\\install-plugins.ps1",
+        "bash setup.sh",
+    ):
         assert cmd in readme
     assert "https://claude.ai/customize/plugins" in install
     assert "Turn Sync automatically on" in install
@@ -92,7 +98,7 @@ def test_four_routes_and_readme_points_at_the_plugin():
     assert "Turn Sync automatically on" in (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     assert "Turn Sync automatically on" in (ROOT / "skills" / "README.md").read_text(encoding="utf-8")
     assert "still updates by re-running" in (ROOT / "skills" / "README.md").read_text(encoding="utf-8")
-    assert "handbuilt-cad-plugins" in readme
+    assert "handbuilt-cad-plugins" in install
     copy_line = "copies .cursor-plugin and skills to ~/.cursor/plugins/local/handbuilt-cad and replaces the old copy"
     assert copy_line in install.replace("`", "")
     assert copy_line in readme.replace("`", "")
@@ -169,7 +175,7 @@ def test_own_catalog_and_nothing_claude_removed_is_back():
     assert "-LinkSkills" not in cmd and "schtasks" not in cmd
 
 
-def test_install_plugins_sh_prints_clicks_and_asks_to_open_the_page(tmp_path):
+def test_install_plugins_sh_copies_without_opening_a_browser(tmp_path):
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     log = tmp_path / "open.log"
@@ -198,7 +204,11 @@ def test_install_plugins_sh_prints_clicks_and_asks_to_open_the_page(tmp_path):
     assert "Reload the Cursor window." not in r.stdout
     assert "Nothing was scheduled." in r.stdout
     assert "link" not in r.stdout.lower()
-    assert log.read_text(encoding="utf-8").strip() == "https://claude.ai/customize/plugins"
+    assert "This script does not open a browser." in r.stdout
+    assert "Opening" not in r.stdout
+    assert not log.exists()
+    assert "xdg-open" not in (ROOT / "install-plugins.sh").read_text(encoding="utf-8")
+    assert "Start-Process" not in (ROOT / "install-plugins.ps1").read_text(encoding="utf-8")
     assert not (home / ".claude").exists()
     refused = subprocess.run(["bash", str(script), "extra"], env=env, capture_output=True, text=True)
     assert refused.returncode == 2

@@ -7,7 +7,16 @@ and docs only** - no part models. Finished models live in a `models` folder outs
 
 ## Setup (about 5 minutes)
 
-Claude Chat, Cowork, and Claude Code get skills when you add this repo's catalog on claude.ai and turn on the **handbuilt-cad** plugin. That is the only Claude route. Cursor is separate. Setup does not copy skills onto this machine, and there is no zip upload. When you run it, the install-plugins script copies `.cursor-plugin` and `skills` to `~/.cursor/plugins/local/handbuilt-cad` and replaces the old copy. The four ways (shortcut, these commands, an agent prompt, and the clicks in INSTALL.md) are in [INSTALL.md](INSTALL.md). The catalog in this repo is named `handbuilt-cad-plugins`. It lists only this plugin. On claude.ai you paste `living-relation/handbuilt-cad` and Turn Sync automatically on. Updates arrive automatically after merges to main. Check for updates in the catalog forces it sooner.
+Skip this if you don't use Claude.
+
+1. Open https://claude.ai/customize/plugins and sign in.
+2. Click Add, then Add marketplace, then Add from a repository.
+3. Paste https://github.com/living-relation/handbuilt-cad, turn Sync automatically on, and confirm.
+4. Wait for it to load; it opens the handbuilt-cad summary page.
+5. Click Add (top right) on that page to install it. Adding the repo alone does not install it.
+6. Fully quit Claude desktop from the tray icon and reopen it.
+
+Updates arrive automatically after merges to main.
 
 `<projects>` is your Projects folder. Each block below is one command.
 
@@ -47,27 +56,43 @@ bash setup.sh
 
 `.gitattributes` keeps LF in the repo (CRLF only for .bat/.cmd/.ps1).
 
-**Plugin on claude.ai, and the Cursor copy. Windows PowerShell, normal window (not Administrator).** This copies `.cursor-plugin` and `skills` to `~/.cursor/plugins/local/handbuilt-cad` and replaces the old copy. It opens the Plugins page and prints the clicks. It does not add the plugin. You still click. Turn Sync automatically on. One account covers chat, Cowork, and Claude Code. Updates arrive automatically after merges to main. Check for updates in the catalog forces it sooner. Details are in [INSTALL.md](INSTALL.md).
+Skip this if you don't use Cursor.
+
+Open a Cursor agent chat in any folder and paste this:
+
+```text
+Install the handbuilt-cad Cursor plugin from https://github.com/living-relation/handbuilt-cad: if it is not cloned yet, clone it into my projects folder; then copy the repo (without .git and .venv) to ~/.cursor/plugins/local/handbuilt-cad, replacing any old copy. Tell me when done so I can fully quit and reopen Cursor.
+```
+
+Manual fallback. Windows PowerShell 5.1, normal window, not admin. `<projects-folder>` is the folder where you keep clones, for example `C:\Users\<you>\projects`.
+
+1. `cd <projects-folder>`
 
 ```powershell
-cd <projects>\active\handbuilt-cad
+cd <projects-folder>
 ```
+
+2. Clone if needed: `git clone https://github.com/living-relation/handbuilt-cad`
+
+```powershell
+git clone https://github.com/living-relation/handbuilt-cad
+```
+
+3. `cd <projects-folder>\handbuilt-cad`
+
+```powershell
+cd <projects-folder>\handbuilt-cad
+```
+
+4. Copy the Cursor plugin. This does not open a browser.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\install-plugins.ps1
 ```
 
-**Plugin on claude.ai, and the Cursor copy. Plain Linux, normal terminal (not root).**
+5. Fully quit and reopen Cursor.
 
-```bash
-cd ~/projects/handbuilt-cad
-```
-
-```bash
-bash install-plugins.sh
-```
-
-Double-click `pull.cmd` in the clone (or run it from a prompt) to `git pull --ff-only` this repo only. Double-click `install.cmd` (or run it from a normal prompt, not Administrator; extra args pass through, e.g. `install.cmd -NoSim`) to run `setup.ps1`. That shortcut installs the toolkit only. It does not add the plugin and it does not open a browser. Double-click `install-plugins.cmd` when you want the claude.ai page and the Cursor copy. That runs only because you started it. It copies `.cursor-plugin` and `skills` to `~/.cursor/plugins/local/handbuilt-cad` and replaces the old copy. Fully quit and reopen Cursor after the copy.
+Double-click `pull.cmd` in the clone (or run it from a prompt) to `git pull --ff-only` this repo only. Double-click `install.cmd` (or run it from a normal prompt, not Administrator; extra args pass through, e.g. `install.cmd -NoSim`) to run `setup.ps1`. That shortcut installs the toolkit only. It does not add the plugin and it does not open a browser. Double-click `install-plugins.cmd` for the Cursor copy. That runs only because you started it. It does not open a browser. It copies `.cursor-plugin` and `skills` to `~/.cursor/plugins/local/handbuilt-cad` and replaces the old copy. Fully quit and reopen Cursor after the copy.
 
 Then use the venv: `$CAD_PY tools/cnc_check.py --help` (`setup.sh` prints the `CAD_PY` to export: `.venv/bin/python`, or `~/.venvs/handbuilt-cad/bin/python` in WSL).
 
