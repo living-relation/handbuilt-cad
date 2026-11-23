@@ -134,13 +134,14 @@ def test_clerical_version_with_drawings_only_passes(tmp_path):
     assert rs.check_release(tmp_path) == []
 
 
-def test_f3d_and_other_model_formats_fail(tmp_path):
+def test_other_model_formats_fail_but_f3d_is_allowed(tmp_path):
+    # Dan F7 b (2026-11-23): a Fusion .f3d may be filed beside its STEP when needed.
     ver = tmp_path / "revA"
     ver.mkdir()
     (ver / "leg.f3d").write_bytes(b"fusion")
     (ver / "plate.stl").write_bytes(b"mesh")
     fails = rs.check_release(tmp_path)
-    assert any("leg.f3d" in f and "STEP only" in f for f in fails)
+    assert not any("leg.f3d" in f for f in fails)
     assert any("plate.stl" in f and "STEP only" in f for f in fails)
 
 
