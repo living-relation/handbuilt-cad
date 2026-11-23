@@ -57,6 +57,9 @@ The drawing engine's full rule list (and which ones it enforces) is `drawing/DRA
 25. **Release checks.** `tools/checks/release_structure.py` fails more than two model versions in a job, a non-AP242 STEP, a non-STEP model file, a duplicate STEP, a made part with more than one solid, a bought part with no maker STEP, an assembly that embeds parts or references a missing one, a part in `Parts/` that no assembly uses, or a script, run, scan, or working note in the models folder. Live Fusion checks stay a checklist in `skills/publish-to-models`.
 26. **Assembly-only drawings.** Only assembly drawing packages (11x17, build order and installation) plus a one-page printed parts list for assemblies with 3D-printed parts; no separate part drawings or DXFs (`drawing/DRAWING-RULES.md` rules 40-41, `skills/cad-drawing`). Full models are still required for every part.
 
+## Fusion MCP
+Fusion work uses Autodesk's official, Autodesk-hosted MCP servers (nothing to install): Fusion Compute MCP `https://developer.api.autodesk.com/da/v3/mcp/fusion` (preferred, headless cloud Fusion, so local Fusion isn't interrupted); Fusion Data MCP `https://developer.api.autodesk.com/fusion/mcp`; Fusion Desktop MCP is built into Fusion (Preferences > General > API, local `http://127.0.0.1:27182/mcp`). Docs: https://help.autodesk.com/view/ADSKMCP/ENU/. This rule moved here from the workstation repo on 2026-11-22; it is the one copy.
+
 ## Electrical and design plans
 1. **Plan document.** Every design with electronics includes a plan document with wiring tables, a schematic, and an electronics BOM.
 2. **Wiring tables.** List every required wire for each device signal. If GPIO/PCB pins can't be planned yet, leave the pin as TBA instead of assigning one.
