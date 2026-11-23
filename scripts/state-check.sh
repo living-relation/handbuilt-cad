@@ -36,11 +36,11 @@ if [ $regchk = 1 ] && [ -n "$code" ]; then
   if f=$(echo "$code" | (cd "$top" && "$PY" "$here/registry-check.py" --not-declared)); then code=$f
   else echo "WARN: registry-check.py --not-declared failed ($PY); code list not filtered."; w=1; fi
 fi
-state=$(echo "$files" | grep -E '(^|/)(STATE\.md|DECISIONS\.md|OPEN-ITEMS[^/]*|AGENTS\.md)$' || true)
+state=$(echo "$files" | grep -E '(^|/)(STATE\.md|STATE-[^/]+\.md|BACKLOG\.md|DECISIONS\.md|OPEN-ITEMS[^/]*|AGENTS\.md)$' || true)
 [ -n "$code" ] && [ -z "$state" ] && { echo "WARN: code changed but STATE.md/DECISIONS.md/OPEN-ITEMS not updated (label no-state-change if intended)."; w=1; }
 txt=$( { [ -n "$body" ] && cat "$body"; [ "$head" != "--staged" ] && git log --format=%B "$base..$head"; } 2>/dev/null )
 if echo "$txt" | grep -qiE 'after merge|not done here'; then
-  echo "$state" | grep -qE 'STATE\.md|OPEN-ITEMS' || { echo "WARN: 'After merge'/'Not done here' step found; record it in STATE.md or OPEN-ITEMS."; w=1; }
+  echo "$state" | grep -qE 'STATE(-[^/]+)?\.md|BACKLOG\.md|OPEN-ITEMS' || { echo "WARN: 'After merge'/'Not done here' step found; record it in STATE.md, STATE-<slug>.md or BACKLOG.md."; w=1; }
 fi
 # automation registry (if the repo has automation.yml): same mode
 # registry-check exits 1 only in block mode with a flag (it prints BLOCK); any other non-zero is a failure

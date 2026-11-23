@@ -94,7 +94,7 @@ def test_four_routes_and_readme_points_at_the_plugin():
     assert "https://claude.ai/customize/plugins" in install
     assert "Turn Sync automatically on" in install
     assert "Sync automatically off" not in install
-    assert "where the Sync automatically switch sits is unverified" in (ROOT / "STATE.md").read_text(encoding="utf-8")
+    assert "where the Sync automatically switch sits is unverified" in (ROOT / "BACKLOG.md").read_text(encoding="utf-8")
     assert "Turn Sync automatically on" in (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     assert "Turn Sync automatically on" in (ROOT / "skills" / "README.md").read_text(encoding="utf-8")
     assert "still updates by re-running" in (ROOT / "skills" / "README.md").read_text(encoding="utf-8")
@@ -332,14 +332,17 @@ def test_ps1_copy_replaces_cursor_plugin_and_checks_the_same_key():
 
 
 def test_repo_does_not_name_another_project_repo():
-    """The check file is the only place those names may appear, as the search terms."""
+    """The check file is the only place those names may appear, as the search terms.
+
+    archives/ holds old state files kept verbatim (history), so it is not searched.
+    """
     import subprocess
 
     for word in ("workstation", "living-relation-plugins"):
         found = subprocess.run(
             [
                 "git", "grep", "-i", "-n", "-I", "--untracked", word, "--",
-                ".", ":!tests/test_install_methods.py",
+                ".", ":!tests/test_install_methods.py", ":!archives/",
             ],
             cwd=ROOT,
             capture_output=True,
