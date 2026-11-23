@@ -41,7 +41,7 @@ FASTENER_RE = re.compile(
     r"(?:^|[^A-Za-z0-9])(?:shcs|bhcs|fhcs|screws?|nuts?|washers?|rivets?|helicoil|sr[\s_-]*fastener)(?:[^A-Za-z0-9]|$)",
     re.I)
 STEP_SUFFIXES = {".step", ".stp"}
-NON_STEP_MODELS = {".f3d", ".fcstd", ".stl", ".iges", ".igs", ".3mf", ".brep", ".sat",
+NON_STEP_MODELS = {".fcstd", ".stl", ".iges", ".igs", ".3mf", ".brep", ".sat",
                    ".obj", ".glb", ".jt", ".sldprt", ".sldasm", ".x_t", ".x_b"}
 SCRIPT_SUFFIXES = {".py", ".pyw", ".sh", ".ps1", ".bat", ".cmd", ".js", ".ts", ".ipynb"}
 SCAN_SUFFIXES = rev.SCAN_SUFFIXES
@@ -64,7 +64,7 @@ def blocked_reason(rel: Path) -> str | None:
     if suf in SCAN_SUFFIXES:
         return f"{rel.as_posix()}: scan; keep it in the parts home (~/cad-parts), not the models folder"
     if suf in NON_STEP_MODELS:
-        return f"{rel.as_posix()}: models folder is AP242 STEP only; export to STEP (Fusion keeps .f3d in its cloud)"
+        return f"{rel.as_posix()}: models folder is AP242 STEP only (plus a Fusion .f3d when needed); export to STEP"
     if suf == ".md" and name.lower() not in ALLOWED_MD and not name.lower().endswith(".revlog.md"):
         return f"{rel.as_posix()}: working note; a version keeps only SUMMARY.md, REVLOG.md and README"
     return None

@@ -10,7 +10,7 @@ description: >-
 ## Always
 - **Method and tool up front** in every report and message, e.g. "Feature-based from hard points, Fusion". Every model or image caption names its tool: (Fusion), (build123d), (FreeCAD).
 - **Repo rules win over this skill.** Read the repo's README and rules (AGENTS.md, decision log, register) first. Start with safe-repo-preflight. Never work on main. Toolkit code changes go in a scratch clone and patch (toolkit-patch-handoff), and you pull fast-forward only after the merge. Run the repo checks after every edit and report pass/fail before calling a step done.
-- **Deliverable: AP242 STEP only** (publish-to-models). No STL, .f3d or other format in the models folder; a print STL stays in the parts home. The native source (build123d script, Fusion document) stays in the parts home or Fusion's cloud, never in the models folder.
+- **Deliverable: AP242 STEP only** (publish-to-models). No STL or other format in the models folder (a Fusion .f3d only when needed, AGENTS.md rule 13); a print STL stays in the parts home. The native source (build123d script, Fusion document) stays in the parts home or Fusion's cloud, never in the models folder.
 - **Don't overwrite.** Never edit an existing rev or the original scan. 3D scans are never deleted. Old versions in the models folder follow publish-to-models step 7 (the 2 latest versions of each assembly are kept).
 - **Off-repo CAD stays off-repo.** If the README says the CAD lives elsewhere (e.g. a runs folder, `[paths] fairsolid_runs` or similar), file it there, labelled, and never copy it into the repo.
 - **Use the user's names** for features. Ask them to define an ambiguous term before you use it.
