@@ -18,6 +18,8 @@ The one state file for this repo: current goal and open items. Decisions go in `
 
 **Install routes (2026-11-19):** [INSTALL.md](INSTALL.md) has the four ways: `install.cmd` plus `install-plugins.cmd`, single-line commands in the README, [SETUP-PROMPT.txt](SETUP-PROMPT.txt), and the claude.ai clicks. claude.ai is the only Claude route. `install-plugins.ps1`, `install-plugins.cmd`, and `install-plugins.sh` copy `.cursor-plugin` and `skills` to `~/.cursor/plugins/local/handbuilt-cad` and replace that copy each time you run them. They print the clicks when you run them. They do not open a browser. After that copy, fully quit and reopen Cursor. Setup does not copy skills into `~/.claude/skills` or `~/.cursor/skills`.
 
+**Fusion MCP rule (2026-11-22):** the 'use Autodesk's official Fusion MCP servers' rule is in `AGENTS.md` (section Fusion MCP). It moved here from the workstation repo, which no longer carries it.
+
 ## Open
 - Confirm a live add of handbuilt-cad on a claude.ai account (catalog `living-relation/handbuilt-cad`, Turn Sync automatically on) and fully quitting and reopening Cursor after the local copy. Linux `install-plugins.sh` was run against a temporary home: it copies `.cursor-plugin` and `skills`, replaces the old copy, and prints the missing-plugin line. `install-plugins.ps1` was not executed (no Windows PowerShell on this machine). Windows double-click, a live claude.ai sign-in, and fully quitting and reopening Cursor were not run, so where the Sync automatically switch sits is unverified.
 
