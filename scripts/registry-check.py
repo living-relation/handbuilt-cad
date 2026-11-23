@@ -13,8 +13,14 @@ Usage (repo root):
 Mode comes from .state-check-mode (comment = exit 0, block = exit 1 on any flag), same as state-check.sh.
 Registry: automation.yml (simple YAML subset, or real YAML if PyYAML is installed) or automation.json.
 Flags: STALE-OUTPUT, ORPHAN-SCRIPT, UNDECLARED-OUTPUT, DUPLICATE-OUTPUT. Declared auto-writers are allowed.
+STALE-OUTPUT compares content, not commit dates: when an entry's reads/script were committed after its
+writes, its run_cmd is re-run in a throwaway copy of the tracked files (never the real tree) and the entry
+is flagged only if that changes a declared output. Entries marked `slow: true` (expensive generators),
+and entries whose run_cmd has a <placeholder> or [optional] part, fails or times out, keep the old
+commit-date check. Mark `slow: true` any generator that is expensive, needs tools CI lacks, uses the
+network, or writes outside the repo: the re-run is a plain shell command in the copy.
 """
-import json, os, re, subprocess, sys
+import hashlib, json, os, re, shutil, subprocess, sys, tempfile
 
 def git(*a):
     return subprocess.run(["git", *a], capture_output=True, text=True).stdout
@@ -80,6 +86,43 @@ def last_ct(globs, files):
     if not hit: return 0
     out = git("log", "-1", "--format=%ct", "--", *hit).strip()
     return int(out or 0)
+
+REGEN_TIMEOUT = 300   # seconds per generator re-run; longer ones should be marked `slow: true`
+
+def is_output(f, globs):
+    """A declared output: matches a `writes` glob, or sits under a `writes` entry that names a folder."""
+    return matches(f, globs) or any(f.startswith(g.rstrip("/") + "/") for g in globs if not re.search(r"[*?\[]", g))
+
+def norm_hash(path):
+    """sha256 of a file, CRLF folded to LF for text (no NUL in the first 8 KiB); None if missing."""
+    try: data = open(path, "rb").read()
+    except OSError: return None
+    if b"\0" not in data[:8192]: data = data.replace(b"\r\n", b"\n")
+    return hashlib.sha256(data).hexdigest()
+
+def regen_diff(e, files):
+    """Re-run e's run_cmd in a temp copy of the tracked files. Returns (changed outputs, None) or (None, why not)."""
+    cmd = str(e.get("run_cmd") or "").strip()
+    if not cmd: return None, "no run_cmd"
+    if re.search(r"<[^<>]+>|(^|\s)\[[^\]]+\]", cmd): return None, "run_cmd has a <placeholder> or [optional] part"
+    w = L(e.get("writes"))
+    tmp = tempfile.mkdtemp(prefix="registry-check-")
+    try:
+        for f in files:   # working-tree copy of tracked files only (no .git, no ignored files)
+            dst = os.path.join(tmp, f)
+            if os.path.islink(f) or os.path.isfile(f):
+                os.makedirs(os.path.dirname(dst) or tmp, exist_ok=True); shutil.copy2(f, dst, follow_symlinks=False)
+            elif os.path.isdir(f): shutil.copytree(f, dst, symlinks=True, dirs_exist_ok=True)
+        q = lambda *a: subprocess.run(["git", "-c", "core.autocrlf=false", "-c", "core.safecrlf=false", *a], cwd=tmp, capture_output=True, text=True)
+        q("init", "-q"); q("add", "-A")   # generators that list tracked files (git ls-files) see the same set
+        try: r = subprocess.run(cmd, shell=True, cwd=tmp, capture_output=True, timeout=REGEN_TIMEOUT)
+        except subprocess.TimeoutExpired: return None, f"re-run timed out after {REGEN_TIMEOUT}s"
+        if r.returncode != 0: return None, f"re-run exited {r.returncode}"
+        touched = set()
+        for line in q("status", "--porcelain", "-z", "--untracked-files=all", "--no-renames").stdout.split("\0"):
+            if len(line) > 3: touched.add(line[3:])
+        return sorted(f for f in touched if is_output(f, w) and norm_hash(f) != norm_hash(os.path.join(tmp, f))), None
+    finally: shutil.rmtree(tmp, ignore_errors=True)
 
 SCRIPT_EXT = (".py", ".sh", ".ps1", ".js", ".ts", ".rb", ".bat", ".cmd")
 DEFAULT_GEN = ["**/*.checks.json", "**/*_report.json", "**/*.pdf", "**/*.html", "**/*.xlsx"]
@@ -182,14 +225,25 @@ def main(argv):
     for f, ids in owners.items():
         if len(ids) > 1: flags.append(f"DUPLICATE-OUTPUT {f}: written by {', '.join(ids)}")
         if REV_DIR.search(f): flags.append(f"DUPLICATE-OUTPUT {f}: revision/date-named output folder (old revisions live in git history)")
-    # STALE-OUTPUT: inputs or script committed after outputs
+    # STALE-OUTPUT: commit dates only pick candidates (inputs or script committed after outputs). A candidate
+    # is re-run in a temp copy and flagged only if its declared outputs change. `slow: true` entries, and ones
+    # that can't be re-run here, fall back to the commit-date result.
     for e in entries:
         w = L(e.get("writes")); r = L(e.get("reads")) + L(e.get("script"))
         if not w or e.get("committed") in ("gitignored", "artifact", False): continue
         tw, tr = last_ct(w, files), last_ct(r, files)
-        if tr and tw and tr > tw:
-            paused = " (paused: enabled false)" if e.get("enabled") is False else ""
-            flags.append(f"STALE-OUTPUT {e.get('id')}: inputs/script changed after its outputs{paused}. Re-run: {e.get('run_cmd') or e.get('script')}")
+        if not (tr and tw and tr > tw): continue
+        paused = " (paused: enabled false)" if e.get("enabled") is False else ""
+        rerun = f"Re-run: {e.get('run_cmd') or e.get('script')}"
+        why = "marked slow: true" if e.get("slow") is True else None
+        if why is None:
+            changed, why = regen_diff(e, files)
+            if changed == []: continue   # same bytes as a fresh run: not stale, whatever the commit dates say
+            if changed:
+                more = f" (+{len(changed) - 3} more)" if len(changed) > 3 else ""
+                flags.append(f"STALE-OUTPUT {e.get('id')}: a fresh run changes {len(changed)} declared output(s): {', '.join(changed[:3])}{more}{paused}. {rerun}")
+                continue
+        flags.append(f"STALE-OUTPUT {e.get('id')}: inputs/script committed after its outputs (commit-date check: {why}){paused}. {rerun}")
     if "--diff" in argv:
         i = argv.index("--diff"); base, head = argv[i+1], argv[i+2]
         for f in git("diff", "--name-only", f"{base}...{head}").splitlines():
