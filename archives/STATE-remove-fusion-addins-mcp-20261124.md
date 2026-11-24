@@ -1,7 +1,7 @@
 # STATE (max 30 lines, overwrite only)
 Repo: handbuilt-cad
 Branch: remove-fusion-addins-mcp
-Last_Verified_SHA: b147288
+Last_Verified_SHA: 99abc6e
 Updated: 2026-11-24 -- Grok Bot
 
 ## Current Goal
