@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-23: retire skill zip tooling
+
+- Removed `scripts/pack-skill-zips.sh` / `.ps1`, `scripts/pack_skill_zips.py`, `scripts/stage-skill-zips.sh`, `.github/workflows/skill-zips.yml`, and committed `skills/*.zip`. Skills install from the handbuilt-cad plugin only. The pre-commit guard now blocks skill zips like any other archive.
+
+
 ## 2026-11-20: keep two assembly versions
 
 - Per-part revs are dropped. A models job holds version folders `rev<LETTER>/`; existing job folder names are kept. `tools/rev.py <job> --prune` lists versions beyond the 2 latest, `--apply` deletes them; a folder with a 3D scan is never deleted.
