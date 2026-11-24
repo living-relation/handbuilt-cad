@@ -64,6 +64,7 @@ The drawing engine's full rule list (and which ones it enforces) is `drawing/DRA
 
 ## Fusion MCP
 Fusion work uses Autodesk's official, Autodesk-hosted MCP servers (nothing to install): Fusion Compute MCP `https://developer.api.autodesk.com/da/v3/mcp/fusion` (preferred, headless cloud Fusion, so local Fusion isn't interrupted); Fusion Data MCP `https://developer.api.autodesk.com/fusion/mcp`; Fusion Desktop MCP is built into Fusion (Preferences > General > API, local `http://127.0.0.1:27182/mcp`). Docs: https://help.autodesk.com/view/ADSKMCP/ENU/. This rule moved here from the shared tools repo on 2026-11-22; it is the one copy.
+Driving local Fusion Desktop (its built-in MCP at 27182, a script run in the Fusion app, or clicking it) needs the per-PC Fusion Desktop lock first: acquire, check in at least every 10 min, release when done (`-Name fusion-desktop`, workstation `instructions/projects-AGENTS.md` section 5). Compute and Data MCP need no lock.
 
 ## Electrical and design plans
 1. **Plan document.** Every design with electronics includes a plan document with wiring tables, a schematic, and an electronics BOM.
