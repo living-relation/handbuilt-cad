@@ -40,3 +40,5 @@ One dated line per decision, newest last. Rules that agents must follow live in 
 - 2026-11-23: Rules 29 (Fusion models in the SparkleBots work hub, Dan > Personal/<project>; every worked model also exported to the models folder as STEP) and 30 (BOMs and parts lists are generated from the model, never hand-edited) written down from Dan's standing instructions. (maintainer)
 
 - 2026-11-23: F7 b (Dan): a Fusion .f3d may be filed in the models folder beside its STEP whenever it is needed to keep working; STEP is still always filed, and no other model format is (AGENTS.md rules 13, 23; drawing rule 37; release_structure.py). Supersedes the STEP-only part of rules 13 / 23. (maintainer)
+
+- 2026-11-23: skill zip tooling retired. Committed `skills/*.zip`, pack scripts, and `.github/workflows/skill-zips.yml` are removed. Skills install from the handbuilt-cad plugin only. The force-with-lease exception for `chore/skill-zips` is gone. (Dan, Cursor Project leftovers.)

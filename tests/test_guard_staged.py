@@ -1,4 +1,4 @@
-"""guard-staged.sh: skill zips next to SKILL.md are allowed; other archives are not."""
+"""guard-staged.sh: archives, including skill zips, are blocked."""
 import subprocess
 from pathlib import Path
 
@@ -23,15 +23,15 @@ def _guard(repo):
     return subprocess.run(["sh", str(GUARD)], cwd=repo, capture_output=True, text=True)
 
 
-def test_guard_allows_skill_zip_when_skill_md_exists(tmp_path):
+def test_guard_blocks_skill_zip_even_when_skill_md_exists(tmp_path):
     repo = _repo(tmp_path)
     (repo / "skills" / "demo-skill").mkdir(parents=True)
     (repo / "skills" / "demo-skill" / "SKILL.md").write_text("---\nname: demo-skill\n---\n")
     (repo / "skills" / "demo-skill.zip").write_bytes(b"PK\x03\x04" + b"\x00" * 32)
     _git(repo, "add", "-f", "skills/demo-skill/SKILL.md", "skills/demo-skill.zip")
     r = _guard(repo)
-    assert r.returncode == 0, r.stdout + r.stderr
-    assert "BLOCK" not in r.stdout
+    assert r.returncode == 1
+    assert "demo-skill.zip" in r.stdout
 
 
 def test_guard_blocks_zip_without_matching_skill(tmp_path):
