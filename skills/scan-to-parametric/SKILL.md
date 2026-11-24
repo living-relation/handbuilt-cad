@@ -27,9 +27,9 @@ description: >-
 - **Timeline owner:** pick one at the start (Fusion, or build123d as master) and write it in SUMMARY.md. Later edits go in the owner.
 
 ## Fusion rules
-- Local Fusion Desktop runs only under the per-PC Fusion Desktop lock (`-Name fusion-desktop`, workstation `instructions/projects-AGENTS.md` section 5): acquire first, check in at least every 10 min, release when done.
+- Using local Fusion Desktop (a script in the app or driving the app) needs the per-PC Fusion Desktop lock (`app-lock.ps1 -Name fusion-desktop`, shared tools repo `instructions/projects-AGENTS.md` section 5): acquire first, check in at least every 10 min, release when done.
 - Reuse the existing document (Fusion's open-document limit). Before each script run, save a version and add a timeline marker named for the step. If a script fails partway, roll back to that version before you retry.
-- One script at a time. Send scripts inline in the MCP call. Don't use staged temp files, because they hang. Test with a one-line version print first.
+- One script at a time. Send each script inline. Don't use staged temp files, because they hang. Test with a one-line version print first.
 - An open dialog blocks writes. **Never close a dialog or cancel a command by script.** Stop and ask the user to clear it.
 - Inspect with Section Analysis or Measure only. Never cut, split or extrude-cut to look inside. Show and hide count as edits, so record the visibility state and restore it.
 

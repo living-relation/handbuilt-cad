@@ -21,17 +21,11 @@ outside_dependencies:   # listed here only; never installed, built or copied by 
     url: https://app.harness.design/mcp
     clients: [claude, cursor]
     enable: "Add the URL as an MCP server in Claude/Cursor, then sign in by hand."
-  fusion-mcp-addin:
-    url: http://127.0.0.1:27182/mcp
-    clients: [claude, cursor]
-    claude_desktop_extension: { id: ant.dir.gh.autodesk.fusion-mcp, version: TBD }
-    enable: "Install Fusion 360, enable Autodesk's MCP add-in (Utilities > Add-ins), optionally add the URL to Claude/Cursor."
   blender-mcp-addon:
     source: TBD
     version: TBD
     enable: "Install the upstream Blender MCP add-on in Blender (Edit > Preferences > Add-ons)."
 models_dir: "{desktop}/models"   # MODELS_DIR / [paths] models_dir; setup.sh creates it if missing. Rev retention is publish-to-models step 7.
 open_items:
-  - Fusion MCP Claude Desktop extension version
   - Blender MCP add-on source and version
   - Elmer source
