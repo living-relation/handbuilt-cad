@@ -160,7 +160,7 @@ def keep_source(rel):
     if SKIP_PARTS & set(parts) or rel.endswith(".local.md"):
         return False
     top = parts[0]
-    if top in {".cursor", "mcp", "addins"}:
+    if top in {".cursor", "mcp"}:
         return False
     if top == "docs":
         return rel == "docs/SURFACE_FIT_PLAN.md"

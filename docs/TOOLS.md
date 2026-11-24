@@ -23,4 +23,4 @@
 | renders | `tools/render/` | made | - | smooth-shaded renders, section plots |
 | fairsolid | `pipelines/fairsolid/` | made | - | scan -> parametric STEP |
 | sim scripts | `sim/` | made | - | meshing/FEA helpers and smoke tests |
-| Fusion 360, Fusion MCP add-in, harness-design MCP, Blender MCP add-on | outside dependencies | existing | pinned outside this repo | not part of this repo |
+| Fusion 360, harness-design MCP, Blender MCP add-on | outside dependencies | existing | pinned outside this repo | not part of this repo |
