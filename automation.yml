@@ -73,3 +73,14 @@ automations:
     run_cmd: python3 scripts/check_no_claude_md.py
     check_cmd: python3 scripts/check_no_claude_md.py
     owner: maintainer
+  - id: cad-rules-session-hook
+    script: hooks/hooks.json
+    helpers: [hooks/cad_rules_pointer.py]
+    trigger: Claude Code SessionStart (plugin hook, every session in any repo)
+    reads: [the session's working folder (names only, depth 3)]
+    writes: []
+    committed: no
+    auto_commit: false
+    enabled: true
+    run_cmd: python3 hooks/cad_rules_pointer.py
+    owner: maintainer

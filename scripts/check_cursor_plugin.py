@@ -138,9 +138,17 @@ def check(root: Path):
     for banned in ("bin",):
         if (root / banned).exists():
             errors.append(f"{banned}/ is present; the plugin must not ship a bin folder")
-    for banned in ("mcp.json", ".mcp.json", "hooks/hooks.json"):
+    for banned in ("mcp.json", ".mcp.json"):
         if (root / banned).exists():
-            errors.append(f"{banned} is present; this phase ships no MCP server and no hooks")
+            errors.append(f"{banned} is present; the plugin ships no MCP server")
+    hooks = root / "hooks" / "hooks.json"
+    if hooks.exists():          # G9 a (Dan 2026-11-25): one SessionStart hook, the CAD rules pointer, and nothing else
+        try:
+            events = sorted(json.loads(hooks.read_text(encoding="utf-8")).get("hooks", {}))
+        except ValueError:
+            events = ["<invalid JSON>"]
+        if events != ["SessionStart"]:
+            errors.append(f"hooks/hooks.json has events {events}; the plugin ships only the SessionStart CAD rules hook")
     return errors
 
 
