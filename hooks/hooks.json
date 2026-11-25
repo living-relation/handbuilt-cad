@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/cad_rules_pointer.py\" 2>/dev/null || python \"${CLAUDE_PLUGIN_ROOT}/hooks/cad_rules_pointer.py\" 2>/dev/null || printf '%s\\n' '{\"systemMessage\":\"handbuilt-cad CAD rules pointer not loaded: no Python found. Read the handbuilt-cad AGENTS.md CAD rules before any CAD work.\"}'"
+          }
+        ]
+      }
+    ]
+  }
+}
