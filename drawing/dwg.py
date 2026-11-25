@@ -66,13 +66,16 @@ def render(sheets,pdf_path,dxf_path=None,png_prefix=None):
     with PdfPages(pdf_path) as pdf:
         for i,sh in enumerate(sheets):
             fig=plt.figure(figsize=(17,11)); ax=fig.add_axes([0,0,1,1]); ax.set_xlim(0,PW); ax.set_ylim(0,PH); ax.axis('off')
+            batch={}   # solid polylines of one style drawn in one call, joined by NaN breaks; dashed ones each on their own so every dash pattern starts at its line's end
             for it in sh.items:
                 k=it[0]
                 if k=='pl':
                     _,p,sty,cl=it; lw,da=STY[sty]
                     if cl: p=np.vstack([p,p[:1]])
-                    ln,=ax.plot(p[:,0],p[:,1],color='k',lw=lw*MM2PT,solid_capstyle='round',solid_joinstyle='round',zorder=2 if sty=='vis' else 3)
-                    if da: ln.set_dashes([d*MM2PT for d in da])
+                    if da:
+                        ln,=ax.plot(p[:,0],p[:,1],color='k',lw=lw*MM2PT,solid_capstyle='round',solid_joinstyle='round',zorder=2 if sty=='vis' else 3)
+                        ln.set_dashes([d*MM2PT for d in da])
+                    else: batch.setdefault(sty,[]).append(np.vstack([p,[[np.nan,np.nan]]]))
                 elif k=='tri':
                     ax.fill(it[1][:,0],it[1][:,1],color='k',lw=0,zorder=4)
                 elif k=='wipe':
@@ -87,6 +90,9 @@ def render(sheets,pdf_path,dxf_path=None,png_prefix=None):
                     t=t.replace('⌴','⊔').replace('⌵','∨')
                     kw=dict(bbox=dict(fc='w',ec='none',pad=0.6)) if bg else {}
                     ax.text(x,y,t,fontsize=h*MM2PT/0.72,ha=ha,va=va,rotation=rot,fontweight='bold' if b else 'normal',zorder=5,linespacing=1.25,**kw)
+            for sty,ps in batch.items():
+                lw=STY[sty][0]; p=np.vstack(ps)[:-1]
+                ax.plot(p[:,0],p[:,1],color='k',lw=lw*MM2PT,solid_capstyle='round',solid_joinstyle='round',zorder=2 if sty=='vis' else 3)
             pdf.savefig(fig)
             if png_prefix: fig.savefig(f"{png_prefix}_sh{i+1}.png",dpi=110)
             plt.close(fig)
