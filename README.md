@@ -18,6 +18,18 @@ Skip this if you don't use Claude.
 
 Updates arrive automatically after merges to main.
 
+**Install in one repo (Claude Code)**
+
+Run these from inside the target repo. They write that repo's `.claude/settings.json` (the marketplace source plus the enabled plugin); commit that file through a PR so every clone gets it. Add the catalog to the repo first: whether the install command alone writes the catalog source is unverified.
+
+```powershell
+claude plugin marketplace add living-relation/handbuilt-cad --scope project
+```
+
+```powershell
+claude plugin install handbuilt-cad@handbuilt-cad-plugins --scope project
+```
+
 `<projects>` is your Projects folder. Each block below is one command.
 
 **Windows PowerShell, normal window (not Administrator).** One clone, in Windows. WSL uses that same folder through a link (`~/projects/handbuilt-cad`).

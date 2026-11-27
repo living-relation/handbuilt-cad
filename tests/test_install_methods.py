@@ -110,6 +110,15 @@ def test_four_routes_and_readme_points_at_the_plugin():
     assert "cd ~/projects/handbuilt-cad" in install
     assert "cd <projects>\\active\\handbuilt-cad" in readme
     assert "cd ~/projects/handbuilt-cad" in readme
+    # The README may show only the per-repo Claude Code install (owner, 2026-11-27).
+    project_install = (
+        "claude plugin marketplace add living-relation/handbuilt-cad --scope project",
+        "claude plugin install handbuilt-cad@handbuilt-cad-plugins --scope project",
+    )
+    readme_no_project_install = readme
+    for line in project_install:
+        assert line in readme
+        readme_no_project_install = readme_no_project_install.replace(line, "")
     for banned_cmd in (
         "claude plugin marketplace add",
         "claude plugin install",
@@ -121,7 +130,7 @@ def test_four_routes_and_readme_points_at_the_plugin():
         "--link-skills",
     ):
         assert banned_cmd not in install
-        assert banned_cmd not in readme
+        assert banned_cmd not in readme_no_project_install
     for banned in ("living-relation-plugins", "workstation"):
         assert banned not in install.lower()
         assert banned not in readme.lower()
