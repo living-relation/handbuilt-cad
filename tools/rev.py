@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Next version folder of a models job, and the keep-two prune. Never edits an existing version.
 
-Layout (Daniel, 2026-11-20): $MODELS_DIR/<job>/rev<LETTER>/ (clerical: rev<LETTER>.<NN>/).
+Layout (the user, 2026-11-20): $MODELS_DIR/<job>/rev<LETTER>/ (clerical: rev<LETTER>.<NN>/).
 Existing job folder names are kept as they are (e.g. `bracket-revB`, `knuckle-rev5`, `bracket_1017`);
 a new job folder is the plain subject. Each version folder holds that version's assembly STEP at
 its root, `Parts/` beside it, `drawings/`, `SUMMARY.md` and the drawing `REVLOG.md`.

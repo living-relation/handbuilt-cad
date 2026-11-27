@@ -12,11 +12,11 @@ Shop-practice and project rules for CNC machined parts. Source: **Xometry, "Desi
 - Rows marked **fail** are failures. Rows marked **flag** are reported for a decision; never auto-fixed, and not an automatic fail.
 - The in-repo source is `docs/references/xometry-design-guide-cnc-machining-2025-04-16.md`. The full PDF is not in this repo (files over 1 MB are blocked). It lives in the models folder: `$MODELS_DIR/references/xometry-design-guide-cnc-machining-2025-04-16.pdf`.
 
-## Project rules (Daniel)
+## Project rules (the user)
 
-- **CNC-CORNER-R (project):** inside vertical corners are never left sharp. Put the radius in the pocket or profile (tool radius at 1.3× the nearest standard tool, never an exact standard tool size). Do not run a fillet along inside edges or floors unless the function needs a floor radius. (Daniel, 2026-11-14; guide p14, p36)
+- **CNC-CORNER-R (project):** inside vertical corners are never left sharp. Put the radius in the pocket or profile (tool radius at 1.3× the nearest standard tool, never an exact standard tool size). Do not run a fillet along inside edges or floors unless the function needs a floor radius. (the user, 2026-11-14; guide p14, p36)
 - **CNC-THREAD-DEPTH (project):** **1.5× the screw diameter** is the **minimum** thread engagement for tapped holes. Matching holes use the same depth. Under 1.5× is a **flag** in the model check, never a reason to change the drawing. The guide's shop note is thread length **≤ 2× diameter** in metal (p20, p36); the project **never flags** deeper threads. Drawings always call out the actual modeled thread depth on every blind tapped hole, including when it is under 1.5× or over 2×. When the drill/hole is deeper than the thread, both depths are called out. Through holes (plain and tapped) are `THRU` with no depth; depth is only called out for blind holes. If thread depth is unknown, flag it; do not invent a number. No torque or threadlocker notes unless the user asks.
-- **CNC-EDGE-BREAK (project):** never auto-apply edge breaks. If chamfers or fillets are already modeled: no prompt and no general note; the drawing annotates their actual dimensions. If they are not modeled and the model has exposed sharp edges that could cut hands, the agent prompts the user. Only if the user approves does the drawing get a leader pointing at those edges: `BREAK ALL EDGES, STD`, or a user-given chamfer length. When breaks are modeled, prefer **45° chamfers**, not fillets. (Daniel, 2026-11-14; guide p36)
+- **CNC-EDGE-BREAK (project):** never auto-apply edge breaks. If chamfers or fillets are already modeled: no prompt and no general note; the drawing annotates their actual dimensions. If they are not modeled and the model has exposed sharp edges that could cut hands, the agent prompts the user. Only if the user approves does the drawing get a leader pointing at those edges: `BREAK ALL EDGES, STD`, or a user-given chamfer length. When breaks are modeled, prefer **45° chamfers**, not fillets. (the user, 2026-11-14; guide p36)
 - **CNC-TOL (project):** the drawing title-block defaults in `drawing/dwg.py` (`X ±0.5`, `X.X ±0.2`, `X.XX ±0.05` mm, angles `±0.5°`, Ra 3.2 µm, ASME Y14.5-2018) are the project default. The Xometry table is the shop default if a drawing is silent. A tolerance tighter than **±0.005" (±0.127 mm)** is a **cost flag**, not a fail. Do not call the Xometry table ISO 2768.
 - **CNC-INSERT (project):** keep inserts in the assembly and `parts/` model for fit. The STEP sent to the shop is the part without inserts; call out SKU, orientation, depth, face and count on the drawing. (guide p29)
 
@@ -125,7 +125,7 @@ The project title block stays as in `drawing/dwg.py` (`X ±0.5`, `X.X ±0.2`, `X
 
 ## Walls
 
-- **CNC-WALL-METAL:** minimum **0.030" (0.762 mm)**. A thinner metal CNC wall **fails**. (p21, p36; Daniel, 2026-11-14)
+- **CNC-WALL-METAL:** minimum **0.030" (0.762 mm)**. A thinner metal CNC wall **fails**. (p21, p36; the user, 2026-11-14)
 - **CNC-WALL-PLASTIC:** minimum **0.060" (1.52 mm)** (guide's mm). A thinner plastic/composite CNC wall **fails**. (p21, p36)
 - Thicker is better; don't design to the minimum. (p36)
 - Project rules may set a **stricter** (thicker) minimum; they may not set a looser one. 3D printed walls stay on the structural-or-critical, never-assumed rule in `AGENTS.md` item 7.

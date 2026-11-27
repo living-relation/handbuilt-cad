@@ -11,7 +11,6 @@ Rules for agents and people:
 - This folder holds usable AP242 STEP models and drawings only, plus each version's `SUMMARY.md`, `REVLOG.md` and these notes. No .f3d (Fusion keeps that in its cloud), STL, scripts, runs, scans, backup ZIPs or purge copies. Working files stay in the parts home (`~/cad-parts/<job>/`).
 - A job folder holds version folders `rev<LETTER>/` (clerical `rev<LETTER>.<NN>/`). Existing job folder names are kept as they are. A version holds the assembly STEP at its root, `Parts/` beside it (every part, subassembly and bought maker STEP, referenced by the assembly), `drawings/`, `SUMMARY.md` and `REVLOG.md`. Never edit an existing version.
 - Keep the 2 latest versions of each assembly (with their parts); older versions are deleted after the new one is filed and checked. Never delete or alter a 3D scan.
-- ST185 jobs live here in the models folder (`st185_*`), not in the st185 repo. Leave them untouched during general cleanups until the owner lifts that.
 - Publish with the handbuilt-cad `publish-to-models` skill.
 - This note is written by handbuilt-cad `tools/folder_notes.py`, run by setup and by publish-to-models. It is written only when missing, never overwritten.
 - To change these rules, open a handbuilt-cad PR (`templates/models-folder/`).

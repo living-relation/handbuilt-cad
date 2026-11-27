@@ -4,7 +4,7 @@
 
 **This file:** a faithful, cleaned Markdown conversion of the full 38-page guide for agent use. Section headings, all numeric values, and tables are kept. Page markers (`<!-- pN -->`) match the guide's own "N of 38" pagination so page cites in `docs/CNC-MACHINING-RULES.md` resolve here. Images and marketing or boilerplate (cover art, "Did you know?" ads, "See more of…", "Other Xometry Capabilities," quoting-engine pitches) are omitted. Where a figure carries information that is not already in the text, it is described briefly.
 
-**Full PDF:** not in this repo (files over 1 MB are blocked). It lives on DansPC in the models folder: `models\references\xometry-design-guide-cnc-machining-2025-04-16.pdf`.
+**Full PDF:** not in this repo (files over 1 MB are blocked). It lives on the user's PC in the models folder: `models\references\xometry-design-guide-cnc-machining-2025-04-16.pdf`.
 
 ---
 

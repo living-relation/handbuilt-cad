@@ -1,4 +1,4 @@
-"""SessionStart hook: point the agent at the handbuilt-cad CAD rules (Dan G9 a, 2026-11-25).
+"""SessionStart hook: point the agent at the handbuilt-cad CAD rules (the user's G9 a, 2026-11-25).
 
 The plugin's rules live in AGENTS.md ("CAD and drawing rules" 1-30) and drawing/DRAWING-RULES.md. Nothing loaded
 them on their own, so sessions doing CAD work in other repos never read them. This hook adds a short pointer to

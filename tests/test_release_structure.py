@@ -135,7 +135,7 @@ def test_clerical_version_with_drawings_only_passes(tmp_path):
 
 
 def test_other_model_formats_fail_but_f3d_is_allowed(tmp_path):
-    # Dan F7 b (2026-11-23): a Fusion .f3d may be filed beside its STEP when needed.
+    # The user's F7 b (2026-11-23): a Fusion .f3d may be filed beside its STEP when needed.
     ver = tmp_path / "revA"
     ver.mkdir()
     (ver / "leg.f3d").write_bytes(b"fusion")

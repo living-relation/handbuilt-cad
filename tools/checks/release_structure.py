@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check models job folders (Daniel, 2026-11-20).
+"""Check models job folders (the user, 2026-11-20).
 
     .venv/bin/python tools/checks/release_structure.py <job-or-rev-folder> [...]
 
