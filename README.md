@@ -20,7 +20,7 @@ Updates arrive automatically after merges to main.
 
 **Install in one repo (Claude Code)**
 
-Run these from inside the target repo. They write that repo's `.claude/settings.json` (the marketplace source plus the enabled plugin); commit that file through a PR so every clone gets it. Add the catalog to the repo first: whether the install command alone writes the catalog source is unverified.
+Run both from inside the target repo, then commit its `.claude/settings.json` through a PR. The first command writes the catalog source to that file and the second turns the plugin on there. The install command alone only writes the plugin line, and it fails on a PC that does not have the catalog yet.
 
 ```powershell
 claude plugin marketplace add living-relation/handbuilt-cad --scope project
@@ -29,6 +29,8 @@ claude plugin marketplace add living-relation/handbuilt-cad --scope project
 ```powershell
 claude plugin install handbuilt-cad@handbuilt-cad-plugins --scope project
 ```
+
+Committing the file does not install the plugin on other clones. In each other clone, run the install command above once. On a PC that does not have the catalog yet, run `claude plugin marketplace add living-relation/handbuilt-cad` first.
 
 `<projects>` is your Projects folder. Each block below is one command.
 
