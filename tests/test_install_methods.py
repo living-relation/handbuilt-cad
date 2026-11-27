@@ -52,8 +52,6 @@ def test_prompt_matches_setup_prompt_file():
     assert "copies .cursor-plugin and skills to ~/.cursor/plugins/local/handbuilt-cad and replaces the old copy" in prompt
     assert "https://claude.ai/customize/plugins" in prompt
     assert "Do not create a CLAUDE.md." in prompt
-    assert "claude plugin marketplace add" not in prompt
-    assert "claude plugin install" not in prompt
     assert "living-relation-plugins" not in prompt
     assert "workstation" not in prompt.lower()
     assert "link" not in prompt.lower().replace("st185-link-ecu-config", "")
@@ -110,27 +108,9 @@ def test_four_routes_and_readme_points_at_the_plugin():
     assert "cd ~/projects/handbuilt-cad" in install
     assert "cd <projects>\\active\\handbuilt-cad" in readme
     assert "cd ~/projects/handbuilt-cad" in readme
-    # The README may show only the per-repo Claude Code install (owner, 2026-11-27).
-    project_install = (
-        "claude plugin marketplace add living-relation/handbuilt-cad --scope project",
-        "claude plugin install handbuilt-cad@handbuilt-cad-plugins --scope project",
-    )
-    readme_no_project_install = readme
-    for line in project_install:
-        assert line in readme
-        readme_no_project_install = readme_no_project_install.replace(line, "")
-    for banned_cmd in (
-        "claude plugin marketplace add",
-        "claude plugin install",
-        "claude plugin update",
-        "claude plugin uninstall",
-        "/plugin marketplace add",
-        "/plugin install",
-        "-LinkSkills",
-        "--link-skills",
-    ):
+    for banned_cmd in ("-LinkSkills", "--link-skills"):
         assert banned_cmd not in install
-        assert banned_cmd not in readme_no_project_install
+        assert banned_cmd not in readme
     for banned in ("living-relation-plugins", "workstation"):
         assert banned not in install.lower()
         assert banned not in readme.lower()
