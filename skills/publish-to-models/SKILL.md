@@ -17,7 +17,6 @@ The project's own rules (AGENTS.md, decision log, revision register) win over th
 ## Models home housekeeping
 - The models home holds usable models and drawings only, plus each version's `SUMMARY.md` and `REVLOG.md`. Never put backup ZIPs, purge copies, or copies of things the user told you to delete there; delete such agent-made leftovers instead of archiving them in the models home.
 - Never delete or alter a 3D scan, anywhere. Scans live in the parts home.
-- ST185 jobs live in the models home (`st185_*`). Leave them untouched during general cleanups until the user lifts that restriction.
 - Existing job folder names are kept as they are. Never reset or invent a rev letter. Before reorganising existing jobs (only when the user asks), verify each version from its SUMMARY.md, REVLOG and actual files, then hash-check the unchanged contents afterward. Don't merge projects or overwrite a destination.
 - Offer every finished model for filing. A filed assembly includes every part and subassembly STEP it references.
 
@@ -50,7 +49,7 @@ Drawings dropped into a job folder are legitimate. Do not add scripts, runs, sca
    - Do not publish `src/`, `runs/`, scripts, scans, renders, or other working notes.
 5. Copy, confirm each file landed (cloud-synced online-only or locked files can fail; let them download, retry if locked), then SHA-256 check every copied file; on Windows + WSL re-check the hashes from Windows, since sync clients can lag. Stop on any mismatch.
 6. Copy vs move. From a live project folder always copy. Move only when the user asks; then remove only sources whose hash matched. A source in a git repo is removed with a normal commit via safe-repo-preflight.
-7. Retention: keep the 2 latest versions of each assembly (Daniel, 2026-11-20). After the new version is filed, hash-checked and passes step 9, run `tools/rev.py <job> --prune` to list older version folders, then `--prune --apply` to delete them with the parts inside them. Clerical decimals go with their letter. A folder holding a 3D scan is never deleted. Real changes always go in a new version, never into an existing one.
+7. Retention: keep the 2 latest versions of each assembly (the user, 2026-11-20). After the new version is filed, hash-checked and passes step 9, run `tools/rev.py <job> --prune` to list older version folders, then `--prune --apply` to delete them with the parts inside them. Clerical decimals go with their letter. A folder holding a 3D scan is never deleted. Real changes always go in a new version, never into an existing one.
 8. Folder notes: run `.venv/bin/python tools/folder_notes.py` so a new job folder, and its parts-home `<job>/`, `src/` and `runs/`, each get a README.md from `templates/notes/` when one is missing. Never edit an existing README.
 9. Release check: `.venv/bin/python tools/checks/release_structure.py <job-folder>`. It fails more than two model versions, a non-AP242 STEP, a non-STEP model, a duplicate STEP, a multi-solid made part, a bought part with no maker file, an assembly that embeds parts or references a missing one, a part in `Parts/` no assembly uses, or a script, run, scan or working note. Fix and re-file; do not edit the previous version.
 10. Report the version path, the files and the check result, and offer the complete finished assembly (all part and subassembly STEPs) for filing.

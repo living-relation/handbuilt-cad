@@ -142,7 +142,7 @@ def check(root: Path):
         if (root / banned).exists():
             errors.append(f"{banned} is present; the plugin ships no MCP server")
     hooks = root / "hooks" / "hooks.json"
-    if hooks.exists():          # G9 a (Dan 2026-11-25): one SessionStart hook, the CAD rules pointer, and nothing else
+    if hooks.exists():          # G9 a (the user 2026-11-25): one SessionStart hook, the CAD rules pointer, and nothing else
         try:
             events = sorted(json.loads(hooks.read_text(encoding="utf-8")).get("hooks", {}))
         except ValueError:

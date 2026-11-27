@@ -1,4 +1,4 @@
-"""The SessionStart CAD rules pointer (hooks/cad_rules_pointer.py, Dan G9 a 2026-11-25)."""
+"""The SessionStart CAD rules pointer (hooks/cad_rules_pointer.py, the user's G9 a 2026-11-25)."""
 import json
 import subprocess
 import sys
